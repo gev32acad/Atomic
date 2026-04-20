@@ -1,50 +1,99 @@
 <div align="center">
   <img width=115 src="https://github.com/user-attachments/assets/4ad8438e-d63f-4d8b-b44b-7001be28b81f" />
-  <h1>Atomic Stresser</h1>
+  <h1>Atomic Stresser — PHP Edition</h1>
 </div>
 
-> ⚠️ **Project in active development** — some features may still be in progress.
+> Pure PHP with JSON file storage — just upload to your www folder and go!
 
-**AtomicStresser** is a powerful and modern stress testing platform built with:
+**AtomicStresser** is a powerful and modern stress testing platform:
 
-* ✅ Next.js + Tailwind CSS (frontend)
-* 📌 RESTful API to manage attack dispatch (**active development**)
+* ✅ Pure PHP frontend (no build step needed)
+* ✅ JSON file storage (no database required)
 * ✅ Dual-layer architecture (L4 and L7 methods)
-* ✅ Admin panel for user and server control
-* ✅ Beautiful, dark UI with animations using Framer Motion
+* ✅ Admin panel for user, plan, and method management
+* ✅ Beautiful, dark UI with Tailwind CSS
+* ✅ Just upload and run — no Node.js, no npm, no build!
 
 ---
 
-## ✨ Features
+## 🚀 Quick Start
 
-* Layer 4 & Layer 7 attack methods (legal use only)
-* Cloudflare, OVH and other anti-DDoS bypass techniques (with mhddos script)
-* Real-time dashboard and charts
-* Admin panel to manage users, slots, plans and expiration
-* Toast system for notifications
-* Responsive UI for mobile and desktop
-* Sidebar with icon-only design and hover label
+1. Upload **all files** to your web server's `www` / `htdocs` / `public_html` folder
+2. Make sure the `data/` folder is writable: `chmod 755 data/`
+3. Open the site in your browser
+4. Login with the default admin account:
+   - **Username:** `admin`
+   - **Password:** `password`
 
----
-
-## Dashboard 👑
-![image](https://github.com/user-attachments/assets/ff9cae17-2489-4fef-8823-315ff4b1fcd8)
+> ⚠️ **Important:** Change the default password after first login!
 
 ---
 
-## 🚀 Getting Started
+## Requirements
 
-```bash
-# Clone the project
-git clone https://github.com/CirqueiraDev/AtomicStresser
-cd AtomicStresser
+- PHP 7.4+ (with `json` and `session` extensions — enabled by default)
+- Apache or Nginx web server
+- Write permissions on the `data/` directory
 
-# Install dependencies
-npm install
+---
 
-# Run in development
-npm run dev
+## 📂 Project Structure
+
 ```
+├── index.php          # Landing page
+├── login.php          # Login page
+├── register.php       # Registration page
+├── dashboard.php      # Dashboard with stats
+├── panel.php          # Attack panel
+├── admin.php          # Admin panel (users, plans, methods)
+├── profile.php        # User profile
+├── api-docs.php       # API documentation
+├── logout.php         # Logout handler
+├── includes/          # Shared PHP includes
+│   ├── config.php     # Configuration & helpers
+│   ├── auth.php       # Authentication functions
+│   ├── header.php     # HTML header
+│   ├── sidebar.php    # Navigation sidebar
+│   └── footer.php     # HTML footer
+├── api/               # JSON API endpoints
+│   ├── login.php
+│   ├── register.php
+│   ├── verify-token.php
+│   ├── dashboard.php
+│   ├── profile.php
+│   ├── attack.php
+│   ├── methods.php
+│   ├── plans.php
+│   └── users.php
+├── data/              # JSON data storage
+│   ├── .htaccess      # Blocks direct access
+│   ├── users.json
+│   ├── plans.json
+│   ├── methods.json
+│   └── attacks.json
+└── assets/            # Static assets
+    ├── css/style.css
+    ├── js/app.js
+    ├── js/admin.js
+    └── imagens/
+```
+
+---
+
+## ⚙️ Configuration
+
+Edit `includes/config.php` to change:
+- `TOKEN_SECRET` — Change this to a random string for security
+- `SITE_NAME` — Your site name
+
+---
+
+## 🔒 Security Notes
+
+- The `data/.htaccess` file prevents direct browser access to JSON files (Apache)
+- For Nginx, add a location rule to deny access to the `data/` directory
+- Always change `TOKEN_SECRET` in production
+- Change the default admin password immediately
 
 ---
 
@@ -53,76 +102,6 @@ npm run dev
 > This platform is designed strictly for **authorized stress testing** purposes and **educational research**. You must own the target or have explicit permission to test it. The author is **not responsible for misuse**.
 
 ---
-
-## 📂 Project Structure
-
-```
-src/
-├── app/
-│   ├── admin/
-│   │   ├── page.tsx                  ← Admin page (users, plans, methods)
-│
-│   ├── dashboard/
-│   │   └── page.tsx                  ← Main dashboard (stats, quick access, etc.)
-│
-│   ├── login/
-│   │   └── page.tsx                  ← Login screen
-│
-│   ├── panel/
-│   │   └── page.tsx                  ← Attack panel with L4/L7 + logs
-│
-│   ├── profile/
-│   │   └── page.tsx                  ← User profile
-│
-│   ├── register/
-│   │   └── page.tsx                  ← Registration screen
-│
-│   ├── layout.tsx                   ← Main layout of the app (likely with sidebar/header)
-│   ├── globals.css                  ← Global styles
-│   └── ClientBody.tsx               ← Likely a wrapper with context
-│
-├── components/
-│   ├── admin/
-│   │   ├── PlanManagement.tsx
-│   │   ├── StressMethods.tsx
-│   │   └── UserManagement.tsx
-│
-│   ├── home/
-│   │   ├── FaqSection.tsx
-│   │   ├── FeaturesSection.tsx
-│   │   ├── Footer.tsx
-│   │   ├── HeroSection.tsx
-│   │   ├── MethodsSection.tsx
-│   │   └── PriceSection.tsx
-│
-│   ├── panel/
-│   │   ├── Layer4Form.tsx           ← Layer 4 attack form
-│   │   ├── Layer7Form.tsx           ← Layer 7 attack form
-│   │   └── AttackLogs.tsx           ← Attack logs table
-│
-│   ├── header.tsx                   ← Fixed or dynamic header
-│   ├── sidebar.tsx                  ← Sidebar menu (likely used in layout.tsx)
-│   ├── RouteGuard.tsx               ← Protected route wrapper
-│   ├── ToastPopup.tsx               ← Custom notification/toast component
-│   └── TopLoadingBar.tsx            ← Top loading progress bar (like YouTube)
-│
-├── contexts/
-│   ├── AuthContext.tsx              ← Authentication context
-│   └── SidebarContext.tsx           ← Sidebar visibility control context
-│
-├── lib/
-│   ├── api.ts                       ← Axios instance or API config
-│   └── util.ts                      ← Utility/helper functions
-
-```
-
----
-
-###
-- For more information, contact me: [Telegram](https://t.me/cirqueiraz)
-- **Discord: Cirqueira**
-- <a href="https://www.instagram.com/cirqueirax/">Instagram</a>
-
 
 ## 📄 License
 

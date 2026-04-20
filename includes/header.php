@@ -1,6 +1,6 @@
 <?php
 $current_page = basename($_SERVER['PHP_SELF'], '.php');
-$user = get_current_user();
+$user = get_authenticated_user();
 $logged_in = $user !== null;
 $admin = $logged_in && $user['rule'] === 'admin';
 ?>

@@ -27,7 +27,7 @@ function verify_token($token) {
     return $data['user_id'];
 }
 
-function get_current_user() {
+function get_authenticated_user() {
     $token = $_SESSION['token'] ?? null;
     if (!$token) return null;
     
@@ -44,7 +44,7 @@ function get_current_user() {
 }
 
 function require_auth() {
-    $user = get_current_user();
+    $user = get_authenticated_user();
     if (!$user) {
         header('Location: login.php');
         exit;
@@ -62,10 +62,10 @@ function require_admin() {
 }
 
 function is_logged_in() {
-    return get_current_user() !== null;
+    return get_authenticated_user() !== null;
 }
 
 function is_admin() {
-    $user = get_current_user();
+    $user = get_authenticated_user();
     return $user && $user['rule'] === 'admin';
 }
