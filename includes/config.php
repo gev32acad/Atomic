@@ -132,11 +132,11 @@ function validate_url($url) {
 function validate_attack_target($target, $layer) {
     if ($layer === 'Layer4') {
         if (!validate_ipv4($target)) {
-            json_error('Invalid IPv4 address. Format: x.x.x.x');
+            json_error('Invalid IPv4 address. Example: 192.168.1.1');
         }
     } elseif ($layer === 'Layer7') {
         if (!validate_url($target)) {
-            json_error('Invalid URL. Must start with http:// or https://');
+            json_error('Invalid URL. Must start with http:// or https:// (e.g. https://example.com)');
         }
     }
     return true;

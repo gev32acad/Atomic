@@ -57,7 +57,7 @@ function get_authenticated_user() {
 
 // API-Key authentication for external API access (#9, #18)
 function get_user_by_api_key($api_key) {
-    if (empty($api_key) || !str_starts_with($api_key, 'atomic_')) {
+    if (empty($api_key) || !str_starts_with($api_key, 'atomic_') || strlen($api_key) !== 31) {
         return null;
     }
     

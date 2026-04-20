@@ -15,9 +15,9 @@ function render_nav_items($nav_items, $current_page, $admin) {
         $classes = $active 
             ? 'bg-blue-600 text-white' 
             : 'text-gray-300 hover:bg-gray-700/50 hover:text-white';
-        $html .= '<a href="' . $item['href'] . '" class="flex items-center gap-3 px-4 py-2.5 rounded-lg transition ' . $classes . '">';
-        $html .= '<i class="fas ' . $item['icon'] . ' w-5"></i>';
-        $html .= '<span>' . $item['label'] . '</span></a>';
+        $html .= '<a href="' . htmlspecialchars($item['href']) . '" class="flex items-center gap-3 px-4 py-2.5 rounded-lg transition ' . $classes . '">';
+        $html .= '<i class="fas ' . htmlspecialchars($item['icon']) . ' w-5"></i>';
+        $html .= '<span>' . htmlspecialchars($item['label']) . '</span></a>';
     }
     if ($admin) {
         $active = $current_page === 'admin';
