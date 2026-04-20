@@ -4,6 +4,8 @@ $nav_items = [
     ['href' => 'dashboard.php', 'icon' => 'fa-chart-line', 'label' => 'Dashboard', 'page' => 'dashboard'],
     ['href' => 'panel.php', 'icon' => 'fa-rocket', 'label' => 'Panel', 'page' => 'panel'],
     ['href' => 'history.php', 'icon' => 'fa-history', 'label' => 'History', 'page' => 'history'],
+    ['href' => 'hub.php', 'icon' => 'fa-globe', 'label' => 'Free Hub', 'page' => 'hub'],
+    ['href' => 'store.php', 'icon' => 'fa-shopping-cart', 'label' => 'Store', 'page' => 'store'],
     ['href' => 'api-docs.php', 'icon' => 'fa-code', 'label' => 'API', 'page' => 'api-docs'],
     ['href' => 'profile.php', 'icon' => 'fa-user', 'label' => 'Profile', 'page' => 'profile'],
 ];

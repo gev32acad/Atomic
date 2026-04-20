@@ -17,6 +17,10 @@ include __DIR__ . '/includes/sidebar.php';
             <button onclick="switchAdminTab('plans')" id="admin-tab-plans" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition">
                 <i class="fas fa-credit-card"></i> Plans
             </button>
+            <button onclick="switchAdminTab('orders')" id="admin-tab-orders" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition">
+                <i class="fas fa-receipt"></i> Orders
+                <span id="orders-badge" class="hidden bg-yellow-500 text-black text-xs rounded-full px-1.5 py-0.5 font-bold"></span>
+            </button>
             <button onclick="switchAdminTab('methods')" id="admin-tab-methods" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition">
                 <i class="fas fa-bomb"></i> Methods
             </button>
@@ -65,7 +69,9 @@ include __DIR__ . '/includes/sidebar.php';
                         <thead class="text-gray-400 border-b border-gray-700">
                             <tr>
                                 <th class="px-4 py-3">Name</th>
-                                <th class="px-4 py-3">Max Concurrents</th>
+                                <th class="px-4 py-3">Price</th>
+                                <th class="px-4 py-3">Days</th>
+                                <th class="px-4 py-3">Concurrents</th>
                                 <th class="px-4 py-3">Max Seconds</th>
                                 <th class="px-4 py-3">Premium</th>
                                 <th class="px-4 py-3">API</th>
@@ -73,13 +79,46 @@ include __DIR__ . '/includes/sidebar.php';
                             </tr>
                         </thead>
                         <tbody id="plans-table" class="text-gray-300">
-                            <tr><td colspan="6" class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading plans...</td></tr>
+                            <tr><td colspan="8" class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading plans...</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
         
+        <!-- Orders Tab -->
+        <div id="admin-orders" class="admin-tab-content hidden">
+            <div class="bg-panel border border-gray-700/50 rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-white">Order Management</h3>
+                    <div class="flex gap-2">
+                        <button onclick="filterOrders('all')" id="order-filter-all" class="text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white transition">All</button>
+                        <button onclick="filterOrders('pending')" id="order-filter-pending" class="text-xs px-3 py-1.5 rounded-lg bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition">Pending</button>
+                        <button onclick="filterOrders('approved')" id="order-filter-approved" class="text-xs px-3 py-1.5 rounded-lg bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition">Approved</button>
+                        <button onclick="filterOrders('rejected')" id="order-filter-rejected" class="text-xs px-3 py-1.5 rounded-lg bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition">Rejected</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-gray-400 border-b border-gray-700">
+                            <tr>
+                                <th class="px-4 py-3">Order ID</th>
+                                <th class="px-4 py-3">User</th>
+                                <th class="px-4 py-3">Plan</th>
+                                <th class="px-4 py-3">Payment</th>
+                                <th class="px-4 py-3">Status</th>
+                                <th class="px-4 py-3">Date</th>
+                                <th class="px-4 py-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-table" class="text-gray-300">
+                            <tr><td colspan="7" class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading orders...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <!-- Methods Tab -->
         <div id="admin-methods" class="admin-tab-content hidden">
             <div class="bg-panel border border-gray-700/50 rounded-2xl p-6">

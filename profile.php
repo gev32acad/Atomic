@@ -19,6 +19,7 @@ $exp_date = $user['expiration_date'] ? date('M j, Y', strtotime($user['expiratio
             <i class="fas fa-info-circle text-blue-400"></i>
             <p class="text-blue-300">
                 We never request sensitive information. Only your User ID or Username is required when purchasing a plan.
+                <a href="store.php" class="underline hover:text-blue-200 ml-1">Buy a plan →</a>
             </p>
         </div>
         

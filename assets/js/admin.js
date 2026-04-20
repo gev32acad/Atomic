@@ -14,7 +14,7 @@ function switchAdminTab(tab) {
     document.querySelectorAll('.admin-tab-content').forEach(el => el.classList.add('hidden'));
     document.getElementById('admin-' + tab).classList.remove('hidden');
     
-    ['users', 'plans', 'methods'].forEach(t => {
+    ['users', 'plans', 'orders', 'methods'].forEach(t => {
         const btn = document.getElementById('admin-tab-' + t);
         btn.className = t === tab
             ? 'flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-blue-600 text-white transition'
@@ -201,6 +201,8 @@ async function loadPlans() {
             tr.className = 'border-t border-gray-700/50';
             tr.innerHTML = `
                 <td class="px-4 py-3 text-white">${escapeHtml(p.name)}</td>
+                <td class="px-4 py-3">${p.price == 0 ? '<span class="text-green-400">Free</span>' : '$' + parseFloat(p.price).toFixed(2)}</td>
+                <td class="px-4 py-3">${p.price == 0 ? '&infin;' : (parseInt(p.duration_days) || 30) + 'd'}</td>
                 <td class="px-4 py-3">${parseInt(p.max_concurrents)}</td>
                 <td class="px-4 py-3">${parseInt(p.max_seconds)}s</td>
                 <td class="px-4 py-3">${p.premium ? '<span class="text-green-400">Yes</span>' : '<span class="text-gray-500">No</span>'}</td>
@@ -231,6 +233,9 @@ function showAddPlanModal() {
     const fields = document.getElementById('modal-fields');
     fields.innerHTML = '';
     fields.appendChild(createField('Name', 'name', 'text', '', {required: true}));
+    fields.appendChild(createField('Description', 'description', 'text', ''));
+    fields.appendChild(createField('Price (USD)', 'price', 'number', '0'));
+    fields.appendChild(createField('Duration (days)', 'duration_days', 'number', '30'));
     fields.appendChild(createField('Max Concurrents', 'max_concurrents', 'number', '1'));
     fields.appendChild(createField('Max Seconds', 'max_seconds', 'number', '60'));
     fields.appendChild(createField('Min Seconds', 'min_seconds', 'number', '10'));
@@ -245,6 +250,9 @@ function editPlan(plan) {
     const fields = document.getElementById('modal-fields');
     fields.innerHTML = '';
     fields.appendChild(createField('Name', 'name', 'text', plan.name));
+    fields.appendChild(createField('Description', 'description', 'text', plan.description || ''));
+    fields.appendChild(createField('Price (USD)', 'price', 'number', plan.price || 0));
+    fields.appendChild(createField('Duration (days)', 'duration_days', 'number', plan.duration_days || 30));
     fields.appendChild(createField('Max Concurrents', 'max_concurrents', 'number', plan.max_concurrents));
     fields.appendChild(createField('Max Seconds', 'max_seconds', 'number', plan.max_seconds));
     fields.appendChild(createField('Min Seconds', 'min_seconds', 'number', plan.min_seconds));
@@ -432,7 +440,148 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// =================== ORDERS ===================
+let allOrders = [];
+let currentOrderFilter = 'all';
+
+async function loadOrders() {
+    try {
+        const res = await fetch('api/orders.php');
+        const orders = await res.json();
+        allOrders = orders;
+
+        // Update badge
+        const pending = orders.filter(o => o.status === 'pending').length;
+        const badge = document.getElementById('orders-badge');
+        if (pending > 0) {
+            badge.textContent = pending;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+
+        renderOrders();
+    } catch (err) {
+        console.error('Failed to load orders:', err);
+        document.getElementById('orders-table').innerHTML = '<tr><td colspan="7" class="text-center py-8 text-red-400">Failed to load orders</td></tr>';
+    }
+}
+
+function filterOrders(status) {
+    currentOrderFilter = status;
+    ['all', 'pending', 'approved', 'rejected'].forEach(s => {
+        const btn = document.getElementById('order-filter-' + s);
+        btn.className = s === status
+            ? 'text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white transition'
+            : 'text-xs px-3 py-1.5 rounded-lg bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition';
+    });
+    renderOrders();
+}
+
+function renderOrders() {
+    const tbody = document.getElementById('orders-table');
+    const filtered = currentOrderFilter === 'all' ? allOrders : allOrders.filter(o => o.status === currentOrderFilter);
+
+    if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-gray-400">No ${currentOrderFilter === 'all' ? '' : currentOrderFilter + ' '}orders found</td></tr>`;
+        return;
+    }
+
+    const statusColors = { pending: 'text-yellow-400', approved: 'text-green-400', rejected: 'text-red-400' };
+    const statusIcons = { pending: 'fa-clock', approved: 'fa-check-circle', rejected: 'fa-times-circle' };
+
+    tbody.innerHTML = '';
+    filtered.forEach(o => {
+        const tr = document.createElement('tr');
+        tr.className = 'border-t border-gray-700/50';
+        tr.innerHTML = `
+            <td class="px-4 py-3 font-mono text-xs text-gray-300">${escapeHtml(o.id)}</td>
+            <td class="px-4 py-3 text-white">${escapeHtml(o.username)}</td>
+            <td class="px-4 py-3"><span class="bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded text-xs">${escapeHtml(o.plan_name)}</span></td>
+            <td class="px-4 py-3 text-xs">${escapeHtml(o.amount)} ${escapeHtml(o.crypto)}<br><span class="text-gray-500">$${parseFloat(o.price_usd).toFixed(2)}</span></td>
+            <td class="px-4 py-3">
+                <span class="flex items-center gap-1 text-sm ${statusColors[o.status] || 'text-gray-400'}">
+                    <i class="fas ${statusIcons[o.status] || 'fa-question-circle'}"></i>
+                    ${escapeHtml(o.status.charAt(0).toUpperCase() + o.status.slice(1))}
+                </span>
+            </td>
+            <td class="px-4 py-3 text-xs text-gray-400">${new Date(o.created_at).toLocaleString()}</td>
+            <td class="px-4 py-3"></td>
+        `;
+
+        const actionsCell = tr.querySelector('td:last-child');
+
+        if (o.status === 'pending') {
+            const approveBtn = document.createElement('button');
+            approveBtn.className = 'text-green-400 hover:text-green-300 mr-2';
+            approveBtn.title = 'Approve';
+            approveBtn.innerHTML = '<i class="fas fa-check"></i>';
+            approveBtn.addEventListener('click', () => handleOrder(o.id, 'approve'));
+
+            const rejectBtn = document.createElement('button');
+            rejectBtn.className = 'text-red-400 hover:text-red-300 mr-2';
+            rejectBtn.title = 'Reject';
+            rejectBtn.innerHTML = '<i class="fas fa-times"></i>';
+            rejectBtn.addEventListener('click', () => handleOrder(o.id, 'reject'));
+
+            actionsCell.appendChild(approveBtn);
+            actionsCell.appendChild(rejectBtn);
+        }
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'text-gray-500 hover:text-red-400';
+        deleteBtn.title = 'Delete';
+        deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+        deleteBtn.addEventListener('click', () => deleteOrder(o.id));
+        actionsCell.appendChild(deleteBtn);
+
+        tbody.appendChild(tr);
+    });
+}
+
+async function handleOrder(id, action) {
+    const label = action === 'approve' ? 'approve' : 'reject';
+    if (!confirm(`Are you sure you want to ${label} this order?`)) return;
+    try {
+        const res = await fetch('api/orders.php', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
+            body: JSON.stringify({ id, action })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showToast('Order ' + (action === 'approve' ? 'approved' : 'rejected'), 'success');
+            loadOrders();
+        } else {
+            showToast(data.detail || 'Failed', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+async function deleteOrder(id) {
+    if (!confirm('Delete this order?')) return;
+    try {
+        const res = await fetch('api/orders.php', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
+            body: JSON.stringify({ id })
+        });
+        if (res.ok) {
+            showToast('Order deleted', 'success');
+            loadOrders();
+        } else {
+            const data = await res.json();
+            showToast(data.detail || 'Failed to delete', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
 // Load initial data
 loadUsers();
 loadPlans();
+loadOrders();
 loadMethods();
