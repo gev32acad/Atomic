@@ -1,0 +1,38 @@
+[
+  {
+    "id": "1",
+    "name": "Starter",
+    "max_concurrents": 1,
+    "max_seconds": 60,
+    "min_seconds": 10,
+    "premium": false,
+    "api_access": false
+  },
+  {
+    "id": "2",
+    "name": "Standard",
+    "max_concurrents": 3,
+    "max_seconds": 120,
+    "min_seconds": 10,
+    "premium": false,
+    "api_access": true
+  },
+  {
+    "id": "3",
+    "name": "Advanced",
+    "max_concurrents": 5,
+    "max_seconds": 300,
+    "min_seconds": 10,
+    "premium": true,
+    "api_access": true
+  },
+  {
+    "id": "4",
+    "name": "Enterprise",
+    "max_concurrents": 10,
+    "max_seconds": 3600,
+    "min_seconds": 10,
+    "premium": true,
+    "api_access": true
+  }
+]
