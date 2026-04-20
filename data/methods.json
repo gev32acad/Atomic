@@ -1,0 +1,9 @@
+[
+  {"id":"1","name":"HTTP-GET","description":"HTTP GET Flood","layer7":true,"layer4":false,"amplification":false,"premium":false,"proxy":true},
+  {"id":"2","name":"HTTP-POST","description":"HTTP POST Flood","layer7":true,"layer4":false,"amplification":false,"premium":false,"proxy":true},
+  {"id":"3","name":"HTTP-OVH","description":"Bypass OVH Protection","layer7":true,"layer4":false,"amplification":false,"premium":true,"proxy":true},
+  {"id":"4","name":"TCP-FLOOD","description":"TCP SYN Flood","layer7":false,"layer4":true,"amplification":false,"premium":false,"proxy":false},
+  {"id":"5","name":"UDP-FLOOD","description":"UDP Flood Attack","layer7":false,"layer4":true,"amplification":false,"premium":false,"proxy":false},
+  {"id":"6","name":"SYN-FLOOD","description":"SYN Flood Attack","layer7":false,"layer4":true,"amplification":false,"premium":true,"proxy":false},
+  {"id":"7","name":"DNS-AMP","description":"DNS Amplification","layer7":false,"layer4":true,"amplification":true,"premium":true,"proxy":false}
+]
