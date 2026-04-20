@@ -10,12 +10,27 @@ function read_json($file) {
     $path = DATA_DIR . $file;
     if (!file_exists($path)) return [];
     $content = file_get_contents($path);
-    return json_decode($content, true) ?: [];
+    $data = json_decode($content, true);
+    if ($data === null && json_last_error() !== JSON_ERROR_NONE) {
+        error_log("Failed to parse JSON from $file: " . json_last_error_msg());
+        return [];
+    }
+    return $data ?: [];
 }
 
 function write_json($file, $data) {
     $path = DATA_DIR . $file;
-    file_put_contents($path, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    if ($json === false) {
+        error_log("Failed to encode JSON for $file: " . json_last_error_msg());
+        return false;
+    }
+    $result = file_put_contents($path, $json, LOCK_EX);
+    if ($result === false) {
+        error_log("Failed to write JSON file: $path");
+        return false;
+    }
+    return true;
 }
 
 function generate_id() {
