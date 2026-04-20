@@ -54,7 +54,13 @@ document.getElementById('register-form').addEventListener('submit', async functi
     
     try {
         const res = await fetch('api/register.php', { method: 'POST', body: formData });
-        const data = await res.json();
+        let data;
+        try {
+            data = await res.json();
+        } catch (parseErr) {
+            showToast('Server error: invalid response', 'error');
+            return;
+        }
         
         if (res.ok) {
             showToast('Account created successfully!', 'success');
@@ -63,7 +69,7 @@ document.getElementById('register-form').addEventListener('submit', async functi
             showToast(data.detail || 'Registration failed', 'error');
         }
     } catch (err) {
-        showToast('Connection error', 'error');
+        showToast('Connection error: unable to reach server', 'error');
     } finally {
         btn.disabled = false;
         btn.textContent = 'Register';

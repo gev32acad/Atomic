@@ -105,7 +105,10 @@ function check_rate_limit($action, $identifier) {
     
     // Record this attempt
     $limits[$key][] = $now;
-    file_put_contents($rate_file, json_encode($limits, JSON_PRETTY_PRINT), LOCK_EX);
+    $write_result = file_put_contents($rate_file, json_encode($limits, JSON_PRETTY_PRINT), LOCK_EX);
+    if ($write_result === false) {
+        error_log("Failed to write rate limit file: $rate_file");
+    }
     
     return false; // Not rate limited
 }
