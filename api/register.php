@@ -1,7 +1,12 @@
 <?php
+ini_set('display_errors', '0');
+error_reporting(E_ALL);
+ob_start();
+
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/auth.php';
 
+ob_end_clean();
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
