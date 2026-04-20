@@ -21,6 +21,11 @@ if ($user['rule'] !== 'admin') {
     json_error('Forbidden', 403);
 }
 
+// CSRF check for state-changing requests (#1)
+if (in_array($method_req, ['POST', 'PUT', 'DELETE'])) {
+    verify_csrf_token();
+}
+
 if ($method_req === 'POST') {
     $name = $_POST['name'] ?? '';
     $max_concurrents = intval($_POST['max_concurrents'] ?? 1);

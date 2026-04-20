@@ -3,6 +3,12 @@
 let currentEditId = null;
 let currentEditType = null;
 
+// Get CSRF token from page
+function getCsrfToken() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : '';
+}
+
 // Tab switching
 function switchAdminTab(tab) {
     document.querySelectorAll('.admin-tab-content').forEach(el => el.classList.add('hidden'));
@@ -35,24 +41,24 @@ function createField(label, name, type = 'text', value = '', options = {}) {
     if (type === 'checkbox') {
         div.innerHTML = `
             <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
-                <input type="checkbox" name="${name}" ${value ? 'checked' : ''} class="rounded">
-                ${label}
+                <input type="checkbox" name="${escapeHtml(name)}" ${value ? 'checked' : ''} class="rounded">
+                ${escapeHtml(label)}
             </label>
         `;
     } else if (type === 'select') {
         const optionsHtml = (options.choices || []).map(c => 
-            `<option value="${c}" ${c === value ? 'selected' : ''}>${c}</option>`
+            `<option value="${escapeHtml(c)}" ${c === value ? 'selected' : ''}>${escapeHtml(c)}</option>`
         ).join('');
         div.innerHTML = `
-            <label class="block text-sm text-gray-400 mb-1">${label}</label>
-            <select name="${name}" class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+            <label class="block text-sm text-gray-400 mb-1">${escapeHtml(label)}</label>
+            <select name="${escapeHtml(name)}" class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
                 ${optionsHtml}
             </select>
         `;
     } else {
         div.innerHTML = `
-            <label class="block text-sm text-gray-400 mb-1">${label}</label>
-            <input type="${type}" name="${name}" value="${value}" 
+            <label class="block text-sm text-gray-400 mb-1">${escapeHtml(label)}</label>
+            <input type="${escapeHtml(type)}" name="${escapeHtml(name)}" value="${escapeHtml(String(value))}" 
                 class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                 ${options.required ? 'required' : ''}>
         `;
@@ -67,21 +73,64 @@ async function loadUsers() {
         const users = await res.json();
         const tbody = document.getElementById('users-table');
         
-        tbody.innerHTML = users.map(u => `
-            <tr class="border-t border-gray-700/50">
-                <td class="px-4 py-3 text-white">${escapeHtml(u.username)}</td>
-                <td class="px-4 py-3">${escapeHtml(u.email)}</td>
-                <td class="px-4 py-3"><span class="bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded text-xs">${escapeHtml(u.plan)}</span></td>
-                <td class="px-4 py-3">${escapeHtml(u.rule)}</td>
-                <td class="px-4 py-3">${new Date(u.join_date).toLocaleDateString()}</td>
-                <td class="px-4 py-3">
-                    <button onclick='editUser(${JSON.stringify(u)})' class="text-blue-400 hover:text-blue-300 mr-2"><i class="fas fa-edit"></i></button>
-                    <button onclick="deleteUser('${u.id}')" class="text-red-400 hover:text-red-300"><i class="fas fa-trash"></i></button>
-                </td>
-            </tr>
-        `).join('');
+        if (!users.length) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">No users found</td></tr>';
+            return;
+        }
+        
+        // XSS-safe rendering (#4): use textContent instead of innerHTML for user data
+        tbody.innerHTML = '';
+        users.forEach(u => {
+            const tr = document.createElement('tr');
+            tr.className = 'border-t border-gray-700/50';
+            
+            const tdUsername = document.createElement('td');
+            tdUsername.className = 'px-4 py-3 text-white';
+            tdUsername.textContent = u.username;
+            
+            const tdEmail = document.createElement('td');
+            tdEmail.className = 'px-4 py-3';
+            tdEmail.textContent = u.email;
+            
+            const tdPlan = document.createElement('td');
+            tdPlan.className = 'px-4 py-3';
+            tdPlan.innerHTML = `<span class="bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded text-xs">${escapeHtml(u.plan)}</span>`;
+            
+            const tdRole = document.createElement('td');
+            tdRole.className = 'px-4 py-3';
+            tdRole.textContent = u.rule;
+            
+            const tdJoined = document.createElement('td');
+            tdJoined.className = 'px-4 py-3';
+            tdJoined.textContent = new Date(u.join_date).toLocaleDateString();
+            
+            const tdActions = document.createElement('td');
+            tdActions.className = 'px-4 py-3';
+            
+            const editBtn = document.createElement('button');
+            editBtn.className = 'text-blue-400 hover:text-blue-300 mr-2';
+            editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+            editBtn.addEventListener('click', () => editUser(u));
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'text-red-400 hover:text-red-300';
+            deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+            deleteBtn.addEventListener('click', () => deleteUser(u.id));
+            
+            tdActions.appendChild(editBtn);
+            tdActions.appendChild(deleteBtn);
+            
+            tr.appendChild(tdUsername);
+            tr.appendChild(tdEmail);
+            tr.appendChild(tdPlan);
+            tr.appendChild(tdRole);
+            tr.appendChild(tdJoined);
+            tr.appendChild(tdActions);
+            tbody.appendChild(tr);
+        });
     } catch (err) {
         console.error('Failed to load users:', err);
+        document.getElementById('users-table').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-red-400">Failed to load users</td></tr>';
     }
 }
 
@@ -119,7 +168,7 @@ async function deleteUser(id) {
     try {
         const res = await fetch('api/users.php', {
             method: 'DELETE',
-            headers: {'Content-Type': 'application/json'},
+            headers: {'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken()},
             body: JSON.stringify({id})
         });
         if (res.ok) {
@@ -141,21 +190,39 @@ async function loadPlans() {
         const plans = await res.json();
         const tbody = document.getElementById('plans-table');
         
-        tbody.innerHTML = plans.map(p => `
-            <tr class="border-t border-gray-700/50">
+        if (!plans.length) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">No plans found</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = '';
+        plans.forEach(p => {
+            const tr = document.createElement('tr');
+            tr.className = 'border-t border-gray-700/50';
+            tr.innerHTML = `
                 <td class="px-4 py-3 text-white">${escapeHtml(p.name)}</td>
-                <td class="px-4 py-3">${p.max_concurrents}</td>
-                <td class="px-4 py-3">${p.max_seconds}s</td>
+                <td class="px-4 py-3">${parseInt(p.max_concurrents)}</td>
+                <td class="px-4 py-3">${parseInt(p.max_seconds)}s</td>
                 <td class="px-4 py-3">${p.premium ? '<span class="text-green-400">Yes</span>' : '<span class="text-gray-500">No</span>'}</td>
                 <td class="px-4 py-3">${p.api_access ? '<span class="text-green-400">Yes</span>' : '<span class="text-gray-500">No</span>'}</td>
-                <td class="px-4 py-3">
-                    <button onclick='editPlan(${JSON.stringify(p)})' class="text-blue-400 hover:text-blue-300 mr-2"><i class="fas fa-edit"></i></button>
-                    <button onclick="deletePlan('${p.id}')" class="text-red-400 hover:text-red-300"><i class="fas fa-trash"></i></button>
-                </td>
-            </tr>
-        `).join('');
+                <td class="px-4 py-3"></td>
+            `;
+            const actionsCell = tr.querySelector('td:last-child');
+            const editBtn = document.createElement('button');
+            editBtn.className = 'text-blue-400 hover:text-blue-300 mr-2';
+            editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+            editBtn.addEventListener('click', () => editPlan(p));
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'text-red-400 hover:text-red-300';
+            deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+            deleteBtn.addEventListener('click', () => deletePlan(p.id));
+            actionsCell.appendChild(editBtn);
+            actionsCell.appendChild(deleteBtn);
+            tbody.appendChild(tr);
+        });
     } catch (err) {
         console.error('Failed to load plans:', err);
+        document.getElementById('plans-table').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-red-400">Failed to load plans</td></tr>';
     }
 }
 
@@ -191,7 +258,7 @@ async function deletePlan(id) {
     try {
         const res = await fetch('api/plans.php', {
             method: 'DELETE',
-            headers: {'Content-Type': 'application/json'},
+            headers: {'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken()},
             body: JSON.stringify({id})
         });
         if (res.ok) {
@@ -213,21 +280,39 @@ async function loadMethods() {
         const methods = await res.json();
         const tbody = document.getElementById('methods-table');
         
-        tbody.innerHTML = methods.map(m => `
-            <tr class="border-t border-gray-700/50">
+        if (!methods.length) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">No methods found</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = '';
+        methods.forEach(m => {
+            const tr = document.createElement('tr');
+            tr.className = 'border-t border-gray-700/50';
+            tr.innerHTML = `
                 <td class="px-4 py-3 text-white">${escapeHtml(m.name)}</td>
                 <td class="px-4 py-3">${escapeHtml(m.description)}</td>
                 <td class="px-4 py-3">${m.layer4 ? '<span class="text-green-400">Yes</span>' : '<span class="text-gray-500">No</span>'}</td>
                 <td class="px-4 py-3">${m.layer7 ? '<span class="text-green-400">Yes</span>' : '<span class="text-gray-500">No</span>'}</td>
                 <td class="px-4 py-3">${m.premium ? '<span class="text-yellow-400">Yes</span>' : '<span class="text-gray-500">No</span>'}</td>
-                <td class="px-4 py-3">
-                    <button onclick='editMethod(${JSON.stringify(m)})' class="text-blue-400 hover:text-blue-300 mr-2"><i class="fas fa-edit"></i></button>
-                    <button onclick="deleteMethod('${m.id}')" class="text-red-400 hover:text-red-300"><i class="fas fa-trash"></i></button>
-                </td>
-            </tr>
-        `).join('');
+                <td class="px-4 py-3"></td>
+            `;
+            const actionsCell = tr.querySelector('td:last-child');
+            const editBtn = document.createElement('button');
+            editBtn.className = 'text-blue-400 hover:text-blue-300 mr-2';
+            editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+            editBtn.addEventListener('click', () => editMethod(m));
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'text-red-400 hover:text-red-300';
+            deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+            deleteBtn.addEventListener('click', () => deleteMethod(m.id));
+            actionsCell.appendChild(editBtn);
+            actionsCell.appendChild(deleteBtn);
+            tbody.appendChild(tr);
+        });
     } catch (err) {
         console.error('Failed to load methods:', err);
+        document.getElementById('methods-table').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-red-400">Failed to load methods</td></tr>';
     }
 }
 
@@ -265,7 +350,7 @@ async function deleteMethod(id) {
     try {
         const res = await fetch('api/methods.php', {
             method: 'DELETE',
-            headers: {'Content-Type': 'application/json'},
+            headers: {'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken()},
             body: JSON.stringify({id})
         });
         if (res.ok) {
@@ -304,6 +389,7 @@ document.getElementById('modal-form').addEventListener('submit', async function(
         method = 'POST';
         const fd = new FormData();
         Object.entries(data).forEach(([k, v]) => fd.append(k, v));
+        fd.append('csrf_token', getCsrfToken());
         body = fd;
     } else {
         url = `api/${type}s.php`;
@@ -317,7 +403,7 @@ document.getElementById('modal-form').addEventListener('submit', async function(
         if (action === 'add') {
             options.body = body;
         } else {
-            options.headers = {'Content-Type': 'application/json'};
+            options.headers = {'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken()};
             options.body = body;
         }
         
@@ -338,11 +424,11 @@ document.getElementById('modal-form').addEventListener('submit', async function(
     }
 });
 
-// Helper
+// Helper - XSS-safe escaping (#4)
 function escapeHtml(text) {
-    if (!text) return '';
+    if (text === null || text === undefined) return '';
     const div = document.createElement('div');
-    div.textContent = text;
+    div.textContent = String(text);
     return div.innerHTML;
 }
 

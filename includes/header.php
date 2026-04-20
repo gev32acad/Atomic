@@ -9,6 +9,7 @@ $admin = $logged_in && $user['rule'] === 'admin';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<?= htmlspecialchars(generate_csrf_token()) ?>">
     <title><?= SITE_NAME ?></title>
     <link rel="icon" href="assets/imagens/logo.png">
     <link href="assets/css/style.css" rel="stylesheet">

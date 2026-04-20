@@ -8,6 +8,16 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_error('Method not allowed', 405);
 }
 
+// CSRF check (#1)
+verify_csrf_token();
+
+// Rate limiting for registration
+$ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+$rate_limited = check_rate_limit('register', $ip);
+if ($rate_limited !== false) {
+    json_error("Too many registration attempts. Try again in {$rate_limited} seconds.", 429);
+}
+
 $username = $_POST['username'] ?? '';
 $email = $_POST['email'] ?? '';
 $password = $_POST['password'] ?? '';
@@ -18,6 +28,14 @@ if (empty($username) || empty($email) || empty($password)) {
 
 if (strlen($username) < 3) {
     json_error('Username must be at least 3 characters');
+}
+
+if (strlen($username) > 20) {
+    json_error('Username must be at most 20 characters');
+}
+
+if (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
+    json_error('Username can only contain letters, numbers, and underscores');
 }
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {

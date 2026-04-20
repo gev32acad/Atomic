@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
 if (is_logged_in()) { header('Location: dashboard.php'); exit; }
+$csrf_token = generate_csrf_token();
 include __DIR__ . '/includes/header.php';
 include __DIR__ . '/includes/sidebar.php';
 ?>
@@ -11,6 +12,7 @@ include __DIR__ . '/includes/sidebar.php';
         <p class="text-center text-gray-300 mb-6">Register to get started with AtomicStresser.</p>
         
         <form id="register-form" class="space-y-6">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
             <div class="flex items-center gap-2 border border-gray-700 rounded px-3 py-2 bg-background">
                 <i class="fas fa-user text-gray-400"></i>
                 <input type="text" name="username" placeholder="Username" required

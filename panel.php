@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
 $user = require_auth();
+$csrf_token = generate_csrf_token();
 include __DIR__ . '/includes/header.php';
 include __DIR__ . '/includes/sidebar.php';
 ?>
@@ -20,6 +21,7 @@ include __DIR__ . '/includes/sidebar.php';
             
             <!-- Layer 4 Form -->
             <form id="l4-form" class="space-y-4">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
                 <input type="hidden" name="layer" value="Layer4">
                 <div>
                     <label class="block text-sm text-gray-400 mb-1">Target IPv4</label>
@@ -56,6 +58,7 @@ include __DIR__ . '/includes/sidebar.php';
             
             <!-- Layer 7 Form -->
             <form id="l7-form" class="space-y-4 hidden">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
                 <input type="hidden" name="layer" value="Layer7">
                 <div>
                     <label class="block text-sm text-gray-400 mb-1">Target URL</label>
@@ -173,6 +176,7 @@ async function stopAttack(id) {
     const formData = new FormData();
     formData.append('action', 'stop');
     formData.append('attack_id', id);
+    formData.append('csrf_token', '<?= htmlspecialchars($csrf_token) ?>');
     
     try {
         const res = await fetch('api/attack.php', { method: 'POST', body: formData });

@@ -33,6 +33,11 @@ if ($method_req === 'GET') {
 }
 
 if ($method_req === 'POST') {
+    // CSRF check only for session-based auth (not API key)
+    if (empty($_GET['key']) && empty($_SERVER['HTTP_X_API_KEY'])) {
+        verify_csrf_token();
+    }
+    
     $action = $_POST['action'] ?? 'start';
     
     if ($action === 'stop') {
@@ -53,7 +58,7 @@ if ($method_req === 'POST') {
     }
     
     // Start attack
-    $target = $_POST['target'] ?? '';
+    $target = trim($_POST['target'] ?? $_POST['ip'] ?? '');
     $port = $_POST['port'] ?? '80';
     $time = intval($_POST['time'] ?? 0);
     $method = $_POST['method'] ?? '';
@@ -62,6 +67,15 @@ if ($method_req === 'POST') {
     
     if (empty($target) || empty($method) || $time <= 0) {
         json_error('Target, method, and time are required');
+    }
+    
+    // Input validation (#5)
+    validate_attack_target($target, $layer);
+    
+    // Validate port
+    $port_num = intval($port);
+    if ($port_num < 1 || $port_num > 65535) {
+        json_error('Port must be between 1 and 65535');
     }
     
     if ($time > $user['max_seconds']) {

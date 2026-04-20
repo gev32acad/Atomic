@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
 $user = require_admin();
+$csrf_token = generate_csrf_token();
 include __DIR__ . '/includes/header.php';
 include __DIR__ . '/includes/sidebar.php';
 ?>
@@ -43,6 +44,7 @@ include __DIR__ . '/includes/sidebar.php';
                             </tr>
                         </thead>
                         <tbody id="users-table" class="text-gray-300">
+                            <tr><td colspan="6" class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading users...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -71,6 +73,7 @@ include __DIR__ . '/includes/sidebar.php';
                             </tr>
                         </thead>
                         <tbody id="plans-table" class="text-gray-300">
+                            <tr><td colspan="6" class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading plans...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -99,6 +102,7 @@ include __DIR__ . '/includes/sidebar.php';
                             </tr>
                         </thead>
                         <tbody id="methods-table" class="text-gray-300">
+                            <tr><td colspan="6" class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading methods...</td></tr>
                         </tbody>
                     </table>
                 </div>
