@@ -1,263 +1,180 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
 $user = require_auth();
+$csrf_token = generate_csrf_token();
 include __DIR__ . '/includes/header.php';
 include __DIR__ . '/includes/sidebar.php';
 ?>
 
-<div class="min-h-screen p-6">
+<div class="min-h-screen px-6 py-6">
     <div class="max-w-7xl mx-auto">
 
-        <!-- Page Header -->
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-white mb-2"><i class="fas fa-globe mr-3 text-blue-400"></i>Free Hub</h1>
-            <p class="text-gray-400">Free tools, resources & utilities available to all members.</p>
+        <!-- Plan info banner -->
+        <div class="mb-5 flex items-center gap-3 text-sm bg-blue-500/10 border border-blue-500/20 rounded-xl px-5 py-3">
+            <i class="fas fa-info-circle text-blue-400"></i>
+            <p class="text-blue-300">
+                You are on the <strong class="text-white"><?= htmlspecialchars($user['plan']) ?></strong> plan &mdash;
+                max <strong class="text-white"><?= $user['max_seconds'] ?>s</strong> duration,
+                <strong class="text-white"><?= $user['max_concurrents'] ?></strong> concurrent<?= $user['max_concurrents'] > 1 ? 's' : '' ?>.
+                <?php if ($user['plan'] === 'Starter'): ?>
+                <a href="store.php" class="text-blue-400 hover:text-blue-300 underline ml-1">Upgrade for more →</a>
+                <?php endif; ?>
+            </p>
         </div>
 
-        <!-- Tools Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="grid lg:grid-cols-2 gap-6">
 
-            <!-- IP Lookup -->
+            <!-- Attack Panel -->
             <div class="bg-panel border border-gray-700/50 rounded-2xl p-6">
-                <h2 class="text-lg font-bold text-white mb-4"><i class="fas fa-search-location mr-2 text-blue-400"></i>IP Lookup</h2>
-                <div class="flex gap-2 mb-4">
-                    <input type="text" id="ip-lookup-input" placeholder="Enter IP address (e.g. 8.8.8.8)"
-                        class="flex-1 bg-background border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm">
-                    <button onclick="lookupIP()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition text-sm font-medium">
-                        <i class="fas fa-search"></i> Lookup
-                    </button>
+                <h2 class="text-xl font-bold text-white mb-4">Launch Attack</h2>
+
+                <!-- Layer Tabs -->
+                <div class="flex gap-2 mb-6">
+                    <button onclick="switchLayer('l4')" id="tab-l4" class="px-4 py-2 rounded-lg font-medium bg-blue-600 text-white transition">Layer 4</button>
+                    <button onclick="switchLayer('l7')" id="tab-l7" class="px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition">Layer 7</button>
                 </div>
-                <div id="ip-lookup-result" class="hidden bg-background border border-gray-700/50 rounded-xl p-4 text-sm space-y-2"></div>
-                <div class="mt-3">
-                    <button onclick="lookupMyIP()" class="text-blue-400 hover:text-blue-300 text-xs transition">
-                        <i class="fas fa-crosshairs mr-1"></i>Lookup my own IP
+
+                <!-- Layer 4 Form -->
+                <form id="l4-form" class="space-y-4">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
+                    <input type="hidden" name="layer" value="Layer4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Target IPv4</label>
+                        <input type="text" name="target" placeholder="e.g. 192.168.1.1" required
+                            class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Port</label>
+                            <input type="number" name="port" value="80" min="1" max="65535"
+                                class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Time (seconds)</label>
+                            <input type="number" name="time" value="30" min="10" max="<?= $user['max_seconds'] ?>"
+                                class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Method</label>
+                        <select name="method" id="l4-methods"
+                            class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Concurrents: <span id="l4-conc-val">1</span></label>
+                        <input type="range" name="concurrents" min="1" max="<?= $user['max_concurrents'] ?>" value="1"
+                            class="w-full" oninput="document.getElementById('l4-conc-val').textContent=this.value">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">
+                        <i class="fas fa-rocket mr-2"></i>Launch Attack
                     </button>
-                </div>
+                </form>
+
+                <!-- Layer 7 Form -->
+                <form id="l7-form" class="space-y-4 hidden">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
+                    <input type="hidden" name="layer" value="Layer7">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Target URL</label>
+                        <input type="url" name="target" placeholder="https://example.com" required
+                            class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Requests</label>
+                            <input type="number" name="port" value="64" min="1"
+                                class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Time (seconds)</label>
+                            <input type="number" name="time" value="30" min="10" max="<?= $user['max_seconds'] ?>"
+                                class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Method</label>
+                        <select name="method" id="l7-methods"
+                            class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Concurrents: <span id="l7-conc-val">1</span></label>
+                        <input type="range" name="concurrents" min="1" max="<?= $user['max_concurrents'] ?>" value="1"
+                            class="w-full" oninput="document.getElementById('l7-conc-val').textContent=this.value">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">
+                        <i class="fas fa-rocket mr-2"></i>Launch Attack
+                    </button>
+                </form>
             </div>
 
-            <!-- Port Scanner -->
+            <!-- Active Attacks -->
             <div class="bg-panel border border-gray-700/50 rounded-2xl p-6">
-                <h2 class="text-lg font-bold text-white mb-4"><i class="fas fa-door-open mr-2 text-green-400"></i>Port Scanner</h2>
-                <p class="text-gray-400 text-xs mb-3">Check if common ports are open on a target host.</p>
-                <div class="flex gap-2 mb-4">
-                    <input type="text" id="port-host-input" placeholder="IP or hostname"
-                        class="flex-1 bg-background border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm">
-                    <button onclick="scanPorts()" id="port-scan-btn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition text-sm font-medium">
-                        <i class="fas fa-wifi"></i> Scan
-                    </button>
-                </div>
-                <div id="port-scan-result" class="hidden">
-                    <div class="grid grid-cols-3 gap-2 text-xs" id="port-scan-grid"></div>
+                <h2 class="text-xl font-bold text-white mb-4">Active Attacks</h2>
+                <div id="attack-logs" class="space-y-3">
+                    <p class="text-gray-400 text-center py-8">Loading...</p>
                 </div>
             </div>
-
-            <!-- DNS Resolver -->
-            <div class="bg-panel border border-gray-700/50 rounded-2xl p-6">
-                <h2 class="text-lg font-bold text-white mb-4"><i class="fas fa-server mr-2 text-purple-400"></i>DNS Resolver</h2>
-                <div class="flex gap-2 mb-4">
-                    <input type="text" id="dns-input" placeholder="Enter domain (e.g. google.com)"
-                        class="flex-1 bg-background border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm">
-                    <button onclick="resolveDNS()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition text-sm font-medium">
-                        <i class="fas fa-arrow-right"></i> Resolve
-                    </button>
-                </div>
-                <div id="dns-result" class="hidden bg-background border border-gray-700/50 rounded-xl p-4 text-sm space-y-1"></div>
-            </div>
-
-            <!-- My IP Info -->
-            <div class="bg-panel border border-gray-700/50 rounded-2xl p-6">
-                <h2 class="text-lg font-bold text-white mb-4"><i class="fas fa-fingerprint mr-2 text-yellow-400"></i>My Connection Info</h2>
-                <div id="my-ip-info" class="space-y-2">
-                    <p class="text-gray-400 text-sm"><i class="fas fa-spinner fa-spin mr-2"></i>Loading your IP information...</p>
-                </div>
-            </div>
-
         </div>
-
-        <!-- Free Resources -->
-        <div class="bg-panel border border-gray-700/50 rounded-2xl p-6 mb-8">
-            <h2 class="text-xl font-bold text-white mb-6"><i class="fas fa-tools mr-2 text-blue-400"></i>Free Tools & Resources</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <?php
-                $resources = [
-                    ['icon' => 'fa-shield-alt', 'color' => 'text-blue-400', 'title' => 'VPN Checker', 'desc' => 'Check if an IP is a known VPN or proxy.', 'link' => 'https://vpnapi.io', 'label' => 'Open Tool'],
-                    ['icon' => 'fa-map-marked-alt', 'color' => 'text-green-400', 'title' => 'IP Geolocation', 'desc' => 'Geolocate any IP address on the map.', 'link' => 'https://www.iplocation.net', 'label' => 'Open Tool'],
-                    ['icon' => 'fa-network-wired', 'color' => 'text-yellow-400', 'title' => 'Subnet Calculator', 'desc' => 'Calculate subnets and CIDR ranges.', 'link' => 'https://www.subnet-calculator.com', 'label' => 'Open Tool'],
-                    ['icon' => 'fa-terminal', 'color' => 'text-red-400', 'title' => 'Online Ping', 'desc' => 'Ping any host from multiple locations.', 'link' => 'https://ping.pe', 'label' => 'Open Tool'],
-                    ['icon' => 'fa-lock', 'color' => 'text-purple-400', 'title' => 'SSL Checker', 'desc' => 'Verify SSL certificates for any domain.', 'link' => 'https://www.ssllabs.com/ssltest/', 'label' => 'Open Tool'],
-                    ['icon' => 'fa-search', 'color' => 'text-cyan-400', 'title' => 'WHOIS Lookup', 'desc' => 'Domain registration and ownership info.', 'link' => 'https://whois.domaintools.com', 'label' => 'Open Tool'],
-                    ['icon' => 'fa-globe', 'color' => 'text-orange-400', 'title' => 'DNS Propagation', 'desc' => 'Check DNS propagation worldwide.', 'link' => 'https://dnschecker.org', 'label' => 'Open Tool'],
-                    ['icon' => 'fa-chart-bar', 'color' => 'text-pink-400', 'title' => 'Shodan Search', 'desc' => 'Search for internet-connected devices.', 'link' => 'https://www.shodan.io', 'label' => 'Open Tool'],
-                ];
-                foreach ($resources as $r): ?>
-                <a href="<?= htmlspecialchars($r['link']) ?>" target="_blank" rel="noopener noreferrer"
-                    class="bg-background border border-gray-700/50 rounded-xl p-4 hover:border-blue-500/50 transition group block">
-                    <div class="<?= $r['color'] ?> text-2xl mb-3"><i class="fas <?= $r['icon'] ?>"></i></div>
-                    <h3 class="text-white font-semibold text-sm mb-1"><?= htmlspecialchars($r['title']) ?></h3>
-                    <p class="text-gray-400 text-xs mb-3"><?= htmlspecialchars($r['desc']) ?></p>
-                    <span class="text-blue-400 text-xs group-hover:text-blue-300 transition">
-                        <?= htmlspecialchars($r['label']) ?> <i class="fas fa-external-link-alt ml-1 text-xs"></i>
-                    </span>
-                </a>
-                <?php endforeach; ?>
-            </div>
-        </div>
-
-        <!-- Plan Upgrade CTA -->
-        <?php if ($user['plan'] === 'Starter'): ?>
-        <div class="bg-gradient-to-r from-blue-900/40 to-purple-900/40 border border-blue-500/30 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div>
-                <h3 class="text-white font-bold text-lg mb-1"><i class="fas fa-rocket mr-2 text-blue-400"></i>Want more power?</h3>
-                <p class="text-gray-300 text-sm">Upgrade to a paid plan for longer durations, more concurrents, premium methods and full API access.</p>
-            </div>
-            <a href="store.php" class="shrink-0 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl transition whitespace-nowrap">
-                <i class="fas fa-shopping-cart mr-2"></i>View Plans
-            </a>
-        </div>
-        <?php endif; ?>
-
     </div>
 </div>
 
 <script>
-async function lookupIP(ip) {
-    const val = ip || document.getElementById('ip-lookup-input').value.trim();
-    if (!val) return showToast('Enter an IP address', 'error');
-    const result = document.getElementById('ip-lookup-result');
-    result.classList.remove('hidden');
-    result.innerHTML = '<p class="text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Looking up...</p>';
-    try {
-        const res = await fetch(`https://ipapi.co/${encodeURIComponent(val)}/json/`);
-        const d = await res.json();
-        if (d.error) { result.innerHTML = `<p class="text-red-400">${escapeHtml(d.reason || 'Lookup failed')}</p>`; return; }
-        result.innerHTML = `
-            <div class="grid grid-cols-2 gap-2">
-                <div><span class="text-gray-400">IP:</span> <span class="text-white font-medium">${escapeHtml(d.ip)}</span></div>
-                <div><span class="text-gray-400">City:</span> <span class="text-white">${escapeHtml(d.city || 'N/A')}</span></div>
-                <div><span class="text-gray-400">Country:</span> <span class="text-white">${escapeHtml(d.country_name || 'N/A')}</span></div>
-                <div><span class="text-gray-400">Region:</span> <span class="text-white">${escapeHtml(d.region || 'N/A')}</span></div>
-                <div><span class="text-gray-400">ISP:</span> <span class="text-white">${escapeHtml(d.org || 'N/A')}</span></div>
-                <div><span class="text-gray-400">Timezone:</span> <span class="text-white">${escapeHtml(d.timezone || 'N/A')}</span></div>
-                <div><span class="text-gray-400">Latitude:</span> <span class="text-white">${d.latitude ?? 'N/A'}</span></div>
-                <div><span class="text-gray-400">Longitude:</span> <span class="text-white">${d.longitude ?? 'N/A'}</span></div>
-            </div>
-        `;
-    } catch (err) {
-        result.innerHTML = '<p class="text-red-400">Failed to fetch IP info.</p>';
-    }
+function switchLayer(layer) {
+    document.getElementById('l4-form').classList.toggle('hidden', layer !== 'l4');
+    document.getElementById('l7-form').classList.toggle('hidden', layer !== 'l7');
+    document.getElementById('tab-l4').className = layer === 'l4'
+        ? 'px-4 py-2 rounded-lg font-medium bg-blue-600 text-white transition'
+        : 'px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition';
+    document.getElementById('tab-l7').className = layer === 'l7'
+        ? 'px-4 py-2 rounded-lg font-medium bg-blue-600 text-white transition'
+        : 'px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition';
 }
 
-async function lookupMyIP() {
+async function loadMethods() {
     try {
-        const res = await fetch('https://ipapi.co/json/');
-        const d = await res.json();
-        if (d.ip) {
-            document.getElementById('ip-lookup-input').value = d.ip;
-            lookupIP(d.ip);
-        }
-    } catch (err) {
-        showToast('Failed to get your IP', 'error');
-    }
-}
-
-async function loadMyIPInfo() {
-    const container = document.getElementById('my-ip-info');
-    try {
-        const res = await fetch('https://ipapi.co/json/');
-        const d = await res.json();
-        container.innerHTML = `
-            <div class="grid grid-cols-2 gap-2 text-sm">
-                <div><span class="text-gray-400">Your IP:</span> <span class="text-white font-bold">${escapeHtml(d.ip)}</span></div>
-                <div><span class="text-gray-400">Country:</span> <span class="text-white">${escapeHtml(d.country_name || 'N/A')}</span></div>
-                <div><span class="text-gray-400">ISP:</span> <span class="text-white">${escapeHtml(d.org || 'N/A')}</span></div>
-                <div><span class="text-gray-400">Timezone:</span> <span class="text-white">${escapeHtml(d.timezone || 'N/A')}</span></div>
-            </div>
-        `;
-    } catch (err) {
-        container.innerHTML = '<p class="text-red-400 text-sm">Failed to load connection info.</p>';
-    }
-}
-
-async function scanPorts() {
-    const host = document.getElementById('port-host-input').value.trim();
-    if (!host) return showToast('Enter a host or IP', 'error');
-
-    const btn = document.getElementById('port-scan-btn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
-    const commonPorts = [21, 22, 23, 25, 53, 80, 110, 143, 443, 445, 3306, 3389, 5432, 6379, 8080, 8443, 27017];
-    const result = document.getElementById('port-scan-result');
-    const grid = document.getElementById('port-scan-grid');
-    result.classList.remove('hidden');
-    grid.innerHTML = commonPorts.map(p => `
-        <div id="port-${p}" class="bg-background border border-gray-700/50 rounded-lg px-2 py-1.5 text-center">
-            <span class="text-gray-300">${p}</span>
-            <span id="port-status-${p}" class="block text-xs text-gray-500 mt-0.5"><i class="fas fa-spinner fa-spin text-xs"></i></span>
-        </div>
-    `).join('');
-
-    // Use online port scanner API via ipapi (fallback: just show "check manually" message)
-    for (const port of commonPorts) {
-        const statusEl = document.getElementById('port-status-' + port);
-        const portEl = document.getElementById('port-' + port);
-        // We simulate by fetching a known open-port checker
-        try {
-            const res = await fetch(`https://portchecker.co/checkJson?host=${encodeURIComponent(host)}&port=${port}`, { signal: AbortSignal.timeout(3000) });
-            const d = await res.json();
-            if (d.isOpen || d.open) {
-                statusEl.textContent = 'Open';
-                statusEl.className = 'block text-xs text-green-400 mt-0.5 font-bold';
-                portEl.classList.add('border-green-500/40');
-            } else {
-                statusEl.textContent = 'Closed';
-                statusEl.className = 'block text-xs text-red-400/60 mt-0.5';
+        const res = await fetch('api/methods.php');
+        const methods = await res.json();
+        const l4Select = document.getElementById('l4-methods');
+        const l7Select = document.getElementById('l7-methods');
+        methods.forEach(m => {
+            if (m.layer4) {
+                const opt = new Option(m.name + (m.premium ? ' \u2B50' : ''), m.name);
+                l4Select.add(opt);
             }
-        } catch {
-            statusEl.textContent = 'N/A';
-            statusEl.className = 'block text-xs text-gray-600 mt-0.5';
-        }
+            if (m.layer7) {
+                const opt = new Option(m.name + (m.premium ? ' \u2B50' : ''), m.name);
+                l7Select.add(opt);
+            }
+        });
+    } catch (err) {
+        console.error('Failed to load methods:', err);
     }
-
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fas fa-wifi"></i> Scan';
 }
 
-async function resolveDNS() {
-    const domain = document.getElementById('dns-input').value.trim();
-    if (!domain) return showToast('Enter a domain', 'error');
-
-    const result = document.getElementById('dns-result');
-    result.classList.remove('hidden');
-    result.innerHTML = '<p class="text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Resolving...</p>';
-
+async function loadAttacks() {
     try {
-        const res = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=A`);
-        const d = await res.json();
-
-        if (!d.Answer || !d.Answer.length) {
-            result.innerHTML = '<p class="text-yellow-400 text-sm">No A records found for this domain.</p>';
+        const res = await fetch('api/attack.php');
+        const attacks = await res.json();
+        const container = document.getElementById('attack-logs');
+        if (!attacks.length) {
+            container.innerHTML = '<p class="text-gray-400 text-center py-8">No active attacks</p>';
             return;
         }
-
-        result.innerHTML = '<p class="text-gray-400 mb-2 text-xs font-medium">A Records:</p>' +
-            d.Answer.filter(r => r.type === 1).map(r =>
-                `<div class="flex items-center justify-between"><span class="text-white">${escapeHtml(r.data)}</span><span class="text-gray-500 text-xs">TTL: ${r.TTL}s</span></div>`
-            ).join('');
-
-        // Also get AAAA
-        try {
-            const res6 = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=AAAA`);
-            const d6 = await res6.json();
-            if (d6.Answer && d6.Answer.length) {
-                result.innerHTML += '<p class="text-gray-400 mt-3 mb-2 text-xs font-medium">AAAA Records (IPv6):</p>' +
-                    d6.Answer.filter(r => r.type === 28).map(r =>
-                        `<div class="flex items-center justify-between"><span class="text-white text-xs break-all">${escapeHtml(r.data)}</span><span class="text-gray-500 text-xs ml-2">TTL: ${r.TTL}s</span></div>`
-                    ).join('');
-            }
-        } catch {}
+        container.innerHTML = attacks.map(a => `
+            <div class="bg-background border border-gray-700/50 rounded-lg p-4 flex items-center justify-between">
+                <div>
+                    <p class="text-white font-medium">${escapeHtml(a.target)}</p>
+                    <p class="text-gray-400 text-sm">${escapeHtml(a.method)} \u2022 ${escapeHtml(a.layer)} \u2022 ${a.remaining}s remaining</p>
+                </div>
+                <button onclick="stopAttack('${escapeHtml(a.id)}')" class="text-red-400 hover:text-red-300 transition">
+                    <i class="fas fa-stop-circle text-xl"></i>
+                </button>
+            </div>
+        `).join('');
     } catch (err) {
-        result.innerHTML = '<p class="text-red-400 text-sm">Failed to resolve DNS.</p>';
+        console.error('Failed to load attacks:', err);
     }
 }
 
@@ -267,7 +184,45 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-loadMyIPInfo();
+async function stopAttack(id) {
+    const formData = new FormData();
+    formData.append('action', 'stop');
+    formData.append('attack_id', id);
+    formData.append('csrf_token', <?= json_encode($csrf_token) ?>);
+    try {
+        const res = await fetch('api/attack.php', { method: 'POST', body: formData });
+        if (res.ok) {
+            showToast('Attack stopped', 'success');
+            loadAttacks();
+        }
+    } catch (err) {
+        showToast('Failed to stop attack', 'error');
+    }
+}
+
+['l4-form', 'l7-form'].forEach(formId => {
+    document.getElementById(formId).addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        try {
+            const res = await fetch('api/attack.php', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (res.ok) {
+                showToast('Attack launched!', 'success');
+                loadAttacks();
+            } else {
+                showToast(data.detail || 'Failed to launch attack', 'error');
+            }
+        } catch (err) {
+            showToast('Connection error', 'error');
+        }
+    });
+});
+
+loadMethods();
+loadAttacks();
+setInterval(loadAttacks, 5000);
 </script>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
+
