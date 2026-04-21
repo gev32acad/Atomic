@@ -9,6 +9,12 @@ include __DIR__ . '/includes/sidebar.php';
 <div class="min-h-screen px-6 py-6">
     <div class="max-w-7xl mx-auto">
 
+        <!-- Page Header -->
+        <div class="mb-5">
+            <h1 class="text-3xl font-bold text-white"><i class="fas fa-globe mr-3 text-green-400"></i>Free Hub</h1>
+            <p class="text-gray-400 mt-1 text-sm">Free plan attack hub &mdash; limited methods &amp; duration.</p>
+        </div>
+
         <!-- Plan info banner -->
         <div class="mb-5 flex items-center gap-3 text-sm bg-blue-500/10 border border-blue-500/20 rounded-xl px-5 py-3">
             <i class="fas fa-info-circle text-blue-400"></i>
@@ -24,9 +30,9 @@ include __DIR__ . '/includes/sidebar.php';
 
         <div class="grid lg:grid-cols-2 gap-6">
 
-            <!-- Attack Panel -->
+            <!-- Send Form -->
             <div class="bg-panel border border-gray-700/50 rounded-2xl p-6">
-                <h2 class="text-xl font-bold text-white mb-4">Launch Attack</h2>
+                <h2 class="text-xl font-bold text-white mb-4">Send Attack</h2>
 
                 <!-- Layer Tabs -->
                 <div class="flex gap-2 mb-6">
@@ -67,7 +73,7 @@ include __DIR__ . '/includes/sidebar.php';
                             class="w-full" oninput="document.getElementById('l4-conc-val').textContent=this.value">
                     </div>
                     <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">
-                        <i class="fas fa-rocket mr-2"></i>Launch Attack
+                        <i class="fas fa-bolt mr-2"></i>Send Attack
                     </button>
                 </form>
 
@@ -104,14 +110,14 @@ include __DIR__ . '/includes/sidebar.php';
                             class="w-full" oninput="document.getElementById('l7-conc-val').textContent=this.value">
                     </div>
                     <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">
-                        <i class="fas fa-rocket mr-2"></i>Launch Attack
+                        <i class="fas fa-bolt mr-2"></i>Send Attack
                     </button>
                 </form>
             </div>
 
-            <!-- Active Attacks -->
+            <!-- Running -->
             <div class="bg-panel border border-gray-700/50 rounded-2xl p-6">
-                <h2 class="text-xl font-bold text-white mb-4">Active Attacks</h2>
+                <h2 class="text-xl font-bold text-white mb-4">Running</h2>
                 <div id="attack-logs" class="space-y-3">
                     <p class="text-gray-400 text-center py-8">Loading...</p>
                 </div>

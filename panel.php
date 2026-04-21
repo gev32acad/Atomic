@@ -7,11 +7,19 @@ include __DIR__ . '/includes/sidebar.php';
 ?>
 
 <div class="min-h-screen px-6 py-6">
-    <div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-6">
-        
-        <!-- Attack Panel -->
+    <div class="max-w-7xl mx-auto">
+
+        <!-- Page Header -->
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold text-white"><i class="fas fa-bolt mr-3 text-blue-400"></i>Hub</h1>
+            <p class="text-gray-400 mt-1 text-sm">Send attacks using your plan's full power.</p>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-6">
+
+        <!-- Send Form -->
         <div class="bg-panel border border-gray-700/50 rounded-2xl p-6">
-            <h2 class="text-xl font-bold text-white mb-4">Launch Attack</h2>
+            <h2 class="text-xl font-bold text-white mb-4">Send Attack</h2>
             
             <!-- Layer Tabs -->
             <div class="flex gap-2 mb-6">
@@ -52,7 +60,7 @@ include __DIR__ . '/includes/sidebar.php';
                         class="w-full" oninput="document.getElementById('l4-conc-val').textContent=this.value">
                 </div>
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">
-                    <i class="fas fa-rocket mr-2"></i>Launch Attack
+                    <i class="fas fa-bolt mr-2"></i>Send Attack
                 </button>
             </form>
             
@@ -89,14 +97,14 @@ include __DIR__ . '/includes/sidebar.php';
                         class="w-full" oninput="document.getElementById('l7-conc-val').textContent=this.value">
                 </div>
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">
-                    <i class="fas fa-rocket mr-2"></i>Launch Attack
+                    <i class="fas fa-bolt mr-2"></i>Send Attack
                 </button>
             </form>
         </div>
         
-        <!-- Attack Logs -->
+        <!-- Running -->
         <div class="bg-panel border border-gray-700/50 rounded-2xl p-6">
-            <h2 class="text-xl font-bold text-white mb-4">Active Attacks</h2>
+            <h2 class="text-xl font-bold text-white mb-4">Running</h2>
             <div id="attack-logs" class="space-y-3">
                 <p class="text-gray-400 text-center py-8">Loading...</p>
             </div>

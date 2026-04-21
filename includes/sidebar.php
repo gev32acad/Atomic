@@ -2,7 +2,7 @@
 // Sidebar navigation items (single definition to avoid duplication) (#7)
 $nav_items = [
     ['href' => 'dashboard.php', 'icon' => 'fa-chart-line', 'label' => 'Dashboard', 'page' => 'dashboard'],
-    ['href' => 'panel.php', 'icon' => 'fa-rocket', 'label' => 'Panel', 'page' => 'panel'],
+    ['href' => 'panel.php', 'icon' => 'fa-bolt', 'label' => 'Hub', 'page' => 'panel'],
     ['href' => 'history.php', 'icon' => 'fa-history', 'label' => 'History', 'page' => 'history'],
     ['href' => 'hub.php', 'icon' => 'fa-globe', 'label' => 'Free Hub', 'page' => 'hub'],
     ['href' => 'store.php', 'icon' => 'fa-shopping-cart', 'label' => 'Store', 'page' => 'store'],
