@@ -1,5 +1,12 @@
 /* AtomicStresser - Custom Styles */
 
+/* ── Site header ── */
+.header-bg {
+    background: rgba(17, 24, 39, 0.92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
     width: 8px;

@@ -312,7 +312,8 @@ function renderAttack(a) {
     const layerBadge = a.layer === 'Layer7'
         ? '<span class="badge badge-l7">L7</span>'
         : '<span class="badge badge-l4">L4</span>';
-    const premBadge = a.method && ['HTTP-OVH','HTTP-CF-BYPASS','HTTP-BROWSER','HTTP-NULL','SYN-FLOOD','ACK-FLOOD','RST-FLOOD','DNS-AMP','NTP-AMP','MEMCACHED-AMP'].includes(a.method)
+    // Use loaded method metadata to determine premium status dynamically
+    const premBadge = a.method && methodMeta[a.method] && methodMeta[a.method].includes('Premium')
         ? '<span class="badge badge-premium">⭐</span>' : '';
 
     return `

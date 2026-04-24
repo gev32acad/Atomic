@@ -7,8 +7,11 @@
         function toggleSidebar() {
             const overlay = document.getElementById('sidebar-overlay');
             const mobileSidebar = document.getElementById('mobile-sidebar');
-            overlay.classList.toggle('hidden');
-            mobileSidebar.classList.toggle('hidden');
+            const toggle = document.getElementById('sidebar-toggle');
+            const isOpen = !mobileSidebar.classList.contains('hidden');
+            overlay.classList.toggle('hidden', isOpen);
+            mobileSidebar.classList.toggle('hidden', isOpen);
+            if (toggle) toggle.setAttribute('aria-expanded', String(!isOpen));
         }
         
         const sidebarToggle = document.getElementById('sidebar-toggle');

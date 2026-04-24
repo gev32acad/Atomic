@@ -38,7 +38,7 @@ $admin = $logged_in && $user['rule'] === 'admin';
     <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
     <!-- Header -->
-    <header class="sticky top-0 z-40 border-b border-gray-700/50" style="background:rgba(17,24,39,0.92);backdrop-filter:blur(8px);">
+    <header class="sticky top-0 z-40 border-b border-gray-700/50 header-bg">
         <div class="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
             <!-- Brand -->
             <a href="index.php" class="flex items-center gap-2 shrink-0 min-w-0">
@@ -51,7 +51,7 @@ $admin = $logged_in && $user['rule'] === 'admin';
                     <i class="fab fa-telegram text-xl"></i>
                 </a>
                 <?php if ($logged_in): ?>
-                    <button id="sidebar-toggle" class="lg:hidden flex items-center justify-center w-8 h-8 text-white rounded-md hover:bg-gray-700/50 transition" aria-label="Toggle navigation">
+                    <button id="sidebar-toggle" class="lg:hidden flex items-center justify-center w-8 h-8 text-white rounded-md hover:bg-gray-700/50 transition" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mobile-sidebar">
                         <i class="fas fa-bars text-lg"></i>
                     </button>
                 <?php endif; ?>
