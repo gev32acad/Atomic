@@ -2,6 +2,9 @@
   {
     "id": "1",
     "name": "Starter",
+    "price": 0,
+    "duration_days": 0,
+    "description": "Free plan to get started. Basic methods, limited concurrents.",
     "max_concurrents": 1,
     "max_seconds": 60,
     "min_seconds": 10,
@@ -11,6 +14,9 @@
   {
     "id": "2",
     "name": "Standard",
+    "price": 9.99,
+    "duration_days": 30,
+    "description": "Perfect for regular testers. API access included.",
     "max_concurrents": 3,
     "max_seconds": 120,
     "min_seconds": 10,
@@ -20,6 +26,9 @@
   {
     "id": "3",
     "name": "Advanced",
+    "price": 19.99,
+    "duration_days": 30,
+    "description": "Premium methods unlocked. Best value for power users.",
     "max_concurrents": 5,
     "max_seconds": 300,
     "min_seconds": 10,
@@ -29,6 +38,9 @@
   {
     "id": "4",
     "name": "Enterprise",
+    "price": 49.99,
+    "duration_days": 30,
+    "description": "Unlimited power. All methods, maximum concurrents, full API.",
     "max_concurrents": 10,
     "max_seconds": 3600,
     "min_seconds": 10,

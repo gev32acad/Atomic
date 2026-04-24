@@ -28,6 +28,9 @@ if (in_array($method_req, ['POST', 'PUT', 'DELETE'])) {
 
 if ($method_req === 'POST') {
     $name = $_POST['name'] ?? '';
+    $description = $_POST['description'] ?? '';
+    $price = floatval($_POST['price'] ?? 0);
+    $duration_days = intval($_POST['duration_days'] ?? 30);
     $max_concurrents = intval($_POST['max_concurrents'] ?? 1);
     $max_seconds = intval($_POST['max_seconds'] ?? 60);
     $min_seconds = intval($_POST['min_seconds'] ?? 10);
@@ -41,6 +44,9 @@ if ($method_req === 'POST') {
     $new_plan = [
         'id' => generate_id(),
         'name' => $name,
+        'price' => $price,
+        'duration_days' => $duration_days,
+        'description' => $description,
         'max_concurrents' => $max_concurrents,
         'max_seconds' => $max_seconds,
         'min_seconds' => $min_seconds,
@@ -64,6 +70,9 @@ if ($method_req === 'PUT') {
     foreach ($plans as &$plan) {
         if ($plan['id'] === $id) {
             $plan['name'] = $input['name'] ?? $plan['name'];
+            $plan['description'] = $input['description'] ?? ($plan['description'] ?? '');
+            $plan['price'] = isset($input['price']) ? floatval($input['price']) : ($plan['price'] ?? 0);
+            $plan['duration_days'] = isset($input['duration_days']) ? intval($input['duration_days']) : ($plan['duration_days'] ?? 30);
             $plan['max_concurrents'] = $input['max_concurrents'] ?? $plan['max_concurrents'];
             $plan['max_seconds'] = $input['max_seconds'] ?? $plan['max_seconds'];
             $plan['min_seconds'] = $input['min_seconds'] ?? $plan['min_seconds'];

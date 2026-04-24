@@ -2,7 +2,7 @@
 require_once __DIR__ . '/includes/auth.php';
 $user = require_auth();
 $csrf_token = generate_csrf_token();
-$is_premium = $user['plan'] !== 'Starter';
+$is_starter = $user['plan'] === 'Starter';
 $max_s = $user['max_seconds'];
 $max_c = $user['max_concurrents'];
 $max_dur_label = $max_s >= 3600 ? floor($max_s/3600).'h' : $max_s.'s';
@@ -17,9 +17,9 @@ include __DIR__ . '/includes/sidebar.php';
         <div class="flex items-center justify-between">
             <div>
                 <h1 class="text-2xl font-bold text-white flex items-center gap-2">
-                    <i class="fas fa-bolt text-blue-400"></i> Hub
+                    <i class="fas fa-globe text-green-400"></i> Free Hub
                 </h1>
-                <p class="text-gray-500 text-sm mt-0.5">Your full-power attack hub.</p>
+                <p class="text-gray-500 text-sm mt-0.5">Free plan attack hub &mdash; limited methods &amp; duration.</p>
             </div>
             <a href="history.php" class="text-xs text-gray-500 hover:text-blue-400 transition flex items-center gap-1.5 border border-gray-700 rounded-lg px-3 py-1.5">
                 <i class="fas fa-history"></i> History
@@ -29,8 +29,8 @@ include __DIR__ . '/includes/sidebar.php';
         <!-- Stats Bar -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <div class="bg-panel border border-gray-700/50 rounded-xl px-4 py-3 flex items-center gap-3">
-                <div class="w-9 h-9 rounded-lg bg-blue-600/15 flex items-center justify-center shrink-0">
-                    <i class="fas fa-id-badge text-blue-400 text-sm"></i>
+                <div class="w-9 h-9 rounded-lg bg-green-600/15 flex items-center justify-center shrink-0">
+                    <i class="fas fa-id-badge text-green-400 text-sm"></i>
                 </div>
                 <div>
                     <p class="text-xs text-gray-500">Plan</p>
@@ -56,22 +56,44 @@ include __DIR__ . '/includes/sidebar.php';
                 </div>
             </div>
             <div class="bg-panel border border-gray-700/50 rounded-xl px-4 py-3 flex items-center gap-3">
+                <?php if ($is_starter): ?>
+                <div class="w-9 h-9 rounded-lg bg-orange-600/15 flex items-center justify-center shrink-0">
+                    <i class="fas fa-lock text-orange-400 text-sm"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs text-gray-500">Methods</p>
+                    <a href="store.php" class="text-orange-400 font-semibold text-xs hover:text-orange-300 transition">Upgrade for Premium →</a>
+                </div>
+                <?php else: ?>
                 <div class="w-9 h-9 rounded-lg bg-purple-600/15 flex items-center justify-center shrink-0">
                     <i class="fas fa-star text-purple-400 text-sm"></i>
                 </div>
                 <div>
                     <p class="text-xs text-gray-500">Methods</p>
-                    <p class="text-white font-semibold text-sm"><?= $is_premium ? 'Premium' : 'Basic' ?></p>
+                    <p class="text-white font-semibold text-sm">Premium</p>
                 </div>
+                <?php endif; ?>
             </div>
         </div>
+
+        <?php if ($is_starter): ?>
+        <!-- Upgrade banner -->
+        <div class="flex items-center gap-3 bg-orange-500/8 border border-orange-500/20 rounded-xl px-5 py-3">
+            <i class="fas fa-rocket text-orange-400"></i>
+            <p class="text-orange-200 text-sm flex-1">
+                You're on the <strong class="text-white">Starter (Free)</strong> plan.
+                Upgrade to unlock premium methods, more concurrents, and longer durations.
+            </p>
+            <a href="store.php" class="shrink-0 text-xs bg-orange-600 hover:bg-orange-700 text-white font-semibold px-4 py-1.5 rounded-lg transition">Upgrade</a>
+        </div>
+        <?php endif; ?>
 
         <div class="grid lg:grid-cols-2 gap-5">
 
             <!-- Send Form -->
             <div class="bg-panel border border-gray-700/50 rounded-2xl p-6">
                 <h2 class="text-base font-bold text-white mb-5 flex items-center gap-2">
-                    <i class="fas fa-crosshairs text-blue-400"></i> Send Attack
+                    <i class="fas fa-crosshairs text-green-400"></i> Send Attack
                 </h2>
 
                 <!-- Layer Tabs -->
@@ -126,7 +148,7 @@ include __DIR__ . '/includes/sidebar.php';
                             <span>1</span><span><?= $max_c ?></span>
                         </div>
                     </div>
-                    <button type="submit" class="launch-btn">
+                    <button type="submit" class="launch-btn launch-btn-green">
                         <i class="fas fa-bolt mr-2"></i>Launch Attack
                     </button>
                 </form>
@@ -171,7 +193,7 @@ include __DIR__ . '/includes/sidebar.php';
                             <span>1</span><span><?= $max_c ?></span>
                         </div>
                     </div>
-                    <button type="submit" class="launch-btn">
+                    <button type="submit" class="launch-btn launch-btn-green">
                         <i class="fas fa-bolt mr-2"></i>Launch Attack
                     </button>
                 </form>
@@ -194,6 +216,15 @@ include __DIR__ . '/includes/sidebar.php';
                         <p class="text-gray-600 text-sm">Loading...</p>
                     </div>
                 </div>
+
+                <?php if ($is_starter): ?>
+                <!-- Upgrade CTA at bottom -->
+                <div class="mt-5 pt-4 border-t border-gray-700/50">
+                    <a href="store.php" class="flex items-center justify-center gap-2 w-full bg-orange-600/15 hover:bg-orange-600/25 border border-orange-500/30 text-orange-300 font-medium text-sm py-2.5 rounded-xl transition">
+                        <i class="fas fa-rocket"></i> Unlock premium methods &amp; more slots
+                    </a>
+                </div>
+                <?php endif; ?>
             </div>
 
         </div>
@@ -202,7 +233,6 @@ include __DIR__ . '/includes/sidebar.php';
 
 <script>
 const csrfToken = <?= json_encode($csrf_token) ?>;
-const maxConcurrents = <?= $max_c ?>;
 let methodMeta = {};
 let attackTimers = {};
 
@@ -217,9 +247,8 @@ function switchLayer(layer) {
 
 function updateMethodDesc(prefix) {
     const sel = document.getElementById(prefix + '-methods');
-    const name = sel.value;
     const desc = document.getElementById(prefix + '-method-desc');
-    desc.textContent = methodMeta[name] || '';
+    desc.textContent = methodMeta[sel.value] || '';
 }
 
 async function loadMethods() {
@@ -232,11 +261,11 @@ async function loadMethods() {
         methods.forEach(m => {
             methodMeta[m.name] = m.description + (m.premium ? ' — Premium' : '') + (m.amplification ? ' [Amplification]' : '');
             if (m.layer4) {
-                const label = m.name + (m.premium ? ' ⭐' : '');
+                const label = m.name + (m.premium ? ' ⭐ (Premium)' : '');
                 l4.add(new Option(label, m.name));
             }
             if (m.layer7) {
-                const label = m.name + (m.premium ? ' ⭐' : '');
+                const label = m.name + (m.premium ? ' ⭐ (Premium)' : '');
                 l7.add(new Option(label, m.name));
             }
         });
@@ -252,8 +281,6 @@ function renderAttack(a) {
     const layerBadge = a.layer === 'Layer7'
         ? '<span class="badge badge-l7">L7</span>'
         : '<span class="badge badge-l4">L4</span>';
-    const premBadge = (a.method || '').includes('OVH') || (a.method || '').includes('SYN') || (a.method || '').includes('DNS')
-        ? '<span class="badge badge-premium">⭐</span>' : '';
 
     return `
     <div class="attack-card" id="card-${escapeHtml(a.id)}">
@@ -263,7 +290,6 @@ function renderAttack(a) {
                 <div class="flex items-center gap-1.5 mt-1 flex-wrap">
                     ${layerBadge}
                     <span class="badge badge-method">${escapeHtml(a.method)}</span>
-                    ${premBadge}
                     <span class="text-gray-500 text-xs">· ${escapeHtml(String(a.port))} · ${escapeHtml(String(a.concurrents))}×</span>
                 </div>
             </div>
@@ -314,7 +340,7 @@ async function loadAttacks() {
 
         if (!attacks.length) {
             clearAttackTimers();
-            if (pulse) { pulse.className = 'status-dot status-idle'; }
+            if (pulse) pulse.className = 'status-dot status-idle';
             container.innerHTML = `
                 <div class="flex flex-col items-center justify-center py-14 text-center">
                     <i class="fas fa-satellite-dish text-3xl text-gray-700 mb-3"></i>
@@ -324,9 +350,8 @@ async function loadAttacks() {
             return;
         }
 
-        if (pulse) { pulse.className = 'status-dot status-live'; }
+        if (pulse) pulse.className = 'status-dot status-live';
 
-        // Only re-render if IDs changed
         const currentIds = new Set(Object.keys(attackTimers));
         const newIds = new Set(attacks.map(a => a.id));
         const idsChanged = [...newIds].some(id => !currentIds.has(id)) || [...currentIds].some(id => !newIds.has(id));

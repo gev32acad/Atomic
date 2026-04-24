@@ -16,9 +16,12 @@ include __DIR__ . '/includes/sidebar.php';
         <p class="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
             High-performance load testing tool with advanced methods. Test your infrastructure with enterprise-grade power.
         </p>
-        <div class="flex gap-4 justify-center">
+        <div class="flex gap-4 justify-center flex-wrap">
             <a href="register.php" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-lg transition transform hover:scale-105">
-                Get Started
+                Get Started Free
+            </a>
+            <a href="store.php" class="bg-transparent border border-blue-500 hover:bg-blue-900/30 text-blue-400 hover:text-blue-300 font-semibold px-8 py-3 rounded-lg transition">
+                <i class="fas fa-shopping-cart mr-2"></i>Buy a Plan
             </a>
             <a href="#features" class="border border-gray-600 hover:border-blue-500 text-gray-300 hover:text-white font-semibold px-8 py-3 rounded-lg transition">
                 Learn More
@@ -53,35 +56,61 @@ include __DIR__ . '/includes/sidebar.php';
 <!-- Pricing Section -->
 <section id="pricing" class="py-20 px-4 bg-panel/30">
     <div class="max-w-6xl mx-auto">
-        <h2 class="text-3xl font-bold text-center text-white mb-12">Pricing Plans</h2>
+        <h2 class="text-3xl font-bold text-center text-white mb-4">Pricing Plans</h2>
+        <p class="text-center text-gray-400 mb-12">Upgrade with crypto — instant, private, secure.</p>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <?php
-            $plans = [
-                ['name' => 'Starter', 'price' => 'Free', 'features' => ['1 Concurrent', '60s Max', 'Basic Methods', 'No API Access']],
-                ['name' => 'Standard', 'price' => '$9.99/mo', 'features' => ['3 Concurrents', '120s Max', 'Basic Methods', 'API Access']],
-                ['name' => 'Advanced', 'price' => '$19.99/mo', 'features' => ['5 Concurrents', '300s Max', 'Premium Methods', 'API Access'], 'popular' => true],
-                ['name' => 'Enterprise', 'price' => '$49.99/mo', 'features' => ['10 Concurrents', '3600s Max', 'All Methods', 'Full API Access']]
-            ];
-            foreach ($plans as $plan): ?>
-            <div class="relative bg-panel border <?= isset($plan['popular']) ? 'border-blue-500' : 'border-gray-700/50' ?> rounded-xl p-6 hover:border-blue-500/50 transition">
-                <?php if (isset($plan['popular'])): ?>
+            $plans_data = read_json('plans.json');
+            foreach ($plans_data as $plan):
+                $is_free = $plan['price'] == 0;
+                $popular = !empty($plan['premium']) && $plan['name'] === 'Advanced';
+            ?>
+            <div class="relative bg-panel border <?= $popular ? 'border-blue-500' : 'border-gray-700/50' ?> rounded-xl p-6 hover:border-blue-500/50 transition flex flex-col">
+                <?php if ($popular): ?>
                 <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs px-3 py-1 rounded-full">Popular</span>
                 <?php endif; ?>
-                <h3 class="text-xl font-bold text-white mb-2"><?= $plan['name'] ?></h3>
-                <p class="text-3xl font-bold text-blue-400 mb-6"><?= $plan['price'] ?></p>
-                <ul class="space-y-3">
-                    <?php foreach ($plan['features'] as $f): ?>
+                <h3 class="text-xl font-bold text-white mb-2"><?= htmlspecialchars($plan['name']) ?></h3>
+                <p class="text-3xl font-bold text-blue-400 mb-1"><?= $is_free ? 'Free' : '$' . number_format($plan['price'], 2) ?></p>
+                <?php if (!$is_free): ?>
+                <p class="text-gray-500 text-xs mb-4">/ <?= $plan['duration_days'] ?? 30 ?> days</p>
+                <?php else: ?>
+                <p class="text-gray-500 text-xs mb-4">forever</p>
+                <?php endif; ?>
+                <ul class="space-y-3 flex-1">
                     <li class="text-gray-300 text-sm flex items-center gap-2">
-                        <i class="fas fa-check text-green-400 text-xs"></i> <?= $f ?>
+                        <i class="fas fa-check text-green-400 text-xs"></i> <?= $plan['max_concurrents'] ?> Concurrent<?= $plan['max_concurrents'] > 1 ? 's' : '' ?>
                     </li>
-                    <?php endforeach; ?>
+                    <li class="text-gray-300 text-sm flex items-center gap-2">
+                        <i class="fas fa-check text-green-400 text-xs"></i> <?= $plan['max_seconds'] >= 3600 ? floor($plan['max_seconds']/3600).'h' : $plan['max_seconds'].'s' ?> Max
+                    </li>
+                    <li class="text-gray-300 text-sm flex items-center gap-2">
+                        <?php if (!empty($plan['premium'])): ?>
+                        <i class="fas fa-check text-green-400 text-xs"></i> Premium Methods
+                        <?php else: ?>
+                        <i class="fas fa-times text-gray-600 text-xs"></i> <span class="text-gray-500">Basic Methods</span>
+                        <?php endif; ?>
+                    </li>
+                    <li class="text-gray-300 text-sm flex items-center gap-2">
+                        <?php if (!empty($plan['api_access'])): ?>
+                        <i class="fas fa-check text-green-400 text-xs"></i> API Access
+                        <?php else: ?>
+                        <i class="fas fa-times text-gray-600 text-xs"></i> <span class="text-gray-500">No API Access</span>
+                        <?php endif; ?>
+                    </li>
                 </ul>
-                <a href="register.php" class="mt-6 block text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition">
-                    Choose Plan
+                <a href="<?= $is_free ? 'register.php' : 'store.php' ?>" class="mt-6 block text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition">
+                    <?= $is_free ? 'Get Started' : 'Buy Now' ?>
                 </a>
             </div>
             <?php endforeach; ?>
         </div>
+        <p class="text-center text-gray-500 text-sm mt-6">
+            <i class="fab fa-bitcoin mr-1"></i> Bitcoin &nbsp;
+            <i class="fab fa-ethereum mr-1"></i> Ethereum &nbsp;
+            <i class="fas fa-coins mr-1"></i> Litecoin &nbsp;
+            <i class="fas fa-shield-alt mr-1"></i> Monero
+            &mdash; accepted
+        </p>
     </div>
 </section>
 

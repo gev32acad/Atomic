@@ -5,6 +5,15 @@ define('DATA_DIR', __DIR__ . '/../data/');
 define('SITE_NAME', 'AtomicStresser');
 define('TOKEN_SECRET', 'atomic_secret_key_change_me');
 
+// Crypto wallet addresses for payments
+define('CRYPTO_BTC_ADDRESS', '1A1zP1eP5QGefi2DMPTfTL5SLmv7Divf');
+define('CRYPTO_ETH_ADDRESS', '0x742d35Cc6634C0532925a3b844Bc454e4438f44e');
+define('CRYPTO_LTC_ADDRESS', 'LaMT348PWRnrqeeWArpwQPbuanpXDZGEUz');
+define('CRYPTO_XMR_ADDRESS', '888tNkZrPN6JsEgekjMnABU4TBzc2Dt29EPAvkRDZVN');
+
+// Telegram support link
+define('TELEGRAM_LINK', 'https://t.me/atomicstresser');
+
 // Rate limiting settings
 define('RATE_LIMIT_MAX_ATTEMPTS', 5);
 define('RATE_LIMIT_WINDOW', 900); // 15 minutes

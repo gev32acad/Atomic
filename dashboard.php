@@ -6,63 +6,124 @@ include __DIR__ . '/includes/sidebar.php';
 ?>
 
 <div class="min-h-screen p-6">
-    <div class="max-w-7xl mx-auto">
+    <div class="max-w-7xl mx-auto space-y-6">
+
+        <!-- Page Header -->
+        <div>
+            <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+                <i class="fas fa-chart-line text-blue-400"></i> Dashboard
+            </h1>
+            <p class="text-gray-500 text-sm mt-0.5">Welcome back, <strong class="text-gray-300"><?= htmlspecialchars($user['username']) ?></strong></p>
+        </div>
+
         <!-- Stats Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div class="bg-panel border border-gray-700/50 p-6 rounded-2xl">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-panel border border-gray-700/50 p-5 rounded-2xl">
                 <div class="flex items-start justify-between">
                     <div>
                         <p id="stat-servers" class="text-3xl font-bold text-white mb-1">-</p>
-                        <p class="text-sm text-gray-400">Active Servers</p>
+                        <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Active Servers</p>
                     </div>
-                    <i class="fas fa-server text-blue-400 text-xl"></i>
+                    <div class="w-10 h-10 rounded-xl bg-blue-600/15 flex items-center justify-center">
+                        <i class="fas fa-server text-blue-400"></i>
+                    </div>
                 </div>
             </div>
-            <div class="bg-panel border border-gray-700/50 p-6 rounded-2xl">
+            <div class="bg-panel border border-gray-700/50 p-5 rounded-2xl">
                 <div class="flex items-start justify-between">
                     <div>
                         <p id="stat-attacks" class="text-3xl font-bold text-white mb-1">-</p>
-                        <p class="text-sm text-gray-400">Total Attacks</p>
+                        <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Total Attacks</p>
                     </div>
-                    <i class="fas fa-database text-blue-400 text-xl"></i>
+                    <div class="w-10 h-10 rounded-xl bg-purple-600/15 flex items-center justify-center">
+                        <i class="fas fa-database text-purple-400"></i>
+                    </div>
                 </div>
             </div>
-            <div class="bg-panel border border-gray-700/50 p-6 rounded-2xl">
+            <div class="bg-panel border border-gray-700/50 p-5 rounded-2xl">
                 <div class="flex items-start justify-between">
                     <div>
                         <p id="stat-running" class="text-3xl font-bold text-white mb-1">-</p>
-                        <p class="text-sm text-gray-400">Running Attacks</p>
+                        <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Running Now</p>
                     </div>
-                    <i class="fas fa-bolt text-blue-400 text-xl"></i>
+                    <div class="w-10 h-10 rounded-xl bg-green-600/15 flex items-center justify-center">
+                        <i class="fas fa-bolt text-green-400"></i>
+                    </div>
                 </div>
             </div>
-            <div class="bg-panel border border-gray-700/50 p-6 rounded-2xl">
+            <div class="bg-panel border border-gray-700/50 p-5 rounded-2xl">
                 <div class="flex items-start justify-between">
                     <div>
                         <p id="stat-users" class="text-3xl font-bold text-white mb-1">-</p>
-                        <p class="text-sm text-gray-400">Registered Users</p>
+                        <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Registered Users</p>
                     </div>
-                    <i class="fas fa-users text-blue-400 text-xl"></i>
+                    <div class="w-10 h-10 rounded-xl bg-yellow-600/15 flex items-center justify-center">
+                        <i class="fas fa-users text-yellow-400"></i>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Chart -->
-        <div class="bg-panel border border-gray-700/50 p-8 rounded-2xl">
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h2 class="text-2xl font-semibold text-white mb-1">Attacks Chart</h2>
-                    <p class="text-gray-400 text-sm">Showing total attacks per day for the last 7 days</p>
+        <!-- Network Status + Chart row -->
+        <div class="grid lg:grid-cols-3 gap-5">
+
+            <!-- Network Status -->
+            <div class="bg-panel border border-gray-700/50 rounded-2xl p-5">
+                <h2 class="text-sm font-bold text-white mb-4 flex items-center gap-2 uppercase tracking-wide">
+                    <i class="fas fa-signal text-green-400"></i> Network Status
+                </h2>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-400 text-sm">Network</span>
+                        <span class="flex items-center gap-1.5 text-green-400 text-sm font-medium">
+                            <span class="status-dot status-live"></span> Online
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-400 text-sm">API</span>
+                        <span class="flex items-center gap-1.5 text-green-400 text-sm font-medium">
+                            <span class="status-dot status-live"></span> Operational
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-400 text-sm">Attack Layer 4</span>
+                        <span class="flex items-center gap-1.5 text-green-400 text-sm font-medium">
+                            <span class="status-dot status-live"></span> Ready
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-400 text-sm">Attack Layer 7</span>
+                        <span class="flex items-center gap-1.5 text-green-400 text-sm font-medium">
+                            <span class="status-dot status-live"></span> Ready
+                        </span>
+                    </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 rounded-full bg-blue-500"></div>
-                    <span class="text-sm text-gray-400">Attacks</span>
+                <div class="mt-4 pt-4 border-t border-gray-700/50">
+                    <a href="panel.php" class="launch-btn text-sm py-2">
+                        <i class="fas fa-bolt mr-2"></i> Go to Hub
+                    </a>
                 </div>
             </div>
-            <div class="h-64 flex items-end gap-2" id="chart-container">
-                <p class="text-gray-400 w-full text-center">Loading chart...</p>
+
+            <!-- Chart (spans 2 cols) -->
+            <div class="lg:col-span-2 bg-panel border border-gray-700/50 p-5 rounded-2xl">
+                <div class="flex items-center justify-between mb-5">
+                    <div>
+                        <h2 class="text-sm font-bold text-white uppercase tracking-wide">Attacks (Last 7 Days)</h2>
+                        <p class="text-gray-500 text-xs mt-0.5">Total attacks per day</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-sm bg-blue-500"></span>
+                        <span class="text-xs text-gray-500">Attacks</span>
+                    </div>
+                </div>
+                <div class="h-48 flex items-end gap-2" id="chart-container">
+                    <p class="text-gray-500 w-full text-center text-sm">Loading chart...</p>
+                </div>
             </div>
+
         </div>
+
     </div>
 </div>
 
