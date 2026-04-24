@@ -38,23 +38,23 @@ $admin = $logged_in && $user['rule'] === 'admin';
     <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
     <!-- Header -->
-    <header class="sticky top-0 z-40 bg-panel/80 backdrop-blur-sm border-b border-gray-700/50">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <a href="index.php" class="flex items-center gap-2">
-                    <img src="assets/imagens/logo.png" alt="Logo" class="w-8 h-8" onerror="this.style.display='none'">
-                    <span class="text-xl font-bold text-white">ATOMICSTRESSER</span>
-                </a>
-            </div>
-            <div class="flex items-center gap-4">
-                <?php if ($logged_in): ?>
-                    <button id="sidebar-toggle" class="lg:hidden text-white">
-                        <i class="fas fa-bars text-xl"></i>
-                    </button>
-                <?php endif; ?>
-                <a href="https://t.me/atomicstresser" target="_blank" class="text-gray-400 hover:text-blue-400 transition">
+    <header class="sticky top-0 z-40 border-b border-gray-700/50 header-bg">
+        <div class="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
+            <!-- Brand -->
+            <a href="index.php" class="flex items-center gap-2 shrink-0 min-w-0">
+                <img src="assets/imagens/logo.png" alt="Logo" class="w-8 h-8 shrink-0" onerror="this.style.display='none'">
+                <span class="text-base sm:text-lg font-bold text-white truncate">ATOMICSTRESSER</span>
+            </a>
+            <!-- Right actions -->
+            <div class="flex items-center gap-3 shrink-0">
+                <a href="https://t.me/atomicstresser" target="_blank" class="text-gray-400 hover:text-blue-400 transition" title="Telegram Support">
                     <i class="fab fa-telegram text-xl"></i>
                 </a>
+                <?php if ($logged_in): ?>
+                    <button id="sidebar-toggle" class="lg:hidden flex items-center justify-center w-8 h-8 text-white rounded-md hover:bg-gray-700/50 transition" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mobile-sidebar">
+                        <i class="fas fa-bars text-lg"></i>
+                    </button>
+                <?php endif; ?>
             </div>
         </div>
     </header>

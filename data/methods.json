@@ -1,9 +1,19 @@
 [
-  {"id":"1","name":"HTTP-GET","description":"HTTP GET Flood","layer7":true,"layer4":false,"amplification":false,"premium":false,"proxy":true},
-  {"id":"2","name":"HTTP-POST","description":"HTTP POST Flood","layer7":true,"layer4":false,"amplification":false,"premium":false,"proxy":true},
-  {"id":"3","name":"HTTP-OVH","description":"Bypass OVH Protection","layer7":true,"layer4":false,"amplification":false,"premium":true,"proxy":true},
-  {"id":"4","name":"TCP-FLOOD","description":"TCP SYN Flood","layer7":false,"layer4":true,"amplification":false,"premium":false,"proxy":false},
-  {"id":"5","name":"UDP-FLOOD","description":"UDP Flood Attack","layer7":false,"layer4":true,"amplification":false,"premium":false,"proxy":false},
-  {"id":"6","name":"SYN-FLOOD","description":"SYN Flood Attack","layer7":false,"layer4":true,"amplification":false,"premium":true,"proxy":false},
-  {"id":"7","name":"DNS-AMP","description":"DNS Amplification","layer7":false,"layer4":true,"amplification":true,"premium":true,"proxy":false}
+  {"id":"1","name":"HTTP-GET","description":"Standard HTTP GET flood targeting web servers","layer7":true,"layer4":false,"amplification":false,"premium":false,"proxy":true},
+  {"id":"2","name":"HTTP-POST","description":"HTTP POST flood with random body payloads","layer7":true,"layer4":false,"amplification":false,"premium":false,"proxy":true},
+  {"id":"3","name":"HTTP-HEAD","description":"Lightweight HTTP HEAD request flood","layer7":true,"layer4":false,"amplification":false,"premium":false,"proxy":true},
+  {"id":"4","name":"HTTP-SLOWLORIS","description":"Slow HTTP attack that holds open connections","layer7":true,"layer4":false,"amplification":false,"premium":false,"proxy":true},
+  {"id":"5","name":"HTTP-OVH","description":"HTTP flood with OVH protection bypass headers","layer7":true,"layer4":false,"amplification":false,"premium":true,"proxy":true},
+  {"id":"6","name":"HTTP-CF-BYPASS","description":"Bypasses Cloudflare JS challenge via headless simulation","layer7":true,"layer4":false,"amplification":false,"premium":true,"proxy":true},
+  {"id":"7","name":"HTTP-BROWSER","description":"Full browser TLS fingerprint emulation flood","layer7":true,"layer4":false,"amplification":false,"premium":true,"proxy":true},
+  {"id":"8","name":"HTTP-NULL","description":"NULL-byte HTTP flood to exhaust server parsers","layer7":true,"layer4":false,"amplification":false,"premium":true,"proxy":true},
+  {"id":"9","name":"TCP-FLOOD","description":"Raw TCP connection flood","layer7":false,"layer4":true,"amplification":false,"premium":false,"proxy":false},
+  {"id":"10","name":"UDP-FLOOD","description":"High-bandwidth UDP packet flood","layer7":false,"layer4":true,"amplification":false,"premium":false,"proxy":false},
+  {"id":"11","name":"ICMP-FLOOD","description":"ICMP echo request flood (ping flood)","layer7":false,"layer4":true,"amplification":false,"premium":false,"proxy":false},
+  {"id":"12","name":"SYN-FLOOD","description":"TCP SYN flood with spoofed source IPs","layer7":false,"layer4":true,"amplification":false,"premium":true,"proxy":false},
+  {"id":"13","name":"ACK-FLOOD","description":"TCP ACK flood to saturate stateful firewalls","layer7":false,"layer4":true,"amplification":false,"premium":true,"proxy":false},
+  {"id":"14","name":"RST-FLOOD","description":"TCP RST flood to tear down existing connections","layer7":false,"layer4":true,"amplification":false,"premium":true,"proxy":false},
+  {"id":"15","name":"DNS-AMP","description":"DNS amplification attack using open resolvers","layer7":false,"layer4":true,"amplification":true,"premium":true,"proxy":false},
+  {"id":"16","name":"NTP-AMP","description":"NTP monlist amplification (up to 556× factor)","layer7":false,"layer4":true,"amplification":true,"premium":true,"proxy":false},
+  {"id":"17","name":"MEMCACHED-AMP","description":"Memcached UDP amplification (up to 51000× factor)","layer7":false,"layer4":true,"amplification":true,"premium":true,"proxy":false}
 ]
