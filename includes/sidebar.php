@@ -4,7 +4,6 @@ $nav_items = [
     ['href' => 'dashboard.php', 'icon' => 'fa-chart-line', 'label' => 'Dashboard', 'page' => 'dashboard'],
     ['href' => 'panel.php', 'icon' => 'fa-bolt', 'label' => 'Hub', 'page' => 'panel'],
     ['href' => 'history.php', 'icon' => 'fa-history', 'label' => 'History', 'page' => 'history'],
-    ['href' => 'hub.php', 'icon' => 'fa-globe', 'label' => 'Free Hub', 'page' => 'hub'],
     ['href' => 'store.php', 'icon' => 'fa-shopping-cart', 'label' => 'Store', 'page' => 'store'],
     ['href' => 'api-docs.php', 'icon' => 'fa-code', 'label' => 'API', 'page' => 'api-docs'],
     ['href' => 'profile.php', 'icon' => 'fa-user', 'label' => 'Profile', 'page' => 'profile'],
@@ -49,7 +48,7 @@ function render_nav_items($nav_items, $current_page, $admin) {
 }
 ?>
 <!-- Sidebar -->
-<aside id="sidebar" class="hidden lg:block fixed left-0 top-[57px] bottom-0 w-64 bg-panel border-r border-gray-700/50 overflow-y-auto z-30">
+<aside id="sidebar" class="hidden lg:block fixed left-0 top-14 bottom-0 w-64 bg-panel border-r border-gray-700/50 overflow-y-auto z-30">
     <nav class="p-4 space-y-2">
         <!-- Plan badge -->
         <div class="flex items-center justify-between px-4 py-2 mb-1">
@@ -65,7 +64,7 @@ function render_nav_items($nav_items, $current_page, $admin) {
 
 <!-- Mobile sidebar overlay -->
 <div id="sidebar-overlay" class="hidden fixed inset-0 bg-black/50 z-20 lg:hidden" onclick="toggleSidebar()"></div>
-<aside id="mobile-sidebar" class="hidden fixed left-0 top-[57px] bottom-0 w-64 bg-panel border-r border-gray-700/50 overflow-y-auto z-30 lg:hidden">
+<aside id="mobile-sidebar" class="hidden fixed left-0 top-14 bottom-0 w-64 bg-panel border-r border-gray-700/50 overflow-y-auto z-30 lg:hidden">
     <nav class="p-4 space-y-2">
         <div class="flex items-center justify-between px-4 py-2 mb-1">
             <span class="text-xs text-gray-600 font-medium uppercase tracking-wide">Navigation</span>
