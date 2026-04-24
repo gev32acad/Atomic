@@ -10,6 +10,19 @@ $nav_items = [
     ['href' => 'profile.php', 'icon' => 'fa-user', 'label' => 'Profile', 'page' => 'profile'],
 ];
 
+// Plan badge styling
+$plan_name = $user['plan'] ?? 'Starter';
+if ($plan_name === 'Starter') {
+    $badge_class = 'plan-badge plan-badge-free';
+    $badge_icon  = 'fa-user';
+} elseif (in_array($plan_name, ['Advanced', 'Enterprise'])) {
+    $badge_class = 'plan-badge plan-badge-premium';
+    $badge_icon  = 'fa-star';
+} else {
+    $badge_class = 'plan-badge plan-badge-paid';
+    $badge_icon  = 'fa-check-circle';
+}
+
 function render_nav_items($nav_items, $current_page, $admin) {
     $html = '';
     foreach ($nav_items as $item) {
@@ -38,6 +51,14 @@ function render_nav_items($nav_items, $current_page, $admin) {
 <!-- Sidebar -->
 <aside id="sidebar" class="hidden lg:block fixed left-0 top-[57px] bottom-0 w-64 bg-panel border-r border-gray-700/50 overflow-y-auto z-30">
     <nav class="p-4 space-y-2">
+        <!-- Plan badge -->
+        <div class="flex items-center justify-between px-4 py-2 mb-1">
+            <span class="text-xs text-gray-600 font-medium uppercase tracking-wide">Navigation</span>
+            <span class="<?= $badge_class ?>">
+                <i class="fas <?= $badge_icon ?> text-xs"></i>
+                <?= htmlspecialchars($plan_name) ?>
+            </span>
+        </div>
         <?= render_nav_items($nav_items, $current_page, $admin) ?>
     </nav>
 </aside>
@@ -46,6 +67,13 @@ function render_nav_items($nav_items, $current_page, $admin) {
 <div id="sidebar-overlay" class="hidden fixed inset-0 bg-black/50 z-20 lg:hidden" onclick="toggleSidebar()"></div>
 <aside id="mobile-sidebar" class="hidden fixed left-0 top-[57px] bottom-0 w-64 bg-panel border-r border-gray-700/50 overflow-y-auto z-30 lg:hidden">
     <nav class="p-4 space-y-2">
+        <div class="flex items-center justify-between px-4 py-2 mb-1">
+            <span class="text-xs text-gray-600 font-medium uppercase tracking-wide">Navigation</span>
+            <span class="<?= $badge_class ?>">
+                <i class="fas <?= $badge_icon ?> text-xs"></i>
+                <?= htmlspecialchars($plan_name) ?>
+            </span>
+        </div>
         <?= render_nav_items($nav_items, $current_page, $admin) ?>
     </nav>
 </aside>

@@ -2,42 +2,110 @@
 require_once __DIR__ . '/includes/auth.php';
 $user = require_auth();
 $csrf_token = generate_csrf_token();
+$is_starter = $user['plan'] === 'Starter';
+$max_s = $user['max_seconds'];
+$max_c = $user['max_concurrents'];
+$max_dur_label = $max_s >= 3600 ? floor($max_s/3600).'h' : $max_s.'s';
 include __DIR__ . '/includes/header.php';
 include __DIR__ . '/includes/sidebar.php';
 ?>
 
-<div class="min-h-screen px-6 py-6">
-    <div class="max-w-7xl mx-auto">
+<div class="min-h-screen px-4 py-6 lg:px-6">
+    <div class="max-w-7xl mx-auto space-y-5">
 
         <!-- Page Header -->
-        <div class="mb-5">
-            <h1 class="text-3xl font-bold text-white"><i class="fas fa-globe mr-3 text-green-400"></i>Free Hub</h1>
-            <p class="text-gray-400 mt-1 text-sm">Free plan attack hub &mdash; limited methods &amp; duration.</p>
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+                    <i class="fas fa-globe text-green-400"></i> Free Hub
+                </h1>
+                <p class="text-gray-500 text-sm mt-0.5">Free plan attack hub &mdash; limited methods &amp; duration.</p>
+            </div>
+            <a href="history.php" class="text-xs text-gray-500 hover:text-blue-400 transition flex items-center gap-1.5 border border-gray-700 rounded-lg px-3 py-1.5">
+                <i class="fas fa-history"></i> History
+            </a>
         </div>
 
-        <!-- Plan info banner -->
-        <div class="mb-5 flex items-center gap-3 text-sm bg-blue-500/10 border border-blue-500/20 rounded-xl px-5 py-3">
-            <i class="fas fa-info-circle text-blue-400"></i>
-            <p class="text-blue-300">
-                You are on the <strong class="text-white"><?= htmlspecialchars($user['plan']) ?></strong> plan &mdash;
-                max <strong class="text-white"><?= $user['max_seconds'] ?>s</strong> duration,
-                <strong class="text-white"><?= $user['max_concurrents'] ?></strong> concurrent<?= $user['max_concurrents'] > 1 ? 's' : '' ?>.
-                <?php if ($user['plan'] === 'Starter'): ?>
-                <a href="store.php" class="text-blue-400 hover:text-blue-300 underline ml-1">Upgrade for more →</a>
+        <!-- Stats Bar -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div class="bg-panel border border-gray-700/50 rounded-xl px-4 py-3 flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg bg-green-600/15 flex items-center justify-center shrink-0">
+                    <i class="fas fa-id-badge text-green-400 text-sm"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500">Plan</p>
+                    <p class="text-white font-semibold text-sm"><?= htmlspecialchars($user['plan']) ?></p>
+                </div>
+            </div>
+            <div class="bg-panel border border-gray-700/50 rounded-xl px-4 py-3 flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg bg-green-600/15 flex items-center justify-center shrink-0">
+                    <i class="fas fa-server text-green-400 text-sm"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500">Slots Used</p>
+                    <p class="text-white font-semibold text-sm"><span id="stat-running">0</span> / <?= $max_c ?></p>
+                </div>
+            </div>
+            <div class="bg-panel border border-gray-700/50 rounded-xl px-4 py-3 flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg bg-yellow-600/15 flex items-center justify-center shrink-0">
+                    <i class="fas fa-clock text-yellow-400 text-sm"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500">Max Duration</p>
+                    <p class="text-white font-semibold text-sm"><?= $max_dur_label ?></p>
+                </div>
+            </div>
+            <div class="bg-panel border border-gray-700/50 rounded-xl px-4 py-3 flex items-center gap-3">
+                <?php if ($is_starter): ?>
+                <div class="w-9 h-9 rounded-lg bg-orange-600/15 flex items-center justify-center shrink-0">
+                    <i class="fas fa-lock text-orange-400 text-sm"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs text-gray-500">Methods</p>
+                    <a href="store.php" class="text-orange-400 font-semibold text-xs hover:text-orange-300 transition">Upgrade for Premium →</a>
+                </div>
+                <?php else: ?>
+                <div class="w-9 h-9 rounded-lg bg-purple-600/15 flex items-center justify-center shrink-0">
+                    <i class="fas fa-star text-purple-400 text-sm"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500">Methods</p>
+                    <p class="text-white font-semibold text-sm">Premium</p>
+                </div>
                 <?php endif; ?>
-            </p>
+            </div>
         </div>
 
-        <div class="grid lg:grid-cols-2 gap-6">
+        <?php if ($is_starter): ?>
+        <!-- Upgrade banner -->
+        <div class="flex items-center gap-3 bg-orange-500/8 border border-orange-500/20 rounded-xl px-5 py-3">
+            <i class="fas fa-rocket text-orange-400"></i>
+            <p class="text-orange-200 text-sm flex-1">
+                You're on the <strong class="text-white">Starter (Free)</strong> plan.
+                Upgrade to unlock premium methods, more concurrents, and longer durations.
+            </p>
+            <a href="store.php" class="shrink-0 text-xs bg-orange-600 hover:bg-orange-700 text-white font-semibold px-4 py-1.5 rounded-lg transition">Upgrade</a>
+        </div>
+        <?php endif; ?>
+
+        <div class="grid lg:grid-cols-2 gap-5">
 
             <!-- Send Form -->
             <div class="bg-panel border border-gray-700/50 rounded-2xl p-6">
-                <h2 class="text-xl font-bold text-white mb-4">Send Attack</h2>
+                <h2 class="text-base font-bold text-white mb-5 flex items-center gap-2">
+                    <i class="fas fa-crosshairs text-green-400"></i> Send Attack
+                </h2>
 
                 <!-- Layer Tabs -->
-                <div class="flex gap-2 mb-6">
-                    <button onclick="switchLayer('l4')" id="tab-l4" class="px-4 py-2 rounded-lg font-medium bg-blue-600 text-white transition">Layer 4</button>
-                    <button onclick="switchLayer('l7')" id="tab-l7" class="px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition">Layer 7</button>
+                <div class="flex gap-1 mb-5 bg-background rounded-lg p-1">
+                    <button onclick="switchLayer('l4')" id="tab-l4"
+                        class="flex-1 px-3 py-2 rounded-md font-medium text-sm bg-blue-600 text-white transition">
+                        <i class="fas fa-network-wired mr-1"></i> Layer 4
+                    </button>
+                    <button onclick="switchLayer('l7')" id="tab-l7"
+                        class="flex-1 px-3 py-2 rounded-md font-medium text-sm text-gray-400 hover:text-white transition">
+                        <i class="fas fa-globe mr-1"></i> Layer 7
+                    </button>
                 </div>
 
                 <!-- Layer 4 Form -->
@@ -45,35 +113,43 @@ include __DIR__ . '/includes/sidebar.php';
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
                     <input type="hidden" name="layer" value="Layer4">
                     <div>
-                        <label class="block text-sm text-gray-400 mb-1">Target IPv4</label>
-                        <input type="text" name="target" placeholder="e.g. 192.168.1.1" required
-                            class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500">
+                        <label class="form-label">Target IPv4</label>
+                        <div class="input-icon-wrap">
+                            <i class="fas fa-crosshairs input-icon"></i>
+                            <input type="text" name="target" placeholder="e.g. 192.168.1.1" required class="form-input pl-9">
+                        </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-sm text-gray-400 mb-1">Port</label>
-                            <input type="number" name="port" value="80" min="1" max="65535"
-                                class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                            <label class="form-label">Port</label>
+                            <input type="number" name="port" value="80" min="1" max="65535" class="form-input">
                         </div>
                         <div>
-                            <label class="block text-sm text-gray-400 mb-1">Time (seconds)</label>
-                            <input type="number" name="time" value="30" min="10" max="<?= $user['max_seconds'] ?>"
-                                class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                            <label class="form-label">Duration (s)</label>
+                            <div class="input-icon-wrap">
+                                <input type="number" name="time" value="30" min="10" max="<?= $max_s ?>" class="form-input pr-8">
+                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs">s</span>
+                            </div>
                         </div>
                     </div>
                     <div>
-                        <label class="block text-sm text-gray-400 mb-1">Method</label>
-                        <select name="method" id="l4-methods"
-                            class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
-                        </select>
+                        <label class="form-label">Method</label>
+                        <select name="method" id="l4-methods" onchange="updateMethodDesc('l4')" class="form-input"></select>
+                        <p id="l4-method-desc" class="text-gray-600 text-xs mt-1.5 pl-1 italic"></p>
                     </div>
                     <div>
-                        <label class="block text-sm text-gray-400 mb-1">Concurrents: <span id="l4-conc-val">1</span></label>
-                        <input type="range" name="concurrents" min="1" max="<?= $user['max_concurrents'] ?>" value="1"
-                            class="w-full" oninput="document.getElementById('l4-conc-val').textContent=this.value">
+                        <label class="form-label flex items-center justify-between">
+                            <span>Concurrents</span>
+                            <span class="text-blue-400 font-bold not-italic" id="l4-conc-val">1</span>
+                        </label>
+                        <input type="range" name="concurrents" min="1" max="<?= $max_c ?>" value="1"
+                            class="w-full mt-1" oninput="document.getElementById('l4-conc-val').textContent=this.value">
+                        <div class="flex justify-between text-xs text-gray-700 mt-1">
+                            <span>1</span><span><?= $max_c ?></span>
+                        </div>
                     </div>
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">
-                        <i class="fas fa-bolt mr-2"></i>Send Attack
+                    <button type="submit" class="launch-btn launch-btn-green">
+                        <i class="fas fa-bolt mr-2"></i>Launch Attack
                     </button>
                 </form>
 
@@ -82,81 +158,174 @@ include __DIR__ . '/includes/sidebar.php';
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
                     <input type="hidden" name="layer" value="Layer7">
                     <div>
-                        <label class="block text-sm text-gray-400 mb-1">Target URL</label>
-                        <input type="url" name="target" placeholder="https://example.com" required
-                            class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500">
+                        <label class="form-label">Target URL</label>
+                        <div class="input-icon-wrap">
+                            <i class="fas fa-globe input-icon"></i>
+                            <input type="url" name="target" placeholder="https://example.com" required class="form-input pl-9">
+                        </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-sm text-gray-400 mb-1">Requests</label>
-                            <input type="number" name="port" value="64" min="1"
-                                class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                            <label class="form-label">Requests/s</label>
+                            <input type="number" name="port" value="64" min="1" class="form-input">
                         </div>
                         <div>
-                            <label class="block text-sm text-gray-400 mb-1">Time (seconds)</label>
-                            <input type="number" name="time" value="30" min="10" max="<?= $user['max_seconds'] ?>"
-                                class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                            <label class="form-label">Duration (s)</label>
+                            <div class="input-icon-wrap">
+                                <input type="number" name="time" value="30" min="10" max="<?= $max_s ?>" class="form-input pr-8">
+                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs">s</span>
+                            </div>
                         </div>
                     </div>
                     <div>
-                        <label class="block text-sm text-gray-400 mb-1">Method</label>
-                        <select name="method" id="l7-methods"
-                            class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
-                        </select>
+                        <label class="form-label">Method</label>
+                        <select name="method" id="l7-methods" onchange="updateMethodDesc('l7')" class="form-input"></select>
+                        <p id="l7-method-desc" class="text-gray-600 text-xs mt-1.5 pl-1 italic"></p>
                     </div>
                     <div>
-                        <label class="block text-sm text-gray-400 mb-1">Concurrents: <span id="l7-conc-val">1</span></label>
-                        <input type="range" name="concurrents" min="1" max="<?= $user['max_concurrents'] ?>" value="1"
-                            class="w-full" oninput="document.getElementById('l7-conc-val').textContent=this.value">
+                        <label class="form-label flex items-center justify-between">
+                            <span>Concurrents</span>
+                            <span class="text-blue-400 font-bold not-italic" id="l7-conc-val">1</span>
+                        </label>
+                        <input type="range" name="concurrents" min="1" max="<?= $max_c ?>" value="1"
+                            class="w-full mt-1" oninput="document.getElementById('l7-conc-val').textContent=this.value">
+                        <div class="flex justify-between text-xs text-gray-700 mt-1">
+                            <span>1</span><span><?= $max_c ?></span>
+                        </div>
                     </div>
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">
-                        <i class="fas fa-bolt mr-2"></i>Send Attack
+                    <button type="submit" class="launch-btn launch-btn-green">
+                        <i class="fas fa-bolt mr-2"></i>Launch Attack
                     </button>
                 </form>
             </div>
 
-            <!-- Running -->
-            <div class="bg-panel border border-gray-700/50 rounded-2xl p-6">
-                <h2 class="text-xl font-bold text-white mb-4">Running</h2>
-                <div id="attack-logs" class="space-y-3">
-                    <p class="text-gray-400 text-center py-8">Loading...</p>
+            <!-- Running Attacks -->
+            <div class="bg-panel border border-gray-700/50 rounded-2xl p-6 flex flex-col">
+                <div class="flex items-center justify-between mb-5">
+                    <h2 class="text-base font-bold text-white flex items-center gap-2.5">
+                        <span id="attack-pulse" class="status-dot status-idle"></span>
+                        Running
+                    </h2>
+                    <span class="text-xs text-gray-600 flex items-center gap-1">
+                        <i class="fas fa-sync-alt text-xs"></i> 5s refresh
+                    </span>
                 </div>
+                <div id="attack-logs" class="space-y-3 flex-1">
+                    <div class="flex flex-col items-center justify-center py-14 text-center">
+                        <i class="fas fa-satellite-dish text-3xl text-gray-700 mb-3"></i>
+                        <p class="text-gray-600 text-sm">Loading...</p>
+                    </div>
+                </div>
+
+                <?php if ($is_starter): ?>
+                <!-- Upgrade CTA at bottom -->
+                <div class="mt-5 pt-4 border-t border-gray-700/50">
+                    <a href="store.php" class="flex items-center justify-center gap-2 w-full bg-orange-600/15 hover:bg-orange-600/25 border border-orange-500/30 text-orange-300 font-medium text-sm py-2.5 rounded-xl transition">
+                        <i class="fas fa-rocket"></i> Unlock premium methods &amp; more slots
+                    </a>
+                </div>
+                <?php endif; ?>
             </div>
+
         </div>
     </div>
 </div>
 
 <script>
+const csrfToken = <?= json_encode($csrf_token) ?>;
+let methodMeta = {};
+let attackTimers = {};
+
 function switchLayer(layer) {
     document.getElementById('l4-form').classList.toggle('hidden', layer !== 'l4');
     document.getElementById('l7-form').classList.toggle('hidden', layer !== 'l7');
-    document.getElementById('tab-l4').className = layer === 'l4'
-        ? 'px-4 py-2 rounded-lg font-medium bg-blue-600 text-white transition'
-        : 'px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition';
-    document.getElementById('tab-l7').className = layer === 'l7'
-        ? 'px-4 py-2 rounded-lg font-medium bg-blue-600 text-white transition'
-        : 'px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition';
+    const active = 'flex-1 px-3 py-2 rounded-md font-medium text-sm bg-blue-600 text-white transition';
+    const idle   = 'flex-1 px-3 py-2 rounded-md font-medium text-sm text-gray-400 hover:text-white transition';
+    document.getElementById('tab-l4').className = layer === 'l4' ? active : idle;
+    document.getElementById('tab-l7').className = layer === 'l7' ? active : idle;
+}
+
+function updateMethodDesc(prefix) {
+    const sel = document.getElementById(prefix + '-methods');
+    const desc = document.getElementById(prefix + '-method-desc');
+    desc.textContent = methodMeta[sel.value] || '';
 }
 
 async function loadMethods() {
     try {
         const res = await fetch('api/methods.php');
         const methods = await res.json();
-        const l4Select = document.getElementById('l4-methods');
-        const l7Select = document.getElementById('l7-methods');
+        const l4 = document.getElementById('l4-methods');
+        const l7 = document.getElementById('l7-methods');
+
         methods.forEach(m => {
+            methodMeta[m.name] = m.description + (m.premium ? ' — Premium' : '') + (m.amplification ? ' [Amplification]' : '');
             if (m.layer4) {
-                const opt = new Option(m.name + (m.premium ? ' \u2B50' : ''), m.name);
-                l4Select.add(opt);
+                const label = m.name + (m.premium ? ' ⭐ (Premium)' : '');
+                l4.add(new Option(label, m.name));
             }
             if (m.layer7) {
-                const opt = new Option(m.name + (m.premium ? ' \u2B50' : ''), m.name);
-                l7Select.add(opt);
+                const label = m.name + (m.premium ? ' ⭐ (Premium)' : '');
+                l7.add(new Option(label, m.name));
             }
         });
+        updateMethodDesc('l4');
+        updateMethodDesc('l7');
     } catch (err) {
         console.error('Failed to load methods:', err);
     }
+}
+
+function renderAttack(a) {
+    const pct = Math.min(100, Math.max(0, (a.remaining / a.time) * 100));
+    const layerBadge = a.layer === 'Layer7'
+        ? '<span class="badge badge-l7">L7</span>'
+        : '<span class="badge badge-l4">L4</span>';
+
+    return `
+    <div class="attack-card" id="card-${escapeHtml(a.id)}">
+        <div class="flex items-start justify-between gap-2 mb-2">
+            <div class="flex-1 min-w-0">
+                <p class="text-white font-mono text-sm font-medium truncate">${escapeHtml(a.target)}</p>
+                <div class="flex items-center gap-1.5 mt-1 flex-wrap">
+                    ${layerBadge}
+                    <span class="badge badge-method">${escapeHtml(a.method)}</span>
+                    <span class="text-gray-500 text-xs">· ${escapeHtml(String(a.port))} · ${escapeHtml(String(a.concurrents))}×</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+                <span id="timer-${escapeHtml(a.id)}" class="text-green-400 font-mono font-bold text-sm tabular-nums">${a.remaining}s</span>
+                <button onclick="stopAttack('${escapeHtml(a.id)}')" class="stop-btn" title="Stop attack">
+                    <i class="fas fa-stop"></i>
+                </button>
+            </div>
+        </div>
+        <div class="attack-progress-track">
+            <div id="bar-${escapeHtml(a.id)}" class="attack-progress-bar" style="width:${pct}%"></div>
+        </div>
+    </div>`;
+}
+
+function clearAttackTimers() {
+    Object.values(attackTimers).forEach(t => clearInterval(t));
+    attackTimers = {};
+}
+
+function startAttackTimer(id, remaining, total) {
+    let r = remaining;
+    attackTimers[id] = setInterval(() => {
+        r--;
+        if (r <= 0) {
+            clearInterval(attackTimers[id]);
+            delete attackTimers[id];
+            loadAttacks();
+            return;
+        }
+        const timerEl = document.getElementById('timer-' + id);
+        const barEl   = document.getElementById('bar-'   + id);
+        if (timerEl) timerEl.textContent = r + 's';
+        if (barEl)   barEl.style.width = Math.max(0, (r / total) * 100) + '%';
+    }, 1000);
 }
 
 async function loadAttacks() {
@@ -164,54 +333,76 @@ async function loadAttacks() {
         const res = await fetch('api/attack.php');
         const attacks = await res.json();
         const container = document.getElementById('attack-logs');
+        const pulse = document.getElementById('attack-pulse');
+        const statEl = document.getElementById('stat-running');
+
+        if (statEl) statEl.textContent = attacks.length;
+
         if (!attacks.length) {
-            container.innerHTML = '<p class="text-gray-400 text-center py-8">No active attacks</p>';
+            clearAttackTimers();
+            if (pulse) pulse.className = 'status-dot status-idle';
+            container.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-14 text-center">
+                    <i class="fas fa-satellite-dish text-3xl text-gray-700 mb-3"></i>
+                    <p class="text-gray-600 text-sm">No active attacks</p>
+                    <p class="text-gray-700 text-xs mt-1">Launch an attack to see it here.</p>
+                </div>`;
             return;
         }
-        container.innerHTML = attacks.map(a => `
-            <div class="bg-background border border-gray-700/50 rounded-lg p-4 flex items-center justify-between">
-                <div>
-                    <p class="text-white font-medium">${escapeHtml(a.target)}</p>
-                    <p class="text-gray-400 text-sm">${escapeHtml(a.method)} \u2022 ${escapeHtml(a.layer)} \u2022 ${a.remaining}s remaining</p>
-                </div>
-                <button onclick="stopAttack('${escapeHtml(a.id)}')" class="text-red-400 hover:text-red-300 transition">
-                    <i class="fas fa-stop-circle text-xl"></i>
-                </button>
-            </div>
-        `).join('');
+
+        if (pulse) pulse.className = 'status-dot status-live';
+
+        const currentIds = new Set(Object.keys(attackTimers));
+        const newIds = new Set(attacks.map(a => a.id));
+        const idsChanged = [...newIds].some(id => !currentIds.has(id)) || [...currentIds].some(id => !newIds.has(id));
+
+        if (idsChanged) {
+            clearAttackTimers();
+            container.innerHTML = attacks.map(renderAttack).join('');
+            attacks.forEach(a => startAttackTimer(a.id, a.remaining, a.time));
+        }
     } catch (err) {
         console.error('Failed to load attacks:', err);
     }
 }
 
 function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = String(text ?? '');
-    return div.innerHTML;
+    const d = document.createElement('div');
+    d.textContent = String(text ?? '');
+    return d.innerHTML;
 }
 
 async function stopAttack(id) {
-    const formData = new FormData();
-    formData.append('action', 'stop');
-    formData.append('attack_id', id);
-    formData.append('csrf_token', <?= json_encode($csrf_token) ?>);
+    const btn = document.querySelector(`#card-${id} .stop-btn`);
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
+    const fd = new FormData();
+    fd.append('action', 'stop');
+    fd.append('attack_id', id);
+    fd.append('csrf_token', csrfToken);
     try {
-        const res = await fetch('api/attack.php', { method: 'POST', body: formData });
+        const res = await fetch('api/attack.php', { method: 'POST', body: fd });
         if (res.ok) {
             showToast('Attack stopped', 'success');
+            clearInterval(attackTimers[id]);
+            delete attackTimers[id];
             loadAttacks();
+        } else {
+            showToast('Failed to stop attack', 'error');
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-stop"></i>'; }
         }
     } catch (err) {
-        showToast('Failed to stop attack', 'error');
+        showToast('Connection error', 'error');
     }
 }
 
 ['l4-form', 'l7-form'].forEach(formId => {
     document.getElementById(formId).addEventListener('submit', async function(e) {
         e.preventDefault();
-        const formData = new FormData(this);
+        const btn = this.querySelector('button[type=submit]');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Launching...';
         try {
-            const res = await fetch('api/attack.php', { method: 'POST', body: formData });
+            const res = await fetch('api/attack.php', { method: 'POST', body: new FormData(this) });
             const data = await res.json();
             if (res.ok) {
                 showToast('Attack launched!', 'success');
@@ -222,6 +413,8 @@ async function stopAttack(id) {
         } catch (err) {
             showToast('Connection error', 'error');
         }
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-bolt mr-2"></i>Launch Attack';
     });
 });
 
@@ -231,4 +424,3 @@ setInterval(loadAttacks, 5000);
 </script>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
-
