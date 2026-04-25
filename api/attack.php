@@ -136,8 +136,23 @@ if ($method_req === 'POST') {
     
     $attacks[] = $new_attack;
     write_json('attacks.json', $attacks);
-    
-    json_response(['message' => 'Attack launched', 'attack' => $new_attack], 201);
+
+    // Forward attack to the external hub API if configured
+    $hub_params = [
+        'host'       => $target,
+        'port'       => $port,
+        'time'       => $time,
+        'method'     => $method,
+        'concurrents'=> $concurrents,
+    ];
+    $hub_response = send_hub_request($hub_params);
+
+    $response_data = ['message' => 'Attack launched', 'attack' => $new_attack];
+    if ($hub_response !== false) {
+        $response_data['hub'] = $hub_response;
+    }
+
+    json_response($response_data, 201);
 }
 
 json_error('Method not allowed', 405);
