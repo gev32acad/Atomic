@@ -169,7 +169,7 @@ function send_hub_request(array $params) {
     curl_setopt_array($ch, [
         CURLOPT_URL            => $url,
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT        => 10,
+        CURLOPT_TIMEOUT        => 5,
         CURLOPT_FOLLOWLOCATION => false,
         CURLOPT_SSL_VERIFYPEER => true,
         CURLOPT_SSL_VERIFYHOST => 2,
@@ -185,7 +185,11 @@ function send_hub_request(array $params) {
     }
 
     $decoded = json_decode($response, true);
-    return $decoded !== null ? $decoded : $response;
+    if ($decoded === null) {
+        error_log("Hub API returned non-JSON response: " . substr($response, 0, 200));
+        return false;
+    }
+    return $decoded;
 }
 
 function validate_attack_target($target, $layer) {

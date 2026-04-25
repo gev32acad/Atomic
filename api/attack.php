@@ -150,6 +150,9 @@ if ($method_req === 'POST') {
     $response_data = ['message' => 'Attack launched', 'attack' => $new_attack];
     if ($hub_response !== false) {
         $response_data['hub'] = $hub_response;
+    } elseif (!empty(HUB_API_URL)) {
+        // Hub is configured but the request failed – warn the caller
+        $response_data['hub_warning'] = 'Attack queued locally; hub API could not be reached.';
     }
 
     json_response($response_data, 201);
