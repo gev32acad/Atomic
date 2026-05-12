@@ -136,8 +136,9 @@ if ($method_req === 'PUT') {
             if (isset($input['username'])) $u['username'] = $input['username'];
             if (isset($input['email'])) $u['email'] = $input['email'];
             if (!empty($input['password'])) $u['password'] = password_hash($input['password'], PASSWORD_BCRYPT);
-            if (isset($input['rule'])) $u['role'] = $input['rule'];
-            if (isset($input['role'])) $u['role'] = $input['role'];
+            // Accept both 'role' (new) and 'rule' (legacy) keys; 'role' takes precedence
+            $new_role = $input['role'] ?? $input['rule'] ?? null;
+            if ($new_role !== null) $u['role'] = $new_role;
             if (array_key_exists('expiration_date', $input)) $u['expiration_date'] = $input['expiration_date'] ?: null;
             
             // Auto-sync limits when plan changes (#17)

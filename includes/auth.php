@@ -182,9 +182,17 @@ function downgrade_expired_user($user) {
     return $updated_user;
 }
 
-// Clear a stale expiration_date when plan is already Starter
+// Clear a stale expiration_date when plan is already Starter (with file lock)
 function clear_stale_expiration($user) {
-    $users = read_json('users.json');
+    $path = DATA_DIR . 'users.json';
+    $fp = @fopen($path, 'c+');
+    if (!$fp) return $user;
+    flock($fp, LOCK_EX);
+
+    $content = '';
+    while (!feof($fp)) $content .= fread($fp, 8192);
+    $users = json_decode($content, true) ?: [];
+
     foreach ($users as &$u) {
         if ($u['id'] === $user['id']) {
             $u['expiration_date'] = null;
@@ -193,7 +201,13 @@ function clear_stale_expiration($user) {
         }
     }
     unset($u);
-    write_json('users.json', $users);
+
+    ftruncate($fp, 0);
+    rewind($fp);
+    fwrite($fp, json_encode($users, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    fflush($fp);
+    flock($fp, LOCK_UN);
+    fclose($fp);
     return $user;
 }
 

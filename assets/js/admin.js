@@ -635,7 +635,12 @@ async function loadServers() {
                 : '<span class="text-gray-500 text-xs">All</span>';
 
             const urlDisplay = s.api_url
-                ? `<span class="text-xs text-gray-400 font-mono" title="${escapeHtml(s.api_url)}">${escapeHtml(s.api_url.substring(0, 45))}${s.api_url.length > 45 ? '…' : ''}</span>`
+                ? (() => {
+                    // Mask the api_key value in the URL display to avoid showing credentials
+                    const masked = s.api_url.replace(/([?&](?:key|apikey|api_key)=)[^&]+/gi, '$1***');
+                    const short = masked.substring(0, 50) + (masked.length > 50 ? '…' : '');
+                    return `<span class="text-xs text-gray-400 font-mono" title="(key hidden)">${escapeHtml(short)}</span>`;
+                  })()
                 : '<span class="text-gray-600">—</span>';
 
             const layerBadge = s.layer === 'Layer4'

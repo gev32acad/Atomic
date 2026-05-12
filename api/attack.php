@@ -181,17 +181,31 @@ if ($method_req === 'POST') {
     $server = find_server_for_attack($method, $layer);
     if ($server) {
         $dispatch = dispatch_to_server($server, $new_attack);
-        // Update attack record with server info (best-effort, no lock needed for metadata)
-        $attacks = read_json('attacks.json');
-        foreach ($attacks as &$a) {
-            if ($a['id'] === $new_attack['id']) {
-                $a['server_id'] = $server['id'];
-                $a['server_response'] = $dispatch['success'] ? 'ok' : ('error: ' . substr($dispatch['error'] ?: (string)$dispatch['status_code'], 0, 100));
-                break;
+        $srv_resp = $dispatch['success'] ? 'ok' : ('error: ' . substr($dispatch['error'] ?: (string)$dispatch['status_code'], 0, 100));
+
+        // Update attack record with server info (locked write to avoid race condition)
+        $attacks_path2 = DATA_DIR . 'attacks.json';
+        $fp2 = @fopen($attacks_path2, 'c+');
+        if ($fp2) {
+            flock($fp2, LOCK_EX);
+            $c2 = '';
+            while (!feof($fp2)) $c2 .= fread($fp2, 8192);
+            $atk2 = json_decode($c2, true) ?: [];
+            foreach ($atk2 as &$a) {
+                if ($a['id'] === $new_attack['id']) {
+                    $a['server_id']       = $server['id'];
+                    $a['server_response'] = $srv_resp;
+                    break;
+                }
             }
+            unset($a);
+            ftruncate($fp2, 0);
+            rewind($fp2);
+            fwrite($fp2, json_encode($atk2, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            fflush($fp2);
+            flock($fp2, LOCK_UN);
+            fclose($fp2);
         }
-        unset($a);
-        write_json('attacks.json', $attacks);
         $new_attack['server_id'] = $server['id'];
     }
     
