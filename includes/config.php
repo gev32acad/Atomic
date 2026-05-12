@@ -91,7 +91,8 @@ function check_rate_limit($action, $identifier) {
 
     $fp = fopen($rate_file, 'c+');
     if (!$fp) {
-        return false; // Can't lock – allow the request
+        // If the lock file cannot be opened, deny the request to fail safely
+        return RATE_LIMIT_WINDOW;
     }
 
     flock($fp, LOCK_EX);
