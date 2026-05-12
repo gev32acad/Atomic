@@ -2,6 +2,7 @@
 
 let currentEditId = null;
 let currentEditType = null;
+let loadedPlanNames = []; // populated by loadPlans() for user modals
 
 // Get CSRF token from page
 function getCsrfToken() {
@@ -138,10 +139,11 @@ function showAddUserModal() {
     currentEditType = 'user-add';
     const fields = document.getElementById('modal-fields');
     fields.innerHTML = '';
+    const planChoices = loadedPlanNames.length ? loadedPlanNames : ['Starter'];
     fields.appendChild(createField('Username', 'username', 'text', '', {required: true}));
     fields.appendChild(createField('Email', 'email', 'email', '', {required: true}));
     fields.appendChild(createField('Password', 'password', 'password', '', {required: true}));
-    fields.appendChild(createField('Plan', 'plan', 'select', 'Starter', {choices: ['Starter', 'Standard', 'Advanced', 'Enterprise']}));
+    fields.appendChild(createField('Plan', 'plan', 'select', planChoices[0], {choices: planChoices}));
     fields.appendChild(createField('Role', 'rule', 'select', 'user', {choices: ['user', 'admin']}));
     fields.appendChild(createField('Max Concurrents', 'max_concurrents', 'number', '1'));
     fields.appendChild(createField('Max Seconds', 'max_seconds', 'number', '60'));
@@ -153,10 +155,11 @@ function editUser(user) {
     currentEditId = user.id;
     const fields = document.getElementById('modal-fields');
     fields.innerHTML = '';
+    const planChoices = loadedPlanNames.length ? loadedPlanNames : ['Starter'];
     fields.appendChild(createField('Username', 'username', 'text', user.username));
     fields.appendChild(createField('Email', 'email', 'email', user.email));
     fields.appendChild(createField('Password (leave blank to keep)', 'password', 'password', ''));
-    fields.appendChild(createField('Plan', 'plan', 'select', user.plan, {choices: ['Starter', 'Standard', 'Advanced', 'Enterprise']}));
+    fields.appendChild(createField('Plan', 'plan', 'select', user.plan, {choices: planChoices}));
     fields.appendChild(createField('Role', 'rule', 'select', user.rule, {choices: ['user', 'admin']}));
     fields.appendChild(createField('Max Concurrents', 'max_concurrents', 'number', user.max_concurrents));
     fields.appendChild(createField('Max Seconds', 'max_seconds', 'number', user.max_seconds));
@@ -188,10 +191,14 @@ async function loadPlans() {
     try {
         const res = await fetch('api/plans.php');
         const plans = await res.json();
+
+        // Keep plan names available for user modals
+        loadedPlanNames = plans.map(p => p.name);
+
         const tbody = document.getElementById('plans-table');
         
         if (!plans.length) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">No plans found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">No plans found</td></tr>';
             return;
         }
         

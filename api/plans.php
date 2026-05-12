@@ -73,9 +73,9 @@ if ($method_req === 'PUT') {
             $plan['description'] = $input['description'] ?? ($plan['description'] ?? '');
             $plan['price'] = isset($input['price']) ? floatval($input['price']) : ($plan['price'] ?? 0);
             $plan['duration_days'] = isset($input['duration_days']) ? intval($input['duration_days']) : ($plan['duration_days'] ?? 30);
-            $plan['max_concurrents'] = $input['max_concurrents'] ?? $plan['max_concurrents'];
-            $plan['max_seconds'] = $input['max_seconds'] ?? $plan['max_seconds'];
-            $plan['min_seconds'] = $input['min_seconds'] ?? $plan['min_seconds'];
+            $plan['max_concurrents'] = isset($input['max_concurrents']) ? intval($input['max_concurrents']) : $plan['max_concurrents'];
+            $plan['max_seconds'] = isset($input['max_seconds']) ? intval($input['max_seconds']) : $plan['max_seconds'];
+            $plan['min_seconds'] = isset($input['min_seconds']) ? intval($input['min_seconds']) : $plan['min_seconds'];
             $plan['premium'] = $input['premium'] ?? $plan['premium'];
             $plan['api_access'] = $input['api_access'] ?? $plan['api_access'];
             break;

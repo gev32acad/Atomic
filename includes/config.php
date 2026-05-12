@@ -3,7 +3,7 @@ session_start();
 
 define('DATA_DIR', __DIR__ . '/../data/');
 define('SITE_NAME', 'AtomicStresser');
-define('TOKEN_SECRET', 'atomic_secret_key_change_me');
+define('TOKEN_SECRET', 'a7f3c9e2b1d8f64ec3a2b9d7f5e38c1ab4d6f2e9c71a3b5d1f8e4c2a6b3d9f7');
 
 // Crypto wallet addresses for payments
 define('CRYPTO_BTC_ADDRESS', '1A1zP1eP5QGefi2DMPTfTL5SLmv7Divf');
@@ -86,55 +86,82 @@ function verify_csrf_token() {
 
 function check_rate_limit($action, $identifier) {
     $rate_file = DATA_DIR . 'rate_limits.json';
-    $limits = [];
-    if (file_exists($rate_file)) {
-        $limits = json_decode(file_get_contents($rate_file), true) ?: [];
-    }
-    
     $key = $action . ':' . $identifier;
     $now = time();
-    
+
+    $fp = fopen($rate_file, 'c+');
+    if (!$fp) {
+        return false; // Can't lock – allow the request
+    }
+
+    flock($fp, LOCK_EX);
+
+    $content = '';
+    while (!feof($fp)) {
+        $content .= fread($fp, 8192);
+    }
+    $limits = json_decode($content, true) ?: [];
+
     // Clean up expired entries
     foreach ($limits as $k => $entries) {
-        $limits[$k] = array_filter($entries, function($timestamp) use ($now) {
+        $limits[$k] = array_values(array_filter($entries, function($timestamp) use ($now) {
             return ($now - $timestamp) < RATE_LIMIT_WINDOW;
-        });
+        }));
         if (empty($limits[$k])) {
             unset($limits[$k]);
         }
     }
-    
+
     // Check current count
     $attempts = $limits[$key] ?? [];
     if (count($attempts) >= RATE_LIMIT_MAX_ATTEMPTS) {
         $oldest = min($attempts);
         $retry_after = RATE_LIMIT_WINDOW - ($now - $oldest);
-        return $retry_after; // Return seconds until retry is allowed
+        flock($fp, LOCK_UN);
+        fclose($fp);
+        return $retry_after;
     }
-    
-    // Record this attempt
+
+    // Record this attempt and persist atomically
     $limits[$key][] = $now;
-    $write_result = file_put_contents($rate_file, json_encode($limits, JSON_PRETTY_PRINT), LOCK_EX);
-    if ($write_result === false) {
-        error_log("Failed to write rate limit file: $rate_file");
-    }
-    
+    ftruncate($fp, 0);
+    rewind($fp);
+    fwrite($fp, json_encode($limits, JSON_PRETTY_PRINT));
+    fflush($fp);
+    flock($fp, LOCK_UN);
+    fclose($fp);
+
     return false; // Not rate limited
 }
 
 function clear_rate_limit($action, $identifier) {
     $rate_file = DATA_DIR . 'rate_limits.json';
-    if (!file_exists($rate_file)) return;
-    $limits = json_decode(file_get_contents($rate_file), true) ?: [];
+
+    $fp = @fopen($rate_file, 'c+');
+    if (!$fp) return;
+
+    flock($fp, LOCK_EX);
+
+    $content = '';
+    while (!feof($fp)) {
+        $content .= fread($fp, 8192);
+    }
+    $limits = json_decode($content, true) ?: [];
     $key = $action . ':' . $identifier;
     unset($limits[$key]);
-    file_put_contents($rate_file, json_encode($limits, JSON_PRETTY_PRINT), LOCK_EX);
+
+    ftruncate($fp, 0);
+    rewind($fp);
+    fwrite($fp, json_encode($limits, JSON_PRETTY_PRINT));
+    fflush($fp);
+    flock($fp, LOCK_UN);
+    fclose($fp);
 }
 
 // =================== Input Validation ===================
 
 function validate_ipv4($ip) {
-    return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false;
+    return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false;
 }
 
 function validate_url($url) {

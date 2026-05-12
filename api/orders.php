@@ -51,7 +51,7 @@ if ($method_req === 'PUT') {
     }
 
     $order['status']     = $action === 'approve' ? 'approved' : 'rejected';
-    $order['admin_note'] = htmlspecialchars($note, ENT_QUOTES, 'UTF-8');
+    $order['admin_note'] = $note;
     $order['updated_at'] = date('c');
 
     if ($action === 'approve') {

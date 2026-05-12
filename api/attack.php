@@ -34,7 +34,7 @@ if ($method_req === 'GET') {
 
 if ($method_req === 'POST') {
     // CSRF check only for session-based auth (not API key)
-    if (empty($_GET['key']) && empty($_SERVER['HTTP_X_API_KEY'])) {
+    if (empty($_SERVER['HTTP_X_API_KEY'])) {
         verify_csrf_token();
     }
     
@@ -64,6 +64,10 @@ if ($method_req === 'POST') {
     $method = $_POST['method'] ?? '';
     $concurrents = intval($_POST['concurrents'] ?? 1);
     $layer = $_POST['layer'] ?? 'Layer4';
+    
+    if (!in_array($layer, ['Layer4', 'Layer7'], true)) {
+        json_error('Invalid layer. Must be Layer4 or Layer7');
+    }
     
     if (empty($target) || empty($method) || $time <= 0) {
         json_error('Target, method, and time are required');
