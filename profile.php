@@ -51,7 +51,7 @@ $exp_date = $user['expiration_date'] ? date('M j, Y', strtotime($user['expiratio
             </div>
             <div class="bg-panel border border-gray-600 rounded-lg p-4">
                 <p class="text-sm text-gray-400">Role</p>
-                <p class="text-white font-semibold"><?= htmlspecialchars($user['rule']) ?></p>
+                <p class="text-white font-semibold"><?= htmlspecialchars($user['role']) ?></p>
             </div>
             <div class="bg-panel border border-gray-600 rounded-lg p-4">
                 <p class="text-sm text-gray-400">Member Since</p>

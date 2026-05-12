@@ -17,7 +17,7 @@ if ($method_req === 'GET') {
 }
 
 // Admin-only operations
-if ($user['rule'] !== 'admin') {
+if ($user['role'] !== 'admin') {
     json_error('Forbidden', 403);
 }
 

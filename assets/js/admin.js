@@ -15,8 +15,9 @@ function switchAdminTab(tab) {
     document.querySelectorAll('.admin-tab-content').forEach(el => el.classList.add('hidden'));
     document.getElementById('admin-' + tab).classList.remove('hidden');
     
-    ['users', 'plans', 'orders', 'methods'].forEach(t => {
+    ['users', 'plans', 'orders', 'methods', 'servers'].forEach(t => {
         const btn = document.getElementById('admin-tab-' + t);
+        if (!btn) return;
         btn.className = t === tab
             ? 'flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-blue-600 text-white transition'
             : 'flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition';
@@ -99,7 +100,7 @@ async function loadUsers() {
             
             const tdRole = document.createElement('td');
             tdRole.className = 'px-4 py-3';
-            tdRole.textContent = u.rule;
+            tdRole.textContent = u.role;
             
             const tdJoined = document.createElement('td');
             tdJoined.className = 'px-4 py-3';
@@ -144,7 +145,7 @@ function showAddUserModal() {
     fields.appendChild(createField('Email', 'email', 'email', '', {required: true}));
     fields.appendChild(createField('Password', 'password', 'password', '', {required: true}));
     fields.appendChild(createField('Plan', 'plan', 'select', planChoices[0], {choices: planChoices}));
-    fields.appendChild(createField('Role', 'rule', 'select', 'user', {choices: ['user', 'admin']}));
+    fields.appendChild(createField('Role', 'role', 'select', 'user', {choices: ['user', 'admin']}));
     fields.appendChild(createField('Max Concurrents', 'max_concurrents', 'number', '1'));
     fields.appendChild(createField('Max Seconds', 'max_seconds', 'number', '60'));
     openModal('Add User');
@@ -160,7 +161,7 @@ function editUser(user) {
     fields.appendChild(createField('Email', 'email', 'email', user.email));
     fields.appendChild(createField('Password (leave blank to keep)', 'password', 'password', ''));
     fields.appendChild(createField('Plan', 'plan', 'select', user.plan, {choices: planChoices}));
-    fields.appendChild(createField('Role', 'rule', 'select', user.rule, {choices: ['user', 'admin']}));
+    fields.appendChild(createField('Role', 'role', 'select', user.role || user.rule, {choices: ['user', 'admin']}));
     fields.appendChild(createField('Max Concurrents', 'max_concurrents', 'number', user.max_concurrents));
     fields.appendChild(createField('Max Seconds', 'max_seconds', 'number', user.max_seconds));
     openModal('Edit User');
@@ -403,13 +404,28 @@ document.getElementById('modal-form').addEventListener('submit', async function(
         url = `api/${type}s.php`;
         method = 'POST';
         const fd = new FormData();
-        Object.entries(data).forEach(([k, v]) => fd.append(k, v));
+        // Collect regular input/select values
+        document.querySelectorAll('#modal-fields input, #modal-fields select').forEach(el => {
+            if (el.type === 'checkbox') {
+                fd.append(el.name, el.checked);
+            } else {
+                fd.append(el.name, el.value);
+            }
+        });
+        // Collect textarea values
+        document.querySelectorAll('#modal-fields textarea').forEach(el => {
+            fd.append(el.name, el.value);
+        });
         fd.append('csrf_token', getCsrfToken());
         body = fd;
     } else {
         url = `api/${type}s.php`;
         method = 'PUT';
         data.id = currentEditId;
+        // Also collect textareas for edit (PUT sends JSON)
+        document.querySelectorAll('#modal-fields textarea').forEach(el => {
+            data[el.name] = el.value;
+        });
         body = JSON.stringify(data);
     }
     
@@ -430,6 +446,7 @@ document.getElementById('modal-form').addEventListener('submit', async function(
             if (type === 'user') loadUsers();
             else if (type === 'plan') loadPlans();
             else if (type === 'method') loadMethods();
+            else if (type === 'server') loadServers();
         } else {
             const resData = await res.json();
             showToast(resData.detail || 'Failed to save', 'error');
@@ -592,3 +609,162 @@ loadUsers();
 loadPlans();
 loadOrders();
 loadMethods();
+loadServers();
+
+// =================== SERVERS ===================
+
+async function loadServers() {
+    try {
+        const res = await fetch('api/servers.php');
+        const servers = await res.json();
+        const tbody = document.getElementById('servers-table');
+
+        if (!servers.length) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">No servers configured yet. Click "Add Server" to add a backend attack server.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = '';
+        servers.forEach(s => {
+            const tr = document.createElement('tr');
+            tr.className = 'border-t border-gray-700/50';
+
+            const methodsDisplay = (s.methods && s.methods.length)
+                ? s.methods.slice(0, 3).map(m => `<span class="inline-block bg-gray-800 text-gray-300 text-xs rounded px-1 py-0.5 mr-1">${escapeHtml(m)}</span>`).join('') +
+                  (s.methods.length > 3 ? `<span class="text-gray-500 text-xs">+${s.methods.length - 3} more</span>` : '')
+                : '<span class="text-gray-500 text-xs">All</span>';
+
+            const urlDisplay = s.api_url
+                ? (() => {
+                    // Mask the api_key value in the URL display to avoid showing credentials
+                    const masked = s.api_url.replace(/([?&](?:key|apikey|api_key)=)[^&]+/gi, '$1***');
+                    const short = masked.substring(0, 50) + (masked.length > 50 ? '…' : '');
+                    return `<span class="text-xs text-gray-400 font-mono" title="(key hidden)">${escapeHtml(short)}</span>`;
+                  })()
+                : '<span class="text-gray-600">—</span>';
+
+            const layerBadge = s.layer === 'Layer4'
+                ? '<span class="text-blue-400 text-xs font-bold">L4</span>'
+                : s.layer === 'Layer7'
+                    ? '<span class="text-purple-400 text-xs font-bold">L7</span>'
+                    : '<span class="text-green-400 text-xs font-bold">L4+L7</span>';
+
+            tr.innerHTML = `
+                <td class="px-4 py-3 text-white font-medium">${escapeHtml(s.name)}</td>
+                <td class="px-4 py-3">${layerBadge}</td>
+                <td class="px-4 py-3">${methodsDisplay}</td>
+                <td class="px-4 py-3">${urlDisplay}</td>
+                <td class="px-4 py-3">${s.enabled ? '<span class="text-green-400">Yes</span>' : '<span class="text-gray-500">No</span>'}</td>
+                <td class="px-4 py-3 server-status-cell" id="server-status-${escapeHtml(s.id)}">
+                    <span class="text-gray-500 text-xs"><i class="fas fa-circle-notch fa-spin mr-1"></i>Checking…</span>
+                </td>
+                <td class="px-4 py-3"></td>
+            `;
+
+            const actionsCell = tr.querySelector('td:last-child');
+
+            const editBtn = document.createElement('button');
+            editBtn.className = 'text-blue-400 hover:text-blue-300 mr-2';
+            editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+            editBtn.title = 'Edit';
+            editBtn.addEventListener('click', () => editServer(s));
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'text-red-400 hover:text-red-300';
+            deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+            deleteBtn.title = 'Delete';
+            deleteBtn.addEventListener('click', () => deleteServer(s.id));
+
+            actionsCell.appendChild(editBtn);
+            actionsCell.appendChild(deleteBtn);
+            tbody.appendChild(tr);
+
+            // Async status check
+            checkServerStatus(s.id);
+        });
+    } catch (err) {
+        console.error('Failed to load servers:', err);
+        const tbody = document.getElementById('servers-table');
+        if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-red-400">Failed to load servers</td></tr>';
+    }
+}
+
+async function checkServerStatus(id) {
+    const cell = document.getElementById('server-status-' + id);
+    if (!cell) return;
+    try {
+        const res = await fetch(`api/servers.php?action=check&id=${encodeURIComponent(id)}`);
+        const data = await res.json();
+        if (data.online) {
+            cell.innerHTML = '<span class="flex items-center gap-1 text-green-400 text-xs"><span class="status-dot status-live"></span>Online</span>';
+        } else {
+            cell.innerHTML = '<span class="flex items-center gap-1 text-red-400 text-xs"><span class="w-2 h-2 rounded-full bg-red-500 inline-block"></span>Offline</span>';
+        }
+    } catch {
+        cell.innerHTML = '<span class="text-gray-600 text-xs">Unknown</span>';
+    }
+}
+
+function showAddServerModal() {
+    currentEditType = 'server-add';
+    const fields = document.getElementById('modal-fields');
+    fields.innerHTML = '';
+    fields.appendChild(createField('Name', 'name', 'text', '', {required: true}));
+
+    // Custom textarea for api_url
+    const urlDiv = document.createElement('div');
+    urlDiv.innerHTML = `
+        <label class="block text-sm text-gray-400 mb-1">API URL (use placeholders)</label>
+        <textarea name="api_url" rows="3" placeholder="http://example.com/api?host={host}&port={port}&time={time}&method={method}&key={apikey}"
+            class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 font-mono text-xs"></textarea>
+    `;
+    fields.appendChild(urlDiv);
+
+    fields.appendChild(createField('Layer', 'layer', 'select', 'Layer4', {choices: ['Layer4', 'Layer7', 'Both']}));
+    fields.appendChild(createField('Methods (comma-separated, empty = all)', 'methods', 'text', ''));
+    fields.appendChild(createField('API Key (replaces {apikey})', 'api_key', 'text', ''));
+    fields.appendChild(createField('Enabled', 'enabled', 'checkbox', true));
+    openModal('Add Server');
+}
+
+function editServer(server) {
+    currentEditType = 'server-edit';
+    currentEditId = server.id;
+    const fields = document.getElementById('modal-fields');
+    fields.innerHTML = '';
+    fields.appendChild(createField('Name', 'name', 'text', server.name));
+
+    const urlDiv = document.createElement('div');
+    urlDiv.innerHTML = `
+        <label class="block text-sm text-gray-400 mb-1">API URL (use placeholders)</label>
+        <textarea name="api_url" rows="3"
+            class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 font-mono text-xs">${escapeHtml(server.api_url || '')}</textarea>
+    `;
+    fields.appendChild(urlDiv);
+
+    fields.appendChild(createField('Layer', 'layer', 'select', server.layer || 'Layer4', {choices: ['Layer4', 'Layer7', 'Both']}));
+    fields.appendChild(createField('Methods (comma-separated, empty = all)', 'methods', 'text', (server.methods || []).join(', ')));
+    fields.appendChild(createField('API Key (replaces {apikey})', 'api_key', 'text', server.api_key || ''));
+    fields.appendChild(createField('Enabled', 'enabled', 'checkbox', server.enabled));
+    openModal('Edit Server');
+}
+
+async function deleteServer(id) {
+    if (!confirm('Delete this server?')) return;
+    try {
+        const res = await fetch('api/servers.php', {
+            method: 'DELETE',
+            headers: {'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken()},
+            body: JSON.stringify({id})
+        });
+        if (res.ok) {
+            showToast('Server deleted', 'success');
+            loadServers();
+        } else {
+            const data = await res.json();
+            showToast(data.detail || 'Failed to delete', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
