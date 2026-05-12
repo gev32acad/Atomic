@@ -28,8 +28,8 @@ function verify_token($token) {
 }
 
 function get_authenticated_user() {
-    // First check API key (for external API calls)
-    $api_key = $_GET['key'] ?? $_SERVER['HTTP_X_API_KEY'] ?? null;
+    // First check API key (for external API calls) – header only to avoid URL logging
+    $api_key = $_SERVER['HTTP_X_API_KEY'] ?? null;
     if ($api_key) {
         return get_user_by_api_key($api_key);
     }
@@ -73,8 +73,7 @@ function get_user_by_api_key($api_key) {
                     break;
                 }
             }
-            // Starter plan has no API access
-            if (!$has_api_access && $user['plan'] === 'Starter') {
+            if (!$has_api_access) {
                 return null;
             }
             // Check plan expiration

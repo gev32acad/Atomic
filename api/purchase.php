@@ -35,6 +35,11 @@ if ($method_req === 'POST') {
         json_error('plan_id, crypto and amount are required');
     }
 
+    if (!is_numeric($amount) || floatval($amount) <= 0 || floatval($amount) > 1000000) {
+        json_error('Amount must be a positive number (max 1,000,000)');
+    }
+    $amount = floatval($amount);
+
     $allowed_cryptos = ['BTC', 'ETH', 'LTC', 'XMR'];
     if (!in_array($crypto, $allowed_cryptos)) {
         json_error('Invalid crypto currency');

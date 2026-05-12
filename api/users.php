@@ -13,9 +13,9 @@ $method_req = $_SERVER['REQUEST_METHOD'];
 $users = read_json('users.json');
 
 if ($method_req === 'GET') {
-    // Return users without passwords
+    // Return users without passwords or api keys
     $safe_users = array_map(function($u) {
-        unset($u['password']);
+        unset($u['password'], $u['api_key']);
         return $u;
     }, $users);
     json_response(array_values($safe_users));
@@ -81,6 +81,37 @@ if ($method_req === 'PUT') {
     
     if (empty($id)) {
         json_error('User ID is required');
+    }
+
+    // Validate updated fields
+    if (isset($input['username'])) {
+        $new_username = $input['username'];
+        if (strlen($new_username) < 3 || strlen($new_username) > 20) {
+            json_error('Username must be between 3 and 20 characters');
+        }
+        if (!preg_match('/^[a-zA-Z0-9_]+$/', $new_username)) {
+            json_error('Username can only contain letters, numbers, and underscores');
+        }
+        // Uniqueness check (exclude the user being edited)
+        foreach ($users as $u) {
+            if ($u['id'] !== $id && $u['username'] === $new_username) {
+                json_error('Username already exists');
+            }
+        }
+    }
+    if (isset($input['email'])) {
+        if (!filter_var($input['email'], FILTER_VALIDATE_EMAIL)) {
+            json_error('Invalid email address');
+        }
+        // Uniqueness check (exclude the user being edited)
+        foreach ($users as $u) {
+            if ($u['id'] !== $id && $u['email'] === $input['email']) {
+                json_error('Email already exists');
+            }
+        }
+    }
+    if (isset($input['rule']) && !in_array($input['rule'], ['user', 'admin'], true)) {
+        json_error('Invalid role');
     }
     
     foreach ($users as &$u) {
