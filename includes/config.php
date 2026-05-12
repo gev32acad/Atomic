@@ -5,6 +5,9 @@ define('DATA_DIR', __DIR__ . '/../data/');
 define('SITE_NAME', 'AtomicStresser');
 define('TOKEN_SECRET', 'a7f3c9e2b1d8f64ec3a2b9d7f5e38c1ab4d6f2e9c71a3b5d1f8e4c2a6b3d9f7');
 
+// Hardcoded crypto exchange rates (approximate USD values) - used server-side for amount validation
+define('CRYPTO_RATES', ['BTC' => 65000, 'ETH' => 3200, 'LTC' => 80, 'XMR' => 170]);
+
 // Crypto wallet addresses for payments
 define('CRYPTO_BTC_ADDRESS', '1A1zP1eP5QGefi2DMPTfTL5SLmv7Divf');
 define('CRYPTO_ETH_ADDRESS', '0x742d35Cc6634C0532925a3b844Bc454e4438f44e');
@@ -17,6 +20,16 @@ define('TELEGRAM_LINK', 'https://t.me/atomicstresser');
 // Rate limiting settings
 define('RATE_LIMIT_MAX_ATTEMPTS', 5);
 define('RATE_LIMIT_WINDOW', 900); // 15 minutes
+
+// =================== Security Headers ===================
+
+function send_security_headers() {
+    header('X-Frame-Options: DENY');
+    header('X-Content-Type-Options: nosniff');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data:; font-src 'self' https://cdnjs.cloudflare.com; connect-src 'self'; frame-ancestors 'none'");
+}
+send_security_headers();
 
 // Helper functions for JSON data
 function read_json($file) {

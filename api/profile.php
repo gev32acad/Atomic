@@ -9,8 +9,8 @@ if (!$user) {
     json_error('Unauthorized', 401);
 }
 
-// Don't expose password
+// Don't expose password or api_key in profile response (#6)
 $profile = $user;
-unset($profile['password']);
+unset($profile['password'], $profile['api_key']);
 
 json_response($profile);

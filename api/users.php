@@ -5,7 +5,7 @@ require_once __DIR__ . '/../includes/auth.php';
 header('Content-Type: application/json');
 
 $user = get_authenticated_user();
-if (!$user || $user['rule'] !== 'admin') {
+if (!$user || $user['role'] !== 'admin') {
     json_error('Forbidden', 403);
 }
 
@@ -31,13 +31,30 @@ if ($method_req === 'POST') {
     $email = $_POST['email'] ?? '';
     $password = $_POST['password'] ?? '';
     $plan = $_POST['plan'] ?? 'Starter';
-    $rule = $_POST['rule'] ?? 'user';
+    $role = $_POST['role'] ?? 'user';
     $max_concurrents = intval($_POST['max_concurrents'] ?? 1);
     $max_seconds = intval($_POST['max_seconds'] ?? 60);
     $expiration_date = $_POST['expiration_date'] ?? null;
     
     if (empty($username) || empty($email) || empty($password)) {
         json_error('Username, email, and password are required');
+    }
+
+    // Validate username (#10)
+    if (strlen($username) < 3 || strlen($username) > 20) {
+        json_error('Username must be between 3 and 20 characters');
+    }
+    if (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
+        json_error('Username can only contain letters, numbers, and underscores');
+    }
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        json_error('Invalid email address');
+    }
+    if (strlen($password) < 6) {
+        json_error('Password must be at least 6 characters');
+    }
+    if (!in_array($role, ['user', 'admin'], true)) {
+        json_error('Invalid role');
     }
     
     // Check duplicates
@@ -59,7 +76,7 @@ if ($method_req === 'POST') {
         'email' => $email,
         'password' => password_hash($password, PASSWORD_BCRYPT),
         'plan' => $plan,
-        'rule' => $rule,
+        'role' => $role,
         'join_date' => date('c'),
         'max_concurrents' => $max_concurrents,
         'max_seconds' => $max_seconds,
@@ -119,7 +136,8 @@ if ($method_req === 'PUT') {
             if (isset($input['username'])) $u['username'] = $input['username'];
             if (isset($input['email'])) $u['email'] = $input['email'];
             if (!empty($input['password'])) $u['password'] = password_hash($input['password'], PASSWORD_BCRYPT);
-            if (isset($input['rule'])) $u['rule'] = $input['rule'];
+            if (isset($input['rule'])) $u['role'] = $input['rule'];
+            if (isset($input['role'])) $u['role'] = $input['role'];
             if (array_key_exists('expiration_date', $input)) $u['expiration_date'] = $input['expiration_date'] ?: null;
             
             // Auto-sync limits when plan changes (#17)

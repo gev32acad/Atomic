@@ -2,7 +2,7 @@
 $current_page = basename($_SERVER['PHP_SELF'], '.php');
 $user = get_authenticated_user();
 $logged_in = $user !== null;
-$admin = $logged_in && $user['rule'] === 'admin';
+$admin = $logged_in && $user['role'] === 'admin';
 ?>
 <!DOCTYPE html>
 <html lang="en" class="dark">

@@ -23,7 +23,7 @@ $per_page = min(50, max(1, intval($_GET['per_page'] ?? 20)));
 
 // Filter attacks for this user (admins can see all with ?all=1)
 foreach ($attacks as $attack) {
-    if ($user['rule'] === 'admin' && !empty($_GET['all'])) {
+    if ($user['role'] === 'admin' && !empty($_GET['all'])) {
         // Admin sees all
     } elseif ($attack['user_id'] !== $user['id']) {
         continue;
