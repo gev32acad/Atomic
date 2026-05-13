@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
 $user = require_auth();
+$page_title = 'Attack History';
 include __DIR__ . '/includes/header.php';
 include __DIR__ . '/includes/sidebar.php';
 ?>
@@ -30,7 +31,7 @@ include __DIR__ . '/includes/sidebar.php';
                             <th class="px-4 py-3">Target</th>
                             <th class="px-4 py-3">Method</th>
                             <th class="px-4 py-3">Layer</th>
-                            <th class="px-4 py-3">Port</th>
+                            <th class="px-4 py-3">Port / RPS</th>
                             <th class="px-4 py-3">Duration</th>
                             <th class="px-4 py-3">Started</th>
                             <th class="px-4 py-3">Status</th>

@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
 $user = require_auth();
+$page_title = 'Dashboard';
 include __DIR__ . '/includes/header.php';
 include __DIR__ . '/includes/sidebar.php';
 ?>
@@ -119,7 +120,10 @@ include __DIR__ . '/includes/sidebar.php';
                     </div>
                 </div>
                 <div class="h-48 relative" id="chart-container">
-                    <canvas id="attacks-chart"></canvas>
+                    <div id="chart-spinner" class="absolute inset-0 flex items-center justify-center text-gray-600">
+                        <i class="fas fa-spinner fa-spin text-2xl"></i>
+                    </div>
+                    <canvas id="attacks-chart" class="hidden"></canvas>
                 </div>
             </div>
 
@@ -147,9 +151,13 @@ async function loadDashboard() {
             }
             const paidEl = document.getElementById('stat-paid-users');
             if (paidEl) {
-                paidEl.textContent = data.paid_users !== null && data.paid_users !== undefined ? data.paid_users.toLocaleString() : '—';
+                paidEl.textContent = (data.paid_users !== null && data.paid_users !== undefined) ? data.paid_users.toLocaleString() : '—';
             }
             
+            // Show chart, hide spinner
+            document.getElementById('chart-spinner').classList.add('hidden');
+            document.getElementById('attacks-chart').classList.remove('hidden');
+
             // Render Chart.js bar chart
             const labels = data.attacks_last_7_days.map(d => d.name);
             const values = data.attacks_last_7_days.map(d => d.attacks);

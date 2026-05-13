@@ -15,13 +15,23 @@ function switchAdminTab(tab) {
     document.querySelectorAll('.admin-tab-content').forEach(el => el.classList.add('hidden'));
     document.getElementById('admin-' + tab).classList.remove('hidden');
     
-    ['users', 'plans', 'orders', 'methods', 'servers'].forEach(t => {
+    ['users', 'plans', 'orders', 'attacks', 'methods', 'servers', 'blacklist'].forEach(t => {
         const btn = document.getElementById('admin-tab-' + t);
         if (!btn) return;
         btn.className = t === tab
             ? 'flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-blue-600 text-white transition'
             : 'flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition';
     });
+
+    // Lazy-load new tabs on first open
+    if (tab === 'attacks' && !window._adminAttacksLoaded) {
+        window._adminAttacksLoaded = true;
+        loadAdminAttacks();
+    }
+    if (tab === 'blacklist' && !window._blacklistLoaded) {
+        window._blacklistLoaded = true;
+        loadBlacklist();
+    }
 }
 
 // Modal functions
@@ -69,19 +79,37 @@ function createField(label, name, type = 'text', value = '', options = {}) {
 }
 
 // =================== USERS ===================
+let allUsersData = [];
+
 async function loadUsers() {
     try {
         const res = await fetch('api/users.php');
-        const users = await res.json();
-        const tbody = document.getElementById('users-table');
-        
-        if (!users.length) {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-400">No users found</td></tr>';
-            return;
-        }
-        
-        // XSS-safe rendering (#4): use textContent instead of innerHTML for user data
-        tbody.innerHTML = '';
+        allUsersData = await res.json();
+        renderUsers(allUsersData);
+    } catch (err) {
+        console.error('Failed to load users:', err);
+        document.getElementById('users-table').innerHTML = '<tr><td colspan="5" class="text-center py-8 text-red-400">Failed to load users</td></tr>';
+    }
+}
+
+function filterUsers(query) {
+    const q = query.toLowerCase();
+    renderUsers(allUsersData.filter(u =>
+        u.username.toLowerCase().includes(q) ||
+        (u.plan || '').toLowerCase().includes(q) ||
+        (u.role || '').toLowerCase().includes(q)
+    ));
+}
+
+function renderUsers(users) {
+    const tbody = document.getElementById('users-table');
+    if (!users.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-400">No users found</td></tr>';
+        return;
+    }
+    
+    // XSS-safe rendering: use textContent instead of innerHTML for user data
+    tbody.innerHTML = '';
         users.forEach(u => {
             const tr = document.createElement('tr');
             tr.className = 'border-t border-gray-700/50';
@@ -125,10 +153,6 @@ async function loadUsers() {
             tr.appendChild(tdActions);
             tbody.appendChild(tr);
         });
-    } catch (err) {
-        console.error('Failed to load users:', err);
-        document.getElementById('users-table').innerHTML = '<tr><td colspan="5" class="text-center py-8 text-red-400">Failed to load users</td></tr>';
-    }
 }
 
 function showAddUserModal() {
@@ -192,7 +216,7 @@ async function loadPlans() {
         const tbody = document.getElementById('plans-table');
         
         if (!plans.length) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">No plans found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-gray-400">No plans found</td></tr>';
             return;
         }
         
@@ -208,6 +232,7 @@ async function loadPlans() {
                 <td class="px-4 py-3">${parseInt(p.max_seconds)}s</td>
                 <td class="px-4 py-3">${p.premium ? '<span class="text-green-400">Yes</span>' : '<span class="text-gray-500">No</span>'}</td>
                 <td class="px-4 py-3">${p.api_access ? '<span class="text-green-400">Yes</span>' : '<span class="text-gray-500">No</span>'}</td>
+                <td class="px-4 py-3">${p.allow_schedule ? '<span class="text-yellow-400"><i class="fas fa-calendar-alt mr-1"></i>Yes</span>' : '<span class="text-gray-500">No</span>'}</td>
                 <td class="px-4 py-3"></td>
             `;
             const actionsCell = tr.querySelector('td:last-child');
@@ -225,7 +250,7 @@ async function loadPlans() {
         });
     } catch (err) {
         console.error('Failed to load plans:', err);
-        document.getElementById('plans-table').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-red-400">Failed to load plans</td></tr>';
+        document.getElementById('plans-table').innerHTML = '<tr><td colspan="9" class="text-center py-8 text-red-400">Failed to load plans</td></tr>';
     }
 }
 
@@ -242,6 +267,7 @@ function showAddPlanModal() {
     fields.appendChild(createField('Min Seconds', 'min_seconds', 'number', '10'));
     fields.appendChild(createField('Premium', 'premium', 'checkbox', false));
     fields.appendChild(createField('API Access', 'api_access', 'checkbox', false));
+    fields.appendChild(createField('Allow Scheduling', 'allow_schedule', 'checkbox', false));
     openModal('Add Plan');
 }
 
@@ -259,6 +285,7 @@ function editPlan(plan) {
     fields.appendChild(createField('Min Seconds', 'min_seconds', 'number', plan.min_seconds));
     fields.appendChild(createField('Premium', 'premium', 'checkbox', plan.premium));
     fields.appendChild(createField('API Access', 'api_access', 'checkbox', plan.api_access));
+    fields.appendChild(createField('Allow Scheduling', 'allow_schedule', 'checkbox', !!plan.allow_schedule));
     openModal('Edit Plan');
 }
 
@@ -415,6 +442,30 @@ document.getElementById('modal-form').addEventListener('submit', async function(
     });
     
     const [type, action] = currentEditType.split('-');
+
+    // Special handling for blacklist-add (maps to api/blacklist.php)
+    if (type === 'blacklist' && action === 'add') {
+        const fd = new FormData();
+        document.querySelectorAll('#modal-fields input, #modal-fields select').forEach(el => {
+            fd.append(el.name, el.value);
+        });
+        fd.append('csrf_token', getCsrfToken());
+        try {
+            const res = await fetch('api/blacklist.php', { method: 'POST', body: fd });
+            if (res.ok) {
+                showToast('Blacklist entry added', 'success');
+                closeModal();
+                loadBlacklist();
+            } else {
+                const d = await res.json();
+                showToast(d.detail || 'Failed', 'error');
+            }
+        } catch (err) {
+            showToast('Connection error', 'error');
+        }
+        return;
+    }
+
     let url, method, body;
     
     if (action === 'add') {
@@ -473,6 +524,7 @@ document.getElementById('modal-form').addEventListener('submit', async function(
             else if (type === 'plan') loadPlans();
             else if (type === 'method') loadMethods();
             else if (type === 'server') loadServers();
+            else if (type === 'blacklist') loadBlacklist();
         } else {
             const resData = await res.json();
             showToast(resData.detail || 'Failed to save', 'error');
@@ -513,14 +565,22 @@ async function loadOrders() {
         renderOrders();
     } catch (err) {
         console.error('Failed to load orders:', err);
-        document.getElementById('orders-table').innerHTML = '<tr><td colspan="7" class="text-center py-8 text-red-400">Failed to load orders</td></tr>';
+        document.getElementById('orders-table').innerHTML = '<tr><td colspan="8" class="text-center py-8 text-red-400">Failed to load orders</td></tr>';
     }
+}
+
+let orderSearchQuery = '';
+
+function filterOrdersSearch(query) {
+    orderSearchQuery = query.toLowerCase();
+    renderOrders();
 }
 
 function filterOrders(status) {
     currentOrderFilter = status;
     ['all', 'pending', 'approved', 'rejected'].forEach(s => {
         const btn = document.getElementById('order-filter-' + s);
+        if (!btn) return;
         btn.className = s === status
             ? 'text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white transition'
             : 'text-xs px-3 py-1.5 rounded-lg bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition';
@@ -530,10 +590,17 @@ function filterOrders(status) {
 
 function renderOrders() {
     const tbody = document.getElementById('orders-table');
-    const filtered = currentOrderFilter === 'all' ? allOrders : allOrders.filter(o => o.status === currentOrderFilter);
+    let filtered = currentOrderFilter === 'all' ? allOrders : allOrders.filter(o => o.status === currentOrderFilter);
+    if (orderSearchQuery) {
+        filtered = filtered.filter(o =>
+            (o.username || '').toLowerCase().includes(orderSearchQuery) ||
+            (o.plan_name || '').toLowerCase().includes(orderSearchQuery) ||
+            (o.id || '').toLowerCase().includes(orderSearchQuery)
+        );
+    }
 
     if (!filtered.length) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-gray-400">No ${currentOrderFilter === 'all' ? '' : currentOrderFilter + ' '}orders found</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-gray-400">No ${currentOrderFilter === 'all' ? '' : currentOrderFilter + ' '}orders found</td></tr>`;
         return;
     }
 
@@ -549,6 +616,7 @@ function renderOrders() {
             <td class="px-4 py-3 text-white">${escapeHtml(o.username)}</td>
             <td class="px-4 py-3"><span class="bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded text-xs">${escapeHtml(o.plan_name)}</span></td>
             <td class="px-4 py-3 text-xs">${escapeHtml(o.amount)} ${escapeHtml(o.crypto)}<br><span class="text-gray-500">$${parseFloat(o.price_usd).toFixed(2)}</span></td>
+            <td class="px-4 py-3 font-mono text-xs text-gray-500">${o.tx_hash ? escapeHtml(String(o.tx_hash).substring(0, 20)) + '…' : '—'}</td>
             <td class="px-4 py-3">
                 <span class="flex items-center gap-1 text-sm ${statusColors[o.status] || 'text-gray-400'}">
                     <i class="fas ${statusIcons[o.status] || 'fa-question-circle'}"></i>
@@ -847,3 +915,131 @@ async function deleteServer(id) {
     }
 }
 
+// =================== ADMIN ATTACKS TAB ===================
+
+let allAdminAttacks = [];
+
+async function loadAdminAttacks() {
+    try {
+        const res = await fetch('api/history.php?all=1&per_page=100');
+        const resp = await res.json();
+        allAdminAttacks = resp.attacks ?? resp;
+        // Enrich with username from user_id by joining users list
+        try {
+            const ur = await fetch('api/users.php');
+            const users = await ur.json();
+            const usersMap = {};
+            users.forEach(u => { usersMap[u.id] = u.username; });
+            allAdminAttacks = allAdminAttacks.map(a => ({...a, username: usersMap[a.user_id] || a.user_id}));
+        } catch(_) {}
+        renderAdminAttacks(allAdminAttacks);
+    } catch (err) {
+        document.getElementById('admin-attacks-table').innerHTML =
+            '<tr><td colspan="6" class="text-center py-8 text-red-400">Failed to load attacks</td></tr>';
+    }
+}
+
+function filterAdminAttacks(query) {
+    const q = query.toLowerCase();
+    renderAdminAttacks(allAdminAttacks.filter(a =>
+        (a.username || '').toLowerCase().includes(q) ||
+        (a.target || '').toLowerCase().includes(q) ||
+        (a.method || '').toLowerCase().includes(q)
+    ));
+}
+
+function renderAdminAttacks(attacks) {
+    const tbody = document.getElementById('admin-attacks-table');
+    if (!attacks.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">No attacks found</td></tr>';
+        return;
+    }
+    tbody.innerHTML = '';
+    attacks.forEach(a => {
+        const tr = document.createElement('tr');
+        tr.className = 'border-t border-gray-700/50';
+        tr.innerHTML = `
+            <td class="px-4 py-3 text-white">${escapeHtml(a.username || a.user_id || '—')}</td>
+            <td class="px-4 py-3 font-mono text-xs text-gray-300">${escapeHtml(a.target || '—')}</td>
+            <td class="px-4 py-3"><span class="badge badge-method">${escapeHtml(a.method || '—')}</span></td>
+            <td class="px-4 py-3"><span class="${a.layer === 'Layer7' ? 'badge badge-l7' : 'badge badge-l4'}">${escapeHtml(a.layer || '—')}</span></td>
+            <td class="px-4 py-3 text-gray-300">${escapeHtml(String(a.time || 0))}s</td>
+            <td class="px-4 py-3 text-xs text-gray-400">${a.start_time ? new Date(a.start_time).toLocaleString() : '—'}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+// =================== BLACKLIST TAB ===================
+
+let allBlacklist = [];
+
+async function loadBlacklist() {
+    try {
+        const res = await fetch('api/blacklist.php');
+        allBlacklist = await res.json();
+        renderBlacklist(allBlacklist);
+    } catch (err) {
+        document.getElementById('blacklist-table').innerHTML =
+            '<tr><td colspan="5" class="text-center py-8 text-red-400">Failed to load blacklist</td></tr>';
+    }
+}
+
+function renderBlacklist(entries) {
+    const tbody = document.getElementById('blacklist-table');
+    if (!entries.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-400">No blacklist entries. Protected targets can be added here.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = '';
+    entries.forEach(e => {
+        const typeColors = { ip: 'text-blue-400', cidr: 'text-yellow-400', url: 'text-purple-400' };
+        const tr = document.createElement('tr');
+        tr.className = 'border-t border-gray-700/50';
+        tr.innerHTML = `
+            <td class="px-4 py-3 font-bold text-xs ${typeColors[e.type] || 'text-gray-400'}">${escapeHtml((e.type || '').toUpperCase())}</td>
+            <td class="px-4 py-3 font-mono text-sm text-white">${escapeHtml(e.value || '')}</td>
+            <td class="px-4 py-3 text-xs text-gray-400">${escapeHtml(e.note || '—')}</td>
+            <td class="px-4 py-3 text-xs text-gray-500">${e.created_at ? new Date(e.created_at).toLocaleString() : '—'}</td>
+            <td class="px-4 py-3"></td>
+        `;
+        const actionsCell = tr.querySelector('td:last-child');
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'text-red-400 hover:text-red-300';
+        deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+        deleteBtn.title = 'Remove';
+        deleteBtn.addEventListener('click', () => deleteBlacklistEntry(e.id));
+        actionsCell.appendChild(deleteBtn);
+        tbody.appendChild(tr);
+    });
+}
+
+function showAddBlacklistModal() {
+    currentEditType = 'blacklist-add';
+    const fields = document.getElementById('modal-fields');
+    fields.innerHTML = '';
+    fields.appendChild(createField('Type', 'type', 'select', 'ip', {choices: ['ip', 'cidr', 'url']}));
+    fields.appendChild(createField('Value', 'value', 'text', '', {required: true}));
+    fields.appendChild(createField('Note (optional)', 'note', 'text', ''));
+    openModal('Add Blacklist Entry');
+}
+
+async function deleteBlacklistEntry(id) {
+    if (!confirm('Remove this entry from the blacklist?')) return;
+    try {
+        const res = await fetch('api/blacklist.php', {
+            method: 'DELETE',
+            headers: {'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken()},
+            body: JSON.stringify({id})
+        });
+        if (res.ok) {
+            showToast('Entry removed', 'success');
+            loadBlacklist();
+        } else {
+            const data = await res.json();
+            showToast(data.detail || 'Failed to delete', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}

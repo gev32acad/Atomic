@@ -8,6 +8,9 @@ define('TOKEN_SECRET', 'a7f3c9e2b1d8f64ec3a2b9d7f5e38c1ab4d6f2e9c71a3b5d1f8e4c2a
 // Hardcoded crypto exchange rates (approximate USD values) - used server-side for amount validation
 define('CRYPTO_RATES', ['BTC' => 65000, 'ETH' => 3200, 'LTC' => 80, 'XMR' => 170]);
 
+// Backend SSL peer verification (set to true when backend servers have valid certificates)
+define('VERIFY_BACKEND_SSL', false);
+
 // Crypto wallet addresses for payments
 define('CRYPTO_BTC_ADDRESS', '1A1zP1eP5QGefi2DMPTfTL5SLmv7Divf');
 define('CRYPTO_ETH_ADDRESS', '0x742d35Cc6634C0532925a3b844Bc454e4438f44e');
@@ -194,5 +197,109 @@ function validate_attack_target($target, $layer) {
             json_error('Invalid URL. Must start with http:// or https:// (e.g. https://example.com)');
         }
     }
+
+    // Check global blacklist
+    $blacklist = read_json('blacklist.json');
+    foreach ($blacklist as $entry) {
+        $type = $entry['type'] ?? 'ip';
+        $val  = $entry['value'] ?? '';
+        if ($type === 'ip' && $val === $target) {
+            json_error('Target is blocked by the global blacklist');
+        }
+        if ($type === 'cidr') {
+            // For Layer4 the target IS the IP; for Layer7 extract the host and resolve it
+            $check_ip = $target;
+            if ($layer === 'Layer7') {
+                $host = parse_url($target, PHP_URL_HOST);
+                if (!$host) continue;
+                // Only compare if the host looks like a valid IPv4 address
+                if (!filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) continue;
+                $check_ip = $host;
+            }
+            if ($layer === 'Layer4' || $layer === 'Layer7') {
+                if (ip_in_cidr($check_ip, $val)) {
+                    json_error('Target is blocked by the global blacklist');
+                }
+            }
+        }
+        if ($type === 'url' && $layer === 'Layer7') {
+            $th = parse_url($target, PHP_URL_HOST);
+            $bh = parse_url($val,    PHP_URL_HOST);
+            if ($th && $bh && strtolower($th) === strtolower($bh)) {
+                json_error('Target is blocked by the global blacklist');
+            }
+        }
+    }
+
     return true;
+}
+
+function ip_in_cidr($ip, $cidr) {
+    if (strpos($cidr, '/') === false) return $ip === $cidr;
+    $parts  = explode('/', $cidr, 2);
+    $subnet = $parts[0];
+    $bits   = intval($parts[1]);
+    if ($bits < 0 || $bits > 32) return false;
+    $mask       = -1 << (32 - $bits);
+    $ip_long    = ip2long($ip);
+    $sub_long   = ip2long($subnet);
+    if ($ip_long === false || $sub_long === false) return false;
+    return ($ip_long & $mask) === ($sub_long & $mask);
+}
+
+// =================== Live Crypto Rates ===================
+
+function get_crypto_rates() {
+    $cache_file = DATA_DIR . 'rates_cache.json';
+    $cache_ttl  = 300; // 5 minutes
+
+    if (file_exists($cache_file)) {
+        $cache = json_decode(@file_get_contents($cache_file), true);
+        if ($cache && isset($cache['timestamp']) && (time() - $cache['timestamp']) < $cache_ttl && isset($cache['rates'])) {
+            return $cache['rates'];
+        }
+    }
+
+    $live = fetch_coingecko_rates();
+    if ($live) {
+        @file_put_contents($cache_file, json_encode(['timestamp' => time(), 'rates' => $live], JSON_PRETTY_PRINT), LOCK_EX);
+        return $live;
+    }
+
+    return CRYPTO_RATES; // fallback
+}
+
+function fetch_coingecko_rates() {
+    $url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,litecoin,monero&vs_currencies=usd';
+    $map = ['bitcoin' => 'BTC', 'ethereum' => 'ETH', 'litecoin' => 'LTC', 'monero' => 'XMR'];
+    $response = null;
+
+    if (function_exists('curl_init')) {
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL            => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 5,
+            CURLOPT_CONNECTTIMEOUT => 3,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_USERAGENT      => 'NetStress/1.0',
+        ]);
+        $response = curl_exec($ch);
+        $code     = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        if ($code !== 200) $response = null;
+    } else {
+        $ctx      = stream_context_create(['http' => ['timeout' => 5, 'ignore_errors' => true]]);
+        $response = @file_get_contents($url, false, $ctx);
+    }
+
+    if (!$response) return null;
+    $data = json_decode($response, true);
+    if (!$data) return null;
+
+    $rates = [];
+    foreach ($map as $cg_id => $symbol) {
+        $rates[$symbol] = isset($data[$cg_id]['usd']) ? floatval($data[$cg_id]['usd']) : CRYPTO_RATES[$symbol];
+    }
+    return $rates;
 }

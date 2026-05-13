@@ -4,6 +4,7 @@ $logged_in = is_logged_in();
 $user = $logged_in ? get_authenticated_user() : null;
 $csrf_token = generate_csrf_token();
 $plans = read_json('plans.json');
+$page_title = 'Store';
 include __DIR__ . '/includes/header.php';
 include __DIR__ . '/includes/sidebar.php';
 ?>
@@ -170,6 +171,12 @@ include __DIR__ . '/includes/sidebar.php';
                 <p class="text-yellow-400 text-xs mt-3"><i class="fas fa-exclamation-triangle mr-1"></i>Send the exact amount. After sending, click "I've Sent Payment" below.</p>
             </div>
 
+            <div id="tx-hash-wrap" class="hidden mb-4">
+                <label class="block text-xs text-gray-400 mb-1"><i class="fas fa-hashtag mr-1"></i>Transaction Hash (optional but speeds up approval)</label>
+                <input type="text" id="tx-hash-input" placeholder="e.g. 0xabc123..." maxlength="200"
+                    class="w-full bg-background border border-gray-700 rounded-lg px-3 py-2 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-blue-500">
+            </div>
+
             <input type="hidden" id="buy-plan-id">
             <input type="hidden" id="buy-crypto">
             <button onclick="confirmPurchase()" id="buy-confirm-btn" disabled
@@ -192,8 +199,14 @@ include __DIR__ . '/includes/sidebar.php';
 <?php endif; ?>
 
 <script>
-// Crypto exchange rates (approximate, in USD)
-const cryptoRates = { BTC: 65000, ETH: 3200, LTC: 80, XMR: 170 };
+// Crypto exchange rates – loaded dynamically from server (with fallback)
+let cryptoRates = { BTC: 65000, ETH: 3200, LTC: 80, XMR: 170 };
+(async () => {
+    try {
+        const r = await fetch('api/rates.php');
+        if (r.ok) { const d = await r.json(); if (d && d.BTC) cryptoRates = d; }
+    } catch(e) { /* use fallback */ }
+})();
 const cryptoAddresses = {
     BTC: <?= json_encode(CRYPTO_BTC_ADDRESS) ?>,
     ETH: <?= json_encode(CRYPTO_ETH_ADDRESS) ?>,
@@ -237,6 +250,7 @@ function selectCrypto(crypto) {
     document.getElementById('pay-currency').textContent = crypto;
     document.getElementById('pay-address').textContent = cryptoAddresses[crypto];
     document.getElementById('payment-address-box').classList.remove('hidden');
+    document.getElementById('tx-hash-wrap').classList.remove('hidden');
     document.getElementById('buy-confirm-btn').disabled = false;
 }
 
@@ -258,6 +272,8 @@ async function confirmPurchase() {
     formData.append('plan_id', modalPlanId);
     formData.append('crypto', selectedCrypto);
     formData.append('amount', amount);
+    const txHash = document.getElementById('tx-hash-input')?.value?.trim() ?? '';
+    if (txHash) formData.append('tx_hash', txHash);
 
     try {
         const res = await fetch('api/purchase.php', { method: 'POST', body: formData });
@@ -290,18 +306,23 @@ async function loadMyOrders() {
             return;
         }
         const statusColors = { pending: 'text-yellow-400', approved: 'text-green-400', rejected: 'text-red-400' };
-        const statusIcons = { pending: 'fa-clock', approved: 'fa-check-circle', rejected: 'fa-times-circle' };
+        const statusIcons  = { pending: 'fa-clock', approved: 'fa-check-circle', rejected: 'fa-times-circle' };
+        const borderColors = { pending: 'border-gray-700/50', approved: 'border-green-700/40', rejected: 'border-red-700/40' };
         container.innerHTML = orders.map(o => `
-            <div class="flex items-center justify-between bg-background border border-gray-700/50 rounded-xl px-5 py-4 mb-3">
-                <div>
-                    <p class="text-white font-medium">${escapeHtml(o.plan_name)} Plan</p>
-                    <p class="text-gray-400 text-xs mt-0.5">${escapeHtml(o.amount)} ${escapeHtml(o.crypto)} &bull; ${new Date(o.created_at).toLocaleString()}</p>
-                    <p class="text-gray-500 text-xs">Order ID: ${escapeHtml(o.id)}</p>
+            <div class="flex flex-col bg-background border ${borderColors[o.status] || 'border-gray-700/50'} rounded-xl px-5 py-4 mb-3">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-white font-medium">${escapeHtml(o.plan_name)} Plan</p>
+                        <p class="text-gray-400 text-xs mt-0.5">${escapeHtml(o.amount)} ${escapeHtml(o.crypto)} &bull; ${new Date(o.created_at).toLocaleString()}</p>
+                        <p class="text-gray-500 text-xs">Order ID: ${escapeHtml(o.id)}</p>
+                        ${o.tx_hash ? `<p class="text-gray-600 text-xs mt-0.5">TX: <span class="font-mono">${escapeHtml(o.tx_hash)}</span></p>` : ''}
+                    </div>
+                    <span class="flex items-center gap-1 text-sm font-medium ${statusColors[o.status] || 'text-gray-400'}">
+                        <i class="fas ${statusIcons[o.status] || 'fa-question-circle'}"></i>
+                        ${escapeHtml(o.status.charAt(0).toUpperCase() + o.status.slice(1))}
+                    </span>
                 </div>
-                <span class="flex items-center gap-1 text-sm font-medium ${statusColors[o.status] || 'text-gray-400'}">
-                    <i class="fas ${statusIcons[o.status] || 'fa-question-circle'}"></i>
-                    ${escapeHtml(o.status.charAt(0).toUpperCase() + o.status.slice(1))}
-                </span>
+                ${o.status === 'rejected' ? '<p class="text-red-400/80 text-xs mt-2 flex items-center gap-1"><i class="fas fa-exclamation-circle"></i>Your order was rejected. Please contact support via Telegram.</p>' : ''}
             </div>
         `).join('');
     } catch (err) {

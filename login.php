@@ -2,6 +2,7 @@
 require_once __DIR__ . '/includes/auth.php';
 if (is_logged_in()) { header('Location: dashboard.php'); exit; }
 $csrf_token = generate_csrf_token();
+$page_title = 'Sign In';
 include __DIR__ . '/includes/header.php';
 include __DIR__ . '/includes/sidebar.php';
 ?>

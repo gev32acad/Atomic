@@ -189,7 +189,7 @@ function ping_server($server) {
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT        => 5,
             CURLOPT_CONNECTTIMEOUT => 3,
-            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYPEER => VERIFY_BACKEND_SSL,
             CURLOPT_NOBODY         => true,
         ]);
         curl_exec($ch);

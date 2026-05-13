@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
 $user = require_auth();
+$page_title = 'API Docs';
 include __DIR__ . '/includes/header.php';
 include __DIR__ . '/includes/sidebar.php';
 
@@ -30,12 +31,18 @@ $api_link = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $host . rtri
         <!-- API Key -->
         <div>
             <h2 class="text-2xl font-semibold mb-2">Your API Key</h2>
-            <div class="bg-panel border border-gray-700 rounded-lg px-4 py-3 flex items-center justify-between">
-                <code class="text-green-400 break-all"><?= htmlspecialchars($user['api_key'] ?? 'N/A') ?></code>
-                <button onclick="copyText('<?= htmlspecialchars($user['api_key'] ?? '') ?>')">
-                    <i class="fas fa-copy text-gray-400 hover:text-white"></i>
-                </button>
+            <div class="bg-panel border border-gray-700 rounded-lg px-4 py-3 flex items-center justify-between gap-3">
+                <code id="api-key-display" class="text-green-400 break-all blur-sm select-none transition-all duration-200"><?= htmlspecialchars($user['api_key'] ?? 'N/A') ?></code>
+                <div class="flex items-center gap-2 shrink-0">
+                    <button onclick="toggleKeyVisibility()" id="toggle-key-btn" title="Show/Hide key">
+                        <i id="toggle-key-icon" class="fas fa-eye text-gray-400 hover:text-white"></i>
+                    </button>
+                    <button onclick="copyText('<?= htmlspecialchars($user['api_key'] ?? '') ?>')" title="Copy key">
+                        <i class="fas fa-copy text-gray-400 hover:text-white"></i>
+                    </button>
+                </div>
             </div>
+            <p class="text-xs text-gray-600 mt-1">Click the eye icon to reveal your full key.</p>
         </div>
 
         <!-- API Fields Table -->
@@ -75,6 +82,15 @@ $api_link = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $host . rtri
 </div>
 
 <script>
+let keyVisible = false;
+function toggleKeyVisibility() {
+    const el = document.getElementById('api-key-display');
+    const icon = document.getElementById('toggle-key-icon');
+    keyVisible = !keyVisible;
+    el.classList.toggle('blur-sm', !keyVisible);
+    el.classList.toggle('select-none', !keyVisible);
+    icon.className = keyVisible ? 'fas fa-eye-slash text-gray-400 hover:text-white' : 'fas fa-eye text-gray-400 hover:text-white';
+}
 function copyText(text) {
     navigator.clipboard.writeText(text);
     showToast('Copied to clipboard!', 'success');
