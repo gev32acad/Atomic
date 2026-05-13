@@ -64,31 +64,36 @@ if ($method_req === 'POST') {
     $name    = trim($_POST['name'] ?? '');
     $api_url = trim($_POST['api_url'] ?? '');
     $layer   = $_POST['layer'] ?? 'Layer4';
-    $api_key = trim($_POST['api_key'] ?? '');
     $enabled = filter_var($_POST['enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
+    $max_slots = intval($_POST['max_slots'] ?? 10);
 
-    // methods: comma-separated string or JSON array
-    $methods_raw = trim($_POST['methods'] ?? '');
-    $methods = parse_methods_input($methods_raw);
+    // methods: collect from methods[] array or comma-separated string
+    $methods_raw = $_POST['methods'] ?? [];
+    if (!is_array($methods_raw)) {
+        $methods_raw = trim($methods_raw);
+    }
+    $methods = is_array($methods_raw)
+        ? array_values(array_filter(array_map('strtoupper', array_map('trim', $methods_raw))))
+        : parse_methods_input($methods_raw);
 
     if (empty($name)) {
         json_error('Server name is required');
     }
     if (empty($api_url) || !filter_var(strtok($api_url, '?'), FILTER_VALIDATE_URL)) {
-        json_error('Valid API URL is required (e.g. http://example.com/api?host={host}&port={port}&time={time}&method={method}&key={apikey})');
+        json_error('Valid API URL is required (e.g. http://example.com/api?host={host}&port={port}&time={time}&method={method})');
     }
-    if (!in_array($layer, ['Layer4', 'Layer7', 'Both'], true)) {
-        json_error('Layer must be Layer4, Layer7, or Both');
+    if (!in_array($layer, ['Layer4', 'Layer7'], true)) {
+        json_error('Layer must be Layer4 or Layer7');
     }
 
     $new_server = [
-        'id'      => generate_id(),
-        'name'    => $name,
-        'api_url' => $api_url,
-        'layer'   => $layer,
-        'methods' => $methods,
-        'api_key' => $api_key,
-        'enabled' => $enabled,
+        'id'        => generate_id(),
+        'name'      => $name,
+        'api_url'   => $api_url,
+        'layer'     => $layer,
+        'methods'   => $methods,
+        'max_slots' => $max_slots,
+        'enabled'   => $enabled,
     ];
 
     $servers   = read_json('servers.json');
@@ -113,15 +118,15 @@ if ($method_req === 'PUT') {
         if ($s['id'] === $id) {
             if (isset($input['name']))    $s['name']    = trim($input['name']);
             if (isset($input['api_url'])) $s['api_url'] = trim($input['api_url']);
-            if (isset($input['layer']) && in_array($input['layer'], ['Layer4', 'Layer7', 'Both'], true)) {
+            if (isset($input['layer']) && in_array($input['layer'], ['Layer4', 'Layer7'], true)) {
                 $s['layer'] = $input['layer'];
             }
             if (isset($input['methods'])) {
                 $s['methods'] = is_array($input['methods'])
-                    ? array_values(array_filter(array_map('trim', $input['methods'])))
+                    ? array_values(array_filter(array_map('strtoupper', array_map('trim', $input['methods']))))
                     : parse_methods_input($input['methods']);
             }
-            if (array_key_exists('api_key', $input)) $s['api_key'] = trim($input['api_key'] ?? '');
+            if (isset($input['max_slots'])) $s['max_slots'] = intval($input['max_slots']);
             if (isset($input['enabled']))  $s['enabled']  = (bool)$input['enabled'];
             $found = true;
             break;
@@ -173,8 +178,6 @@ function ping_server($server) {
         '{port}'        => '80',
         '{time}'        => '1',
         '{method}'      => 'TEST',
-        '{apikey}'      => urlencode($server['api_key'] ?? ''),
-        '{key}'         => urlencode($server['api_key'] ?? ''),
         '{concurrents}' => '1',
     ];
     $test_url = str_replace(array_keys($replacements), array_values($replacements), $url);

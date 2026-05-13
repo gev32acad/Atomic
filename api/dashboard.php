@@ -51,8 +51,12 @@ $response = [
 if ($user['role'] === 'admin') {
     $users = read_json('users.json');
     $response['registered_users'] = count($users);
+    $response['paid_users'] = count(array_filter($users, function($u) {
+        return ($u['plan'] ?? 'Starter') !== 'Starter';
+    }));
 } else {
     $response['registered_users'] = null;
+    $response['paid_users'] = null;
 }
 
 json_response($response);

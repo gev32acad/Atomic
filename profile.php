@@ -29,7 +29,6 @@ $exp_date = $user['expiration_date'] ? date('M j, Y', strtotime($user['expiratio
                 <?= htmlspecialchars($avatar) ?>
             </div>
             <h2 class="text-xl font-semibold text-white mt-2"><?= htmlspecialchars($user['username']) ?></h2>
-            <p class="text-sm text-gray-400"><?= htmlspecialchars($user['email']) ?></p>
         </div>
         
         <!-- User ID -->

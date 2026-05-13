@@ -56,6 +56,7 @@ include __DIR__ . '/includes/sidebar.php';
                     <div>
                         <p id="stat-users" class="text-3xl font-bold text-white mb-1">-</p>
                         <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Registered Users</p>
+                        <p class="text-xs text-yellow-400 mt-1.5 font-medium"><span id="stat-paid-users">-</span> <span class="text-gray-500">Paid</span></p>
                     </div>
                     <div class="w-10 h-10 rounded-xl bg-yellow-600/15 flex items-center justify-center">
                         <i class="fas fa-users text-yellow-400"></i>
@@ -117,8 +118,8 @@ include __DIR__ . '/includes/sidebar.php';
                         <span class="text-xs text-gray-500">Attacks</span>
                     </div>
                 </div>
-                <div class="h-48 flex items-end gap-2" id="chart-container">
-                    <p class="text-gray-500 w-full text-center text-sm">Loading chart...</p>
+                <div class="h-48 relative" id="chart-container">
+                    <canvas id="attacks-chart"></canvas>
                 </div>
             </div>
 
@@ -127,7 +128,10 @@ include __DIR__ . '/includes/sidebar.php';
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
+let attacksChart = null;
+
 async function loadDashboard() {
     try {
         const res = await fetch('api/dashboard.php');
@@ -141,25 +145,55 @@ async function loadDashboard() {
             if (usersEl) {
                 usersEl.textContent = data.registered_users !== null ? data.registered_users.toLocaleString() : '—';
             }
+            const paidEl = document.getElementById('stat-paid-users');
+            if (paidEl) {
+                paidEl.textContent = data.paid_users !== null && data.paid_users !== undefined ? data.paid_users.toLocaleString() : '—';
+            }
             
-            // Render chart
-            const container = document.getElementById('chart-container');
-            const maxAttacks = Math.max(...data.attacks_last_7_days.map(d => d.attacks), 1);
-            container.innerHTML = '';
-            
-            data.attacks_last_7_days.forEach(day => {
-                const height = Math.max((day.attacks / maxAttacks) * 100, 5);
-                const bar = document.createElement('div');
-                bar.className = 'flex-1 flex flex-col items-center gap-2';
-                bar.innerHTML = `
-                    <span class="text-xs text-gray-400">${day.attacks}</span>
-                    <div class="w-full rounded-t-lg relative" style="height: ${height}%">
-                        <div class="absolute inset-0 bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-lg opacity-80"></div>
-                    </div>
-                    <span class="text-xs text-gray-400">${day.name}</span>
-                `;
-                container.appendChild(bar);
-            });
+            // Render Chart.js bar chart
+            const labels = data.attacks_last_7_days.map(d => d.name);
+            const values = data.attacks_last_7_days.map(d => d.attacks);
+
+            const ctx = document.getElementById('attacks-chart').getContext('2d');
+            if (attacksChart) {
+                attacksChart.data.labels = labels;
+                attacksChart.data.datasets[0].data = values;
+                attacksChart.update();
+            } else {
+                attacksChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels,
+                        datasets: [{
+                            label: 'Attacks',
+                            data: values,
+                            backgroundColor: 'rgba(59,130,246,0.5)',
+                            borderColor: 'rgba(59,130,246,0.9)',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { callbacks: { label: ctx => ctx.parsed.y + ' attacks' } }
+                        },
+                        scales: {
+                            x: {
+                                grid: { color: 'rgba(255,255,255,0.05)' },
+                                ticks: { color: '#6b7280', font: { size: 11 } }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: 'rgba(255,255,255,0.05)' },
+                                ticks: { color: '#6b7280', font: { size: 11 }, precision: 0 }
+                            }
+                        }
+                    }
+                });
+            }
         }
     } catch (err) {
         console.error('Failed to load dashboard:', err);

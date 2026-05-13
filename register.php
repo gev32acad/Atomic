@@ -20,12 +20,6 @@ include __DIR__ . '/includes/sidebar.php';
             </div>
             
             <div class="flex items-center gap-2 border border-gray-700 rounded px-3 py-2 bg-background">
-                <i class="fas fa-envelope text-gray-400"></i>
-                <input type="email" name="email" placeholder="Email" required
-                    class="w-full bg-transparent text-white placeholder-gray-500 focus:outline-none">
-            </div>
-            
-            <div class="flex items-center gap-2 border border-gray-700 rounded px-3 py-2 bg-background">
                 <i class="fas fa-lock text-gray-400"></i>
                 <input type="password" name="password" placeholder="Password" required minlength="6"
                     class="w-full bg-transparent text-white placeholder-gray-500 focus:outline-none">

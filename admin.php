@@ -43,7 +43,6 @@ include __DIR__ . '/includes/sidebar.php';
                         <thead class="text-gray-400 border-b border-gray-700">
                             <tr>
                                 <th class="px-4 py-3">Username</th>
-                                <th class="px-4 py-3">Email</th>
                                 <th class="px-4 py-3">Plan</th>
                                 <th class="px-4 py-3">Role</th>
                                 <th class="px-4 py-3">Joined</th>
@@ -51,7 +50,7 @@ include __DIR__ . '/includes/sidebar.php';
                             </tr>
                         </thead>
                         <tbody id="users-table" class="text-gray-300">
-                            <tr><td colspan="6" class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading users...</td></tr>
+                            <tr><td colspan="5" class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading users...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -164,7 +163,7 @@ include __DIR__ . '/includes/sidebar.php';
                     Add backend attack servers. The API URL supports placeholders:
                     <code class="text-blue-400">{host}</code>, <code class="text-blue-400">{port}</code>,
                     <code class="text-blue-400">{time}</code>, <code class="text-blue-400">{method}</code>,
-                    <code class="text-blue-400">{apikey}</code>, <code class="text-blue-400">{concurrents}</code>
+                    <code class="text-blue-400">{concurrents}</code>
                 </p>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm text-left">
@@ -173,6 +172,7 @@ include __DIR__ . '/includes/sidebar.php';
                                 <th class="px-4 py-3">Name</th>
                                 <th class="px-4 py-3">Layer</th>
                                 <th class="px-4 py-3">Methods</th>
+                                <th class="px-4 py-3">Max Slots</th>
                                 <th class="px-4 py-3">API URL</th>
                                 <th class="px-4 py-3">Enabled</th>
                                 <th class="px-4 py-3">Status</th>
@@ -180,7 +180,7 @@ include __DIR__ . '/includes/sidebar.php';
                             </tr>
                         </thead>
                         <tbody id="servers-table" class="text-gray-300">
-                            <tr><td colspan="7" class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading servers...</td></tr>
+                            <tr><td colspan="8" class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading servers...</td></tr>
                         </tbody>
                     </table>
                 </div>

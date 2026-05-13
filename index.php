@@ -14,12 +14,6 @@ include __DIR__ . '/includes/sidebar.php';
     <div class="hero-grid"></div>
 
     <div class="relative z-10 max-w-4xl mx-auto">
-        <!-- Badge -->
-        <div class="inline-flex items-center gap-2 bg-blue-600/10 border border-blue-500/30 text-blue-400 text-xs font-semibold px-4 py-1.5 rounded-full mb-6 uppercase tracking-widest">
-            <span class="status-dot status-live status-dot-sm"></span>
-            All systems operational
-        </div>
-
         <h1 class="text-5xl md:text-7xl font-extrabold text-white mb-6 leading-tight">
             The Most Powerful<br>
             <span class="hero-gradient-text">IP Stresser</span>
@@ -40,8 +34,8 @@ include __DIR__ . '/includes/sidebar.php';
         <!-- Stats row -->
         <div class="grid grid-cols-3 gap-4 max-w-lg mx-auto">
             <div class="hero-stat">
-                <span class="hero-stat-value">10<span class="text-blue-400">Gbps</span></span>
-                <span class="hero-stat-label">Network Power</span>
+                <span class="hero-stat-value text-blue-400" style="font-size:1.1rem;padding-top:4px">Best</span>
+                <span class="hero-stat-label">Bypasses</span>
             </div>
             <div class="hero-stat">
                 <span class="hero-stat-value">99.9<span class="text-blue-400">%</span></span>
@@ -147,76 +141,6 @@ include __DIR__ . '/includes/sidebar.php';
             <span><i class="fab fa-ethereum mr-1 text-purple-400"></i>Ethereum</span>
             <span><i class="fas fa-coins mr-1 text-gray-400"></i>Litecoin</span>
             <span><i class="fas fa-shield-alt mr-1 text-orange-400"></i>Monero</span>
-        </div>
-    </div>
-</section>
-
-<!-- Methods Section -->
-<section class="py-24 px-4">
-    <div class="max-w-5xl mx-auto">
-        <div class="section-label">Methods</div>
-        <h2 class="section-title">Attack Vectors</h2>
-        <p class="section-sub">Choose from a wide range of Layer 4 and Layer 7 attack methods.</p>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-14">
-            <!-- Layer 7 -->
-            <div class="method-group">
-                <div class="method-group-header">
-                    <div class="method-group-icon bg-green-400/10 text-green-400">
-                        <i class="fas fa-globe"></i>
-                    </div>
-                    <span class="text-white font-semibold">Layer 7 &mdash; Application</span>
-                </div>
-                <div class="space-y-3">
-                    <?php
-                    $l7 = [
-                        ['name' => 'HTTP-GET',  'desc' => 'HTTP GET Flood',         'premium' => false],
-                        ['name' => 'HTTP-POST', 'desc' => 'HTTP POST Flood',        'premium' => false],
-                        ['name' => 'HTTP-OVH',  'desc' => 'Bypass OVH Protection',  'premium' => true],
-                    ];
-                    foreach ($l7 as $m): ?>
-                    <div class="method-card">
-                        <div class="flex items-center gap-2">
-                            <span class="text-white font-mono font-semibold text-sm"><?= $m['name'] ?></span>
-                            <?php if ($m['premium']): ?>
-                            <span class="badge badge-premium">Premium</span>
-                            <?php endif; ?>
-                        </div>
-                        <p class="text-gray-500 text-xs mt-0.5"><?= $m['desc'] ?></p>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-
-            <!-- Layer 4 -->
-            <div class="method-group">
-                <div class="method-group-header">
-                    <div class="method-group-icon bg-blue-400/10 text-blue-400">
-                        <i class="fas fa-network-wired"></i>
-                    </div>
-                    <span class="text-white font-semibold">Layer 4 &mdash; Transport</span>
-                </div>
-                <div class="space-y-3">
-                    <?php
-                    $l4 = [
-                        ['name' => 'TCP-FLOOD', 'desc' => 'TCP SYN Flood',      'premium' => false],
-                        ['name' => 'UDP-FLOOD', 'desc' => 'UDP Flood Attack',   'premium' => false],
-                        ['name' => 'SYN-FLOOD', 'desc' => 'SYN Flood Attack',   'premium' => true],
-                        ['name' => 'DNS-AMP',   'desc' => 'DNS Amplification',  'premium' => true],
-                    ];
-                    foreach ($l4 as $m): ?>
-                    <div class="method-card">
-                        <div class="flex items-center gap-2">
-                            <span class="text-white font-mono font-semibold text-sm"><?= $m['name'] ?></span>
-                            <?php if ($m['premium']): ?>
-                            <span class="badge badge-premium">Premium</span>
-                            <?php endif; ?>
-                        </div>
-                        <p class="text-gray-500 text-xs mt-0.5"><?= $m['desc'] ?></p>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
         </div>
     </div>
 </section>

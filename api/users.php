@@ -28,7 +28,6 @@ if (in_array($method_req, ['POST', 'PUT', 'DELETE'])) {
 
 if ($method_req === 'POST') {
     $username = $_POST['username'] ?? '';
-    $email = $_POST['email'] ?? '';
     $password = $_POST['password'] ?? '';
     $plan = $_POST['plan'] ?? 'Starter';
     $role = $_POST['role'] ?? 'user';
@@ -36,8 +35,8 @@ if ($method_req === 'POST') {
     $max_seconds = intval($_POST['max_seconds'] ?? 60);
     $expiration_date = $_POST['expiration_date'] ?? null;
     
-    if (empty($username) || empty($email) || empty($password)) {
-        json_error('Username, email, and password are required');
+    if (empty($username) || empty($password)) {
+        json_error('Username and password are required');
     }
 
     // Validate username (#10)
@@ -46,9 +45,6 @@ if ($method_req === 'POST') {
     }
     if (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
         json_error('Username can only contain letters, numbers, and underscores');
-    }
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        json_error('Invalid email address');
     }
     if (strlen($password) < 6) {
         json_error('Password must be at least 6 characters');
@@ -60,7 +56,6 @@ if ($method_req === 'POST') {
     // Check duplicates
     foreach ($users as $u) {
         if ($u['username'] === $username) json_error('Username already exists');
-        if ($u['email'] === $email) json_error('Email already exists');
     }
     
     // Auto-sync plan limits (#17)
@@ -73,7 +68,6 @@ if ($method_req === 'POST') {
     $new_user = [
         'id' => generate_id(),
         'username' => $username,
-        'email' => $email,
         'password' => password_hash($password, PASSWORD_BCRYPT),
         'plan' => $plan,
         'role' => $role,
@@ -116,17 +110,6 @@ if ($method_req === 'PUT') {
             }
         }
     }
-    if (isset($input['email'])) {
-        if (!filter_var($input['email'], FILTER_VALIDATE_EMAIL)) {
-            json_error('Invalid email address');
-        }
-        // Uniqueness check (exclude the user being edited)
-        foreach ($users as $u) {
-            if ($u['id'] !== $id && $u['email'] === $input['email']) {
-                json_error('Email already exists');
-            }
-        }
-    }
     if (isset($input['rule']) && !in_array($input['rule'], ['user', 'admin'], true)) {
         json_error('Invalid role');
     }
@@ -134,7 +117,6 @@ if ($method_req === 'PUT') {
     foreach ($users as &$u) {
         if ($u['id'] === $id) {
             if (isset($input['username'])) $u['username'] = $input['username'];
-            if (isset($input['email'])) $u['email'] = $input['email'];
             if (!empty($input['password'])) $u['password'] = password_hash($input['password'], PASSWORD_BCRYPT);
             // Accept both 'role' (new) and 'rule' (legacy) keys; 'role' takes precedence
             $new_role = $input['role'] ?? $input['rule'] ?? null;

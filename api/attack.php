@@ -221,8 +221,8 @@ function find_server_for_attack($method, $layer) {
     foreach ($servers as $server) {
         if (empty($server['enabled'])) continue;
         // Check layer compatibility
-        $srv_layer = $server['layer'] ?? 'Both';
-        if ($srv_layer !== 'Both' && $srv_layer !== $layer) continue;
+        $srv_layer = $server['layer'] ?? 'Layer4';
+        if ($srv_layer !== $layer) continue;
         // Empty methods list = server accepts all methods
         $srv_methods = $server['methods'] ?? [];
         if (!empty($srv_methods) && !in_array($method, $srv_methods, true)) continue;
@@ -245,8 +245,6 @@ function dispatch_to_server($server, $attack) {
         '{port}'        => urlencode((string)$attack['port']),
         '{time}'        => urlencode((string)$attack['time']),
         '{method}'      => urlencode($attack['method']),
-        '{apikey}'      => urlencode($server['api_key'] ?? ''),
-        '{key}'         => urlencode($server['api_key'] ?? ''),
         '{concurrents}' => urlencode((string)$attack['concurrents']),
     ];
     $url = str_replace(array_keys($replacements), array_values($replacements), $url);
