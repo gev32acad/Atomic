@@ -99,8 +99,8 @@ include __DIR__ . '/includes/sidebar.php';
 
         <div class="grid lg:grid-cols-2 gap-5">
 
-            <!-- Send Form -->
-            <div class="bg-panel border border-gray-700/50 rounded-2xl p-6">
+            <!-- Send Form (order-2 on mobile = shown second; order-1 on desktop = shown left) -->
+            <div class="bg-panel border border-gray-700/50 rounded-2xl p-6 order-2 lg:order-1">
                 <h2 class="text-base font-bold text-white mb-5 flex items-center gap-2">
                     <i class="fas fa-crosshairs text-<?= $accent ?>-400"></i> Send Attack
                 </h2>
@@ -160,6 +160,16 @@ include __DIR__ . '/includes/sidebar.php';
                     <button type="submit" class="launch-btn <?= $is_starter ? 'launch-btn-green' : '' ?>">
                         <i class="fas fa-bolt mr-2"></i>Launch Attack
                     </button>
+                    <div class="mt-3">
+                        <button type="button" onclick="toggleScheduleL4()" class="text-xs text-gray-600 hover:text-blue-400 flex items-center gap-1 transition">
+                            <i class="fas fa-calendar-alt"></i> Schedule for later
+                        </button>
+                        <div id="schedule-l4" class="hidden mt-2">
+                            <label class="form-label">Scheduled Launch Time</label>
+                            <input type="datetime-local" name="scheduled_at" class="form-input"
+                                min="<?= date('Y-m-d\TH:i') ?>">
+                        </div>
+                    </div>
                 </form>
 
                 <!-- Layer 7 Form -->
@@ -205,6 +215,16 @@ include __DIR__ . '/includes/sidebar.php';
                     <button type="submit" class="launch-btn <?= $is_starter ? 'launch-btn-green' : '' ?>">
                         <i class="fas fa-bolt mr-2"></i>Launch Attack
                     </button>
+                    <div class="mt-3">
+                        <button type="button" onclick="toggleScheduleL7()" class="text-xs text-gray-600 hover:text-blue-400 flex items-center gap-1 transition">
+                            <i class="fas fa-calendar-alt"></i> Schedule for later
+                        </button>
+                        <div id="schedule-l7" class="hidden mt-2">
+                            <label class="form-label">Scheduled Launch Time</label>
+                            <input type="datetime-local" name="scheduled_at" class="form-input"
+                                min="<?= date('Y-m-d\TH:i') ?>">
+                        </div>
+                    </div>
                 </form>
 
                 <?php if ($is_starter): ?>
@@ -222,15 +242,15 @@ include __DIR__ . '/includes/sidebar.php';
                 <?php endif; ?>
             </div>
 
-            <!-- Running Attacks -->
-            <div class="bg-panel border border-gray-700/50 rounded-2xl p-6 flex flex-col">
+            <!-- Running Attacks (order-1 on mobile = shown first; order-2 on desktop = shown right) -->
+            <div class="bg-panel border border-gray-700/50 rounded-2xl p-6 flex flex-col order-1 lg:order-2">
                 <div class="flex items-center justify-between mb-5">
                     <h2 class="text-base font-bold text-white flex items-center gap-2.5">
                         <span id="attack-pulse" class="status-dot status-idle"></span>
                         Running
                     </h2>
                     <span class="text-xs text-gray-600 flex items-center gap-1">
-                        <i class="fas fa-sync-alt text-xs"></i> 5s refresh
+                        <i class="fas fa-sync-alt text-xs"></i> Live
                     </span>
                 </div>
                 <div id="attack-logs" class="space-y-3 flex-1">
@@ -251,6 +271,30 @@ include __DIR__ . '/includes/sidebar.php';
             </div>
 
         </div>
+
+        <!-- Quick Launch Favorites -->
+        <div id="favorites-section" class="mt-5 bg-panel border border-gray-700/50 rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-semibold text-gray-300 flex items-center gap-2">
+                    <i class="fas fa-star text-yellow-400"></i> Favorites
+                </h3>
+                <button onclick="saveFavoriteFromForm()" class="text-xs text-gray-500 hover:text-yellow-400 flex items-center gap-1 transition">
+                    <i class="fas fa-plus"></i> Save current
+                </button>
+            </div>
+            <div id="favorites-list" class="flex flex-wrap gap-2">
+                <p class="text-gray-600 text-xs">No favorites yet. Fill in the form and click "Save current" to add one.</p>
+            </div>
+        </div>
+
+        <!-- Scheduled Attacks -->
+        <div id="scheduled-section" class="hidden mt-5 bg-panel border border-yellow-700/30 rounded-2xl p-5">
+            <h3 class="text-sm font-semibold text-yellow-300 flex items-center gap-2 mb-3">
+                <i class="fas fa-calendar-alt"></i> Scheduled Attacks
+            </h3>
+            <div id="scheduled-list" class="space-y-2"></div>
+        </div>
+
     </div>
 </div>
 
@@ -408,6 +452,17 @@ function escapeHtml(text) {
     return d.innerHTML;
 }
 
+// Manual poll fallback (also called after stop for immediate refresh)
+async function loadAttacks() {
+    try {
+        const res = await fetch('api/attack.php');
+        const attacks = await res.json();
+        updateAttackDisplay(attacks);
+    } catch (err) {
+        console.error('Failed to load attacks:', err);
+    }
+}
+
 async function stopAttack(id) {
     const btn = document.querySelector(`#card-${id} .stop-btn`);
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
@@ -421,6 +476,7 @@ async function stopAttack(id) {
             showToast('Attack stopped', 'success');
             clearInterval(attackTimers[id]);
             delete attackTimers[id];
+            // SSE will pick up the change within 1s; also trigger immediate poll
             loadAttacks();
         } else {
             showToast('Failed to stop attack', 'error');
@@ -441,8 +497,10 @@ async function stopAttack(id) {
             const res = await fetch('api/attack.php', { method: 'POST', body: new FormData(this) });
             const data = await res.json();
             if (res.ok) {
-                showToast('Attack launched!', 'success');
-                loadAttacks();
+                const msg = data.attack?.status === 'scheduled' ? 'Attack scheduled!' : 'Attack launched!';
+                showToast(msg, 'success');
+                if (data.attack?.status !== 'scheduled') loadAttacks();
+                else loadScheduled();
             } else {
                 showToast(data.detail || 'Failed to launch attack', 'error');
             }
@@ -454,9 +512,197 @@ async function stopAttack(id) {
     });
 });
 
+// =================== SCHEDULE TOGGLES ===================
+function toggleScheduleL4() {
+    document.getElementById('schedule-l4').classList.toggle('hidden');
+}
+function toggleScheduleL7() {
+    document.getElementById('schedule-l7').classList.toggle('hidden');
+}
+
+// =================== SCHEDULED ATTACKS ===================
+async function loadScheduled() {
+    try {
+        const res = await fetch('api/schedule.php');
+        const list = await res.json();
+        const container = document.getElementById('scheduled-list');
+        if (!container) return;
+        if (!list.length) {
+            container.innerHTML = '';
+            document.getElementById('scheduled-section')?.classList.add('hidden');
+            return;
+        }
+        document.getElementById('scheduled-section')?.classList.remove('hidden');
+        container.innerHTML = list.map(s => `
+            <div class="flex items-center justify-between bg-background border border-yellow-700/30 rounded-xl px-4 py-3">
+                <div>
+                    <p class="text-white text-sm font-mono">${escapeHtml(s.target)}</p>
+                    <p class="text-gray-500 text-xs">${escapeHtml(s.method)} · ${escapeHtml(s.layer)} · ${escapeHtml(String(s.time))}s</p>
+                    <p class="text-yellow-400 text-xs mt-0.5"><i class="fas fa-clock mr-1"></i>${new Date(s.scheduled_at).toLocaleString()}</p>
+                </div>
+                <button onclick="cancelScheduled('${escapeHtml(s.id)}')" class="text-gray-600 hover:text-red-400 transition text-sm" title="Cancel">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `).join('');
+    } catch (err) { /* silent */ }
+}
+
+async function cancelScheduled(id) {
+    const fd = new FormData();
+    fd.append('csrf_token', csrfToken);
+    const res = await fetch('api/schedule.php', {
+        method: 'DELETE',
+        headers: {'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken},
+        body: JSON.stringify({id})
+    });
+    if (res.ok) { showToast('Scheduled attack cancelled', 'success'); loadScheduled(); }
+}
+
+// =================== FAVORITES ===================
+async function loadFavorites() {
+    try {
+        const res = await fetch('api/favorites.php');
+        const favs = await res.json();
+        const container = document.getElementById('favorites-list');
+        if (!container) return;
+        if (!favs.length) {
+            container.innerHTML = '<p class="text-gray-600 text-xs">No favorites yet. Fill in the form and click "Save current" to add one.</p>';
+            return;
+        }
+        container.innerHTML = favs.map(f => `
+            <div class="flex items-center gap-1">
+                <button onclick="applyFavorite(${escapeHtml(JSON.stringify(f))})"
+                    class="flex items-center gap-1.5 bg-background border border-gray-700 hover:border-blue-500 text-gray-300 hover:text-white text-xs rounded-lg px-3 py-1.5 transition">
+                    <i class="fas fa-star text-yellow-400 text-xs"></i>
+                    ${escapeHtml(f.name)}
+                </button>
+                <button onclick="deleteFavorite('${escapeHtml(f.id)}')" class="text-gray-700 hover:text-red-400 transition text-xs" title="Remove">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `).join('');
+    } catch (err) { /* silent */ }
+}
+
+function applyFavorite(f) {
+    if (f.layer === 'Layer7') {
+        switchLayer('l7');
+        const form = document.getElementById('l7-form');
+        if (form.querySelector('[name=target]')) form.querySelector('[name=target]').value = f.target || '';
+        if (form.querySelector('[name=port]'))   form.querySelector('[name=port]').value   = f.port || 64;
+        if (form.querySelector('[name=time]'))   form.querySelector('[name=time]').value   = f.time || 30;
+        const methSel = document.getElementById('l7-methods');
+        if (methSel) for (let o of methSel.options) if (o.value === f.method) { methSel.value = f.method; break; }
+        const rangeEl = form.querySelector('[name=concurrents]');
+        if (rangeEl) { rangeEl.value = f.concurrents || 1; document.getElementById('l7-conc-val').textContent = rangeEl.value; }
+    } else {
+        switchLayer('l4');
+        const form = document.getElementById('l4-form');
+        if (form.querySelector('[name=target]')) form.querySelector('[name=target]').value = f.target || '';
+        if (form.querySelector('[name=port]'))   form.querySelector('[name=port]').value   = f.port || 80;
+        if (form.querySelector('[name=time]'))   form.querySelector('[name=time]').value   = f.time || 30;
+        const methSel = document.getElementById('l4-methods');
+        if (methSel) for (let o of methSel.options) if (o.value === f.method) { methSel.value = f.method; break; }
+        const rangeEl = form.querySelector('[name=concurrents]');
+        if (rangeEl) { rangeEl.value = f.concurrents || 1; document.getElementById('l4-conc-val').textContent = rangeEl.value; }
+    }
+}
+
+async function saveFavoriteFromForm() {
+    const activeForm = document.getElementById('l7-form').classList.contains('hidden')
+        ? document.getElementById('l4-form') : document.getElementById('l7-form');
+    const layer    = activeForm.querySelector('[name=layer]')?.value || 'Layer4';
+    const target   = activeForm.querySelector('[name=target]')?.value?.trim();
+    const port     = activeForm.querySelector('[name=port]')?.value;
+    const time     = activeForm.querySelector('[name=time]')?.value;
+    const method   = layer === 'Layer4'
+        ? document.getElementById('l4-methods')?.value
+        : document.getElementById('l7-methods')?.value;
+    const concurrents = activeForm.querySelector('[name=concurrents]')?.value || 1;
+
+    if (!target) { showToast('Enter a target first', 'error'); return; }
+
+    const name = prompt('Name for this favorite:', target);
+    if (!name) return;
+
+    const fd = new FormData();
+    fd.append('csrf_token', csrfToken);
+    fd.append('name', name);
+    fd.append('target', target);
+    fd.append('port', port || 80);
+    fd.append('method', method || '');
+    fd.append('layer', layer);
+    fd.append('time', time || 30);
+    fd.append('concurrents', concurrents);
+
+    const res = await fetch('api/favorites.php', { method: 'POST', body: fd });
+    if (res.ok) { showToast('Favorite saved!', 'success'); loadFavorites(); }
+    else { const d = await res.json(); showToast(d.detail || 'Failed to save', 'error'); }
+}
+
+async function deleteFavorite(id) {
+    const res = await fetch('api/favorites.php', {
+        method: 'DELETE',
+        headers: {'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken},
+        body: JSON.stringify({id})
+    });
+    if (res.ok) { showToast('Favorite removed', 'success'); loadFavorites(); }
+}
+
+// =================== SSE (Server-Sent Events) ===================
+let evtSource = null;
+
+function updateAttackDisplay(attacks) {
+    const container = document.getElementById('attack-logs');
+    const pulse = document.getElementById('attack-pulse');
+    const statEl = document.getElementById('stat-running');
+
+    if (statEl) statEl.textContent = attacks.length;
+
+    if (!attacks.length) {
+        clearAttackTimers();
+        if (pulse) pulse.className = 'status-dot status-idle';
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-14 text-center">
+                <i class="fas fa-satellite-dish text-3xl text-gray-700 mb-3"></i>
+                <p class="text-gray-600 text-sm">No active attacks</p>
+                <p class="text-gray-700 text-xs mt-1">Launch an attack to see it here.</p>
+            </div>`;
+        return;
+    }
+
+    if (pulse) pulse.className = 'status-dot status-live';
+
+    const currentIds = new Set(Object.keys(attackTimers));
+    const newIds     = new Set(attacks.map(a => a.id));
+    const idsChanged = [...newIds].some(id => !currentIds.has(id)) || [...currentIds].some(id => !newIds.has(id));
+
+    if (idsChanged) {
+        clearAttackTimers();
+        container.innerHTML = attacks.map(renderAttack).join('');
+        attacks.forEach(a => startAttackTimer(a.id, a.remaining, a.time));
+    }
+}
+
+function connectSSE() {
+    if (evtSource) { evtSource.close(); evtSource = null; }
+    evtSource = new EventSource('api/attacks-sse.php');
+
+    evtSource.onmessage = function(e) {
+        try { updateAttackDisplay(JSON.parse(e.data)); } catch(_) {}
+    };
+    evtSource.onerror = function() {
+        evtSource.close(); evtSource = null;
+        setTimeout(connectSSE, 3000);
+    };
+}
+
 loadMethods();
-loadAttacks();
-setInterval(loadAttacks, 5000);
+connectSSE();
+loadFavorites();
+loadScheduled();
+
 </script>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>

@@ -22,22 +22,33 @@ include __DIR__ . '/includes/sidebar.php';
                 <i class="fas fa-receipt"></i> Orders
                 <span id="orders-badge" class="hidden bg-yellow-500 text-black text-xs rounded-full px-1.5 py-0.5 font-bold"></span>
             </button>
+            <button onclick="switchAdminTab('attacks')" id="admin-tab-attacks" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition">
+                <i class="fas fa-history"></i> Attacks
+            </button>
             <button onclick="switchAdminTab('methods')" id="admin-tab-methods" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition">
                 <i class="fas fa-bomb"></i> Methods
             </button>
             <button onclick="switchAdminTab('servers')" id="admin-tab-servers" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition">
                 <i class="fas fa-server"></i> Servers
             </button>
+            <button onclick="switchAdminTab('blacklist')" id="admin-tab-blacklist" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition">
+                <i class="fas fa-ban"></i> Blacklist
+            </button>
         </div>
         
         <!-- Users Tab -->
         <div id="admin-users" class="admin-tab-content">
             <div class="bg-panel border border-gray-700/50 rounded-2xl p-6">
-                <div class="flex items-center justify-between mb-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                     <h3 class="text-lg font-semibold text-white">User Management</h3>
-                    <button onclick="showAddUserModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition text-sm">
-                        <i class="fas fa-plus mr-1"></i> Add User
-                    </button>
+                    <div class="flex gap-2">
+                        <input type="text" id="user-search" placeholder="Search users…"
+                            oninput="filterUsers(this.value)"
+                            class="bg-background border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-gray-300 placeholder-gray-600 focus:outline-none focus:border-blue-500 w-44">
+                        <button onclick="showAddUserModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition text-sm">
+                            <i class="fas fa-plus mr-1"></i> Add User
+                        </button>
+                    </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm text-left">
@@ -92,9 +103,12 @@ include __DIR__ . '/includes/sidebar.php';
         <!-- Orders Tab -->
         <div id="admin-orders" class="admin-tab-content hidden">
             <div class="bg-panel border border-gray-700/50 rounded-2xl p-6">
-                <div class="flex items-center justify-between mb-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                     <h3 class="text-lg font-semibold text-white">Order Management</h3>
-                    <div class="flex gap-2">
+                    <div class="flex flex-wrap gap-2 items-center">
+                        <input type="text" id="order-search" placeholder="Search user / plan…"
+                            oninput="filterOrdersSearch(this.value)"
+                            class="bg-background border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-gray-300 placeholder-gray-600 focus:outline-none focus:border-blue-500 w-44">
                         <button onclick="filterOrders('all')" id="order-filter-all" class="text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white transition">All</button>
                         <button onclick="filterOrders('pending')" id="order-filter-pending" class="text-xs px-3 py-1.5 rounded-lg bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition">Pending</button>
                         <button onclick="filterOrders('approved')" id="order-filter-approved" class="text-xs px-3 py-1.5 rounded-lg bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition">Approved</button>
@@ -109,13 +123,14 @@ include __DIR__ . '/includes/sidebar.php';
                                 <th class="px-4 py-3">User</th>
                                 <th class="px-4 py-3">Plan</th>
                                 <th class="px-4 py-3">Payment</th>
+                                <th class="px-4 py-3">TX Hash</th>
                                 <th class="px-4 py-3">Status</th>
                                 <th class="px-4 py-3">Date</th>
                                 <th class="px-4 py-3">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="orders-table" class="text-gray-300">
-                            <tr><td colspan="7" class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading orders...</td></tr>
+                            <tr><td colspan="8" class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading orders...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -187,6 +202,65 @@ include __DIR__ . '/includes/sidebar.php';
                 </div>
             </div>
         </div>
+
+        <!-- Attacks Tab -->
+        <div id="admin-attacks" class="admin-tab-content hidden">
+            <div class="bg-panel border border-gray-700/50 rounded-2xl p-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <h3 class="text-lg font-semibold text-white">All Attacks</h3>
+                    <input type="text" id="attacks-admin-search" placeholder="Search user / target / method…"
+                        oninput="filterAdminAttacks(this.value)"
+                        class="bg-background border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-gray-300 placeholder-gray-600 focus:outline-none focus:border-blue-500 w-60">
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-gray-400 border-b border-gray-700">
+                            <tr>
+                                <th class="px-4 py-3">User</th>
+                                <th class="px-4 py-3">Target</th>
+                                <th class="px-4 py-3">Method</th>
+                                <th class="px-4 py-3">Layer</th>
+                                <th class="px-4 py-3">Duration</th>
+                                <th class="px-4 py-3">Started</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-attacks-table" class="text-gray-300">
+                            <tr><td colspan="6" class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading attacks...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Blacklist Tab -->
+        <div id="admin-blacklist" class="admin-tab-content hidden">
+            <div class="bg-panel border border-gray-700/50 rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-white">IP/URL Blacklist</h3>
+                    <button onclick="showAddBlacklistModal()" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded-lg transition text-sm">
+                        <i class="fas fa-plus mr-1"></i> Add Entry
+                    </button>
+                </div>
+                <p class="text-gray-500 text-xs mb-4">Targets on this list cannot be attacked from any account.</p>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-gray-400 border-b border-gray-700">
+                            <tr>
+                                <th class="px-4 py-3">Type</th>
+                                <th class="px-4 py-3">Value</th>
+                                <th class="px-4 py-3">Note</th>
+                                <th class="px-4 py-3">Added</th>
+                                <th class="px-4 py-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="blacklist-table" class="text-gray-300">
+                            <tr><td colspan="5" class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading blacklist...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
