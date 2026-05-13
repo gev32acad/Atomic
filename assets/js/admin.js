@@ -225,7 +225,7 @@ async function loadPlans() {
         });
     } catch (err) {
         console.error('Failed to load plans:', err);
-        document.getElementById('plans-table').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-red-400">Failed to load plans</td></tr>';
+        document.getElementById('plans-table').innerHTML = '<tr><td colspan="8" class="text-center py-8 text-red-400">Failed to load plans</td></tr>';
     }
 }
 

@@ -20,7 +20,12 @@ function showToast(message, type = 'info') {
         info: '<i class="fas fa-info-circle"></i>'
     };
     
-    toast.innerHTML = `${icons[type] || icons.info} <span>${message}</span>`;
+    const iconEl = document.createElement('span');
+    iconEl.innerHTML = icons[type] || icons.info;
+    const msgEl = document.createElement('span');
+    msgEl.textContent = message;
+    toast.appendChild(iconEl);
+    toast.appendChild(msgEl);
     container.appendChild(toast);
     
     setTimeout(() => {

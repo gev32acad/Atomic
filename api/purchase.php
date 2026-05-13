@@ -30,6 +30,7 @@ if ($method_req === 'POST') {
     $plan_id = $_POST['plan_id'] ?? '';
     $crypto  = strtoupper(trim($_POST['crypto'] ?? ''));
     $amount  = $_POST['amount'] ?? '';
+    $tx_hash = trim($_POST['tx_hash'] ?? '');
 
     if (empty($plan_id) || empty($crypto) || empty($amount)) {
         json_error('plan_id, crypto and amount are required');
@@ -39,6 +40,10 @@ if ($method_req === 'POST') {
         json_error('Amount must be a positive number (max 1,000,000)');
     }
     $amount = floatval($amount);
+
+    if (!empty($tx_hash) && !preg_match('/^[a-fA-F0-9x]{10,200}$/', $tx_hash)) {
+        json_error('Invalid transaction hash format');
+    }
 
     $allowed_cryptos = ['BTC', 'ETH', 'LTC', 'XMR'];
     if (!in_array($crypto, $allowed_cryptos)) {
@@ -63,7 +68,7 @@ if ($method_req === 'POST') {
     }
 
     // Server-side amount validation – verify amount is plausible for plan price (#9)
-    $rates = CRYPTO_RATES;
+    $rates = get_crypto_rates();
     if (isset($rates[$crypto]) && $rates[$crypto] > 0) {
         $expected_amount = $plan['price'] / $rates[$crypto];
         $tolerance = 0.25; // 25% tolerance to account for rate fluctuations
@@ -93,6 +98,7 @@ if ($method_req === 'POST') {
         'price_usd'   => $plan['price'],
         'crypto'      => $crypto,
         'amount'      => $amount,
+        'tx_hash'     => $tx_hash,
         'status'      => 'pending',
         'created_at'  => date('c'),
         'updated_at'  => date('c'),

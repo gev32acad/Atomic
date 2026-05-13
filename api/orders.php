@@ -66,18 +66,31 @@ if ($method_req === 'PUT') {
         }
 
         if ($plan) {
-            $users = read_json('users.json');
-            foreach ($users as &$u) {
-                if ($u['id'] === $order['user_id']) {
-                    $duration_days = isset($plan['duration_days']) ? intval($plan['duration_days']) : 30;
-                    $u['plan']             = $plan['name'];
-                    $u['max_concurrents']  = $plan['max_concurrents'];
-                    $u['max_seconds']      = $plan['max_seconds'];
-                    $u['expiration_date']  = date('c', strtotime("+{$duration_days} days"));
-                    break;
+            $users_path = DATA_DIR . 'users.json';
+            $ufp = @fopen($users_path, 'c+');
+            if ($ufp) {
+                flock($ufp, LOCK_EX);
+                $uc = '';
+                while (!feof($ufp)) $uc .= fread($ufp, 8192);
+                $users = json_decode($uc, true) ?: [];
+                foreach ($users as &$u) {
+                    if ($u['id'] === $order['user_id']) {
+                        $duration_days = isset($plan['duration_days']) ? intval($plan['duration_days']) : 30;
+                        $u['plan']            = $plan['name'];
+                        $u['max_concurrents'] = $plan['max_concurrents'];
+                        $u['max_seconds']     = $plan['max_seconds'];
+                        $u['expiration_date'] = date('c', strtotime("+{$duration_days} days"));
+                        break;
+                    }
                 }
+                unset($u);
+                ftruncate($ufp, 0);
+                rewind($ufp);
+                fwrite($ufp, json_encode($users, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+                fflush($ufp);
+                flock($ufp, LOCK_UN);
+                fclose($ufp);
             }
-            write_json('users.json', $users);
         }
     }
 

@@ -33,7 +33,8 @@
     "max_seconds": 300,
     "min_seconds": 10,
     "premium": true,
-    "api_access": true
+    "api_access": true,
+    "popular": true
   },
   {
     "id": "4",

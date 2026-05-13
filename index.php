@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
+$page_title = 'Home';
 include __DIR__ . '/includes/header.php';
 include __DIR__ . '/includes/sidebar.php';
 ?>
@@ -90,7 +91,7 @@ include __DIR__ . '/includes/sidebar.php';
             $plans_data = read_json('plans.json');
             foreach ($plans_data as $plan):
                 $is_free = $plan['price'] == 0;
-                $popular = !empty($plan['premium']) && $plan['name'] === 'Advanced';
+                $popular = !empty($plan['popular']);
             ?>
             <div class="pricing-card <?= $popular ? 'pricing-card-popular' : '' ?> flex flex-col">
                 <?php if ($popular): ?>

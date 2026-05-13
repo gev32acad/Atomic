@@ -8,6 +8,7 @@ $max_s = $user['max_seconds'];
 $max_c = $user['max_concurrents'];
 $max_dur_label = $max_s >= 3600 ? floor($max_s/3600).'h' : $max_s.'s';
 $accent = $is_starter ? 'green' : 'blue';
+$page_title = 'Hub';
 include __DIR__ . '/includes/header.php';
 include __DIR__ . '/includes/sidebar.php';
 ?>

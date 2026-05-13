@@ -47,16 +47,11 @@ $response = [
     'attacks_last_7_days' => $days,
 ];
 
-// Restrict sensitive platform stats to admins only (#11)
-if ($user['role'] === 'admin') {
-    $users = read_json('users.json');
-    $response['registered_users'] = count($users);
-    $response['paid_users'] = count(array_filter($users, function($u) {
-        return ($u['plan'] ?? 'Starter') !== 'Starter';
-    }));
-} else {
-    $response['registered_users'] = null;
-    $response['paid_users'] = null;
-}
+// Stats visible to all authenticated users
+$users = read_json('users.json');
+$response['registered_users'] = count($users);
+$response['paid_users'] = count(array_filter($users, function($u) {
+    return ($u['plan'] ?? 'Starter') !== 'Starter';
+}));
 
 json_response($response);

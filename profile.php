@@ -1,13 +1,22 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
 $user = require_auth();
+$page_title = 'Profile';
 include __DIR__ . '/includes/header.php';
 include __DIR__ . '/includes/sidebar.php';
 
-$avatar = strtoupper(implode('', array_map(function($n) { return $n[0] ?? ''; }, explode(' ', $user['username']))));
+$avatar = strtoupper(implode('', array_map(function($n) { return isset($n[0]) ? $n[0] : ''; }, preg_split('/[\s_]+/', $user['username']))));
 $join_date = date('M j, Y', strtotime($user['join_date']));
-$max_hours = floor($user['max_seconds'] / 3600);
-$max_minutes = floor(($user['max_seconds'] % 3600) / 60);
+$s = $user['max_seconds'];
+if ($s < 60) {
+    $dur_display = $s . 's';
+} elseif ($s < 3600) {
+    $dur_display = floor($s / 60) . 'm';
+} else {
+    $h = floor($s / 3600);
+    $m = floor(($s % 3600) / 60);
+    $dur_display = $h . 'h' . ($m > 0 ? ' ' . $m . 'm' : '');
+}
 $exp_date = $user['expiration_date'] ? date('M j, Y', strtotime($user['expiration_date'])) : 'No expiration';
 ?>
 
@@ -62,7 +71,7 @@ $exp_date = $user['expiration_date'] ? date('M j, Y', strtotime($user['expiratio
             </div>
             <div class="bg-panel border border-gray-600 rounded-lg p-4">
                 <p class="text-sm text-gray-400">Max Duration</p>
-                <p class="text-white font-semibold"><?= $max_hours ?>h <?= $max_minutes ?>m</p>
+                <p class="text-white font-semibold"><?= htmlspecialchars($dur_display) ?></p>
             </div>
             <div class="bg-panel border border-gray-600 rounded-lg p-4">
                 <p class="text-sm text-gray-400">Expires On</p>

@@ -10,8 +10,9 @@ $admin = $logged_in && $user['role'] === 'admin';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?= htmlspecialchars(generate_csrf_token()) ?>">
-    <title><?= SITE_NAME ?></title>
+    <title><?= isset($page_title) ? htmlspecialchars($page_title) . ' – ' . SITE_NAME : SITE_NAME ?></title>
     <link rel="icon" href="assets/imagens/logo.png">
+    <meta property="og:image" content="assets/imagens/logo2.jpg">
     <link href="assets/css/style.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>

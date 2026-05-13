@@ -12,6 +12,9 @@ if (!$user) {
 $method_req = $_SERVER['REQUEST_METHOD'];
 
 if ($method_req === 'GET') {
+    // Process any due scheduled attacks for this user
+    process_due_scheduled_attacks($user);
+
     // Get running attacks for current user
     $attacks = read_json('attacks.json');
     $now = time();
@@ -45,16 +48,30 @@ if ($method_req === 'POST') {
         if (empty($attack_id)) {
             json_error('Attack ID is required');
         }
-        
-        $attacks = read_json('attacks.json');
+
+        $attacks_path = DATA_DIR . 'attacks.json';
+        $fp = @fopen($attacks_path, 'c+');
+        if (!$fp) json_error('Server error: could not open attacks file', 500);
+        flock($fp, LOCK_EX);
+        $content = '';
+        while (!feof($fp)) $content .= fread($fp, 8192);
+        $attacks = json_decode($content, true) ?: [];
+
         foreach ($attacks as &$attack) {
             if ($attack['id'] === $attack_id && $attack['user_id'] === $user['id']) {
-                $attack['time'] = 0; // Set time to 0 to mark as stopped
+                $attack['time'] = 0; // Mark as stopped
                 break;
             }
         }
         unset($attack);
-        write_json('attacks.json', $attacks);
+
+        ftruncate($fp, 0);
+        rewind($fp);
+        fwrite($fp, json_encode($attacks, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        fflush($fp);
+        flock($fp, LOCK_UN);
+        fclose($fp);
+
         json_response(['message' => 'Attack stopped']);
     }
     
@@ -65,6 +82,7 @@ if ($method_req === 'POST') {
     $method = $_POST['method'] ?? '';
     $concurrents = intval($_POST['concurrents'] ?? 1);
     $layer = $_POST['layer'] ?? 'Layer4';
+    $scheduled_at = trim($_POST['scheduled_at'] ?? '');
     
     if (!in_array($layer, ['Layer4', 'Layer7'], true)) {
         json_error('Invalid layer. Must be Layer4 or Layer7');
@@ -154,19 +172,50 @@ if ($method_req === 'POST') {
     }
     
     $new_attack = [
-        'id' => generate_id(),
-        'user_id' => $user['id'],
-        'target' => $target,
-        'port' => $port,
-        'time' => $time,
-        'method' => $method,
+        'id'          => generate_id(),
+        'user_id'     => $user['id'],
+        'target'      => $target,
+        'port'        => $port_num,   // stored as integer (Bug 14)
+        'time'        => $time,
+        'method'      => $method,
         'concurrents' => $concurrents,
-        'layer' => $layer,
-        'start_time' => date('c'),
-        'status' => 'running',
-        'server_id' => null,
+        'layer'       => $layer,
+        'start_time'  => date('c'),
+        'status'      => 'running',
+        'server_id'   => null,
         'server_response' => null
     ];
+
+    // Handle scheduled attacks (Feature P)
+    if (!empty($scheduled_at)) {
+        $scheduled_ts = strtotime($scheduled_at);
+        if ($scheduled_ts !== false && $scheduled_ts > time()) {
+            // Store as a scheduled (pending) attack
+            flock($fp, LOCK_UN);
+            fclose($fp);
+
+            $new_attack['status']       = 'scheduled';
+            $new_attack['scheduled_at'] = date('c', $scheduled_ts);
+            unset($new_attack['start_time']); // will be set when launched
+
+            $sched_path = DATA_DIR . 'scheduled.json';
+            $sfp = @fopen($sched_path, 'c+');
+            if ($sfp) {
+                flock($sfp, LOCK_EX);
+                $sc = '';
+                while (!feof($sfp)) $sc .= fread($sfp, 8192);
+                $scheduled = json_decode($sc, true) ?: [];
+                $scheduled[] = $new_attack;
+                ftruncate($sfp, 0);
+                rewind($sfp);
+                fwrite($sfp, json_encode($scheduled, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+                fflush($sfp);
+                flock($sfp, LOCK_UN);
+                fclose($sfp);
+            }
+            json_response(['message' => 'Attack scheduled', 'attack' => $new_attack], 201);
+        }
+    }
 
     $attacks[] = $new_attack;
 
@@ -298,7 +347,7 @@ function dispatch_to_server($server, $attack) {
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_TIMEOUT        => 10,
         CURLOPT_CONNECTTIMEOUT => 5,
-        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYPEER => VERIFY_BACKEND_SSL,
         CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_MAXREDIRS      => 3,
         CURLOPT_USERAGENT      => 'NetStress/1.0',
@@ -314,4 +363,66 @@ function dispatch_to_server($server, $attack) {
         'response'    => (string)$response,
         'error'       => $error,
     ];
+}
+
+// =================== Scheduled Attack Processor ===================
+
+function process_due_scheduled_attacks($user) {
+    $sched_path = DATA_DIR . 'scheduled.json';
+    if (!file_exists($sched_path)) return;
+
+    $sfp = @fopen($sched_path, 'c+');
+    if (!$sfp) return;
+    flock($sfp, LOCK_EX);
+
+    $content = '';
+    while (!feof($sfp)) $content .= fread($sfp, 8192);
+    $scheduled = json_decode($content, true) ?: [];
+
+    $now     = time();
+    $to_run  = [];
+    $remaining_scheduled = [];
+
+    foreach ($scheduled as $s) {
+        if (($s['user_id'] ?? '') !== $user['id']) {
+            $remaining_scheduled[] = $s;
+            continue;
+        }
+        $ts = isset($s['scheduled_at']) ? strtotime($s['scheduled_at']) : 0;
+        if ($ts <= $now && ($s['status'] ?? '') === 'scheduled') {
+            $s['status']     = 'running';
+            $s['start_time'] = date('c');
+            unset($s['scheduled_at']);
+            $to_run[] = $s;
+        } else {
+            $remaining_scheduled[] = $s;
+        }
+    }
+
+    ftruncate($sfp, 0);
+    rewind($sfp);
+    fwrite($sfp, json_encode($remaining_scheduled, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    fflush($sfp);
+    flock($sfp, LOCK_UN);
+    fclose($sfp);
+
+    if (empty($to_run)) return;
+
+    // Append the now-due attacks to attacks.json
+    $atk_path = DATA_DIR . 'attacks.json';
+    $afp = @fopen($atk_path, 'c+');
+    if (!$afp) return;
+    flock($afp, LOCK_EX);
+    $ac = '';
+    while (!feof($afp)) $ac .= fread($afp, 8192);
+    $attacks = json_decode($ac, true) ?: [];
+    foreach ($to_run as $a) {
+        $attacks[] = $a;
+    }
+    ftruncate($afp, 0);
+    rewind($afp);
+    fwrite($afp, json_encode($attacks, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    fflush($afp);
+    flock($afp, LOCK_UN);
+    fclose($afp);
 }

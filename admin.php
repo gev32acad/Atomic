@@ -2,6 +2,7 @@
 require_once __DIR__ . '/includes/auth.php';
 $user = require_admin();
 $csrf_token = generate_csrf_token();
+$page_title = 'Admin Panel';
 include __DIR__ . '/includes/header.php';
 include __DIR__ . '/includes/sidebar.php';
 ?>
