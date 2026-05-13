@@ -705,6 +705,31 @@ async function checkServerStatus(id) {
     }
 }
 
+function createApiKeyField(value) {
+    const div = document.createElement('div');
+    div.innerHTML = `
+        <label class="block text-sm text-gray-400 mb-1">API Key (replaces {apikey})</label>
+        <div class="flex gap-2">
+            <input type="text" name="api_key" value="${escapeHtml(value)}"
+                class="flex-1 bg-background border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 font-mono text-xs"
+                placeholder="Enter or generate an API key">
+            <button type="button" onclick="generateServerApiKey(this)"
+                class="shrink-0 bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-xs transition flex items-center gap-1">
+                <i class="fas fa-sync-alt"></i> Generate
+            </button>
+        </div>
+    `;
+    return div;
+}
+
+function generateServerApiKey(btn) {
+    const input = btn.closest('div').querySelector('input[name="api_key"]');
+    if (!input) return;
+    const arr = new Uint8Array(16);
+    crypto.getRandomValues(arr);
+    input.value = Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 function showAddServerModal() {
     currentEditType = 'server-add';
     const fields = document.getElementById('modal-fields');
@@ -722,7 +747,7 @@ function showAddServerModal() {
 
     fields.appendChild(createField('Layer', 'layer', 'select', 'Layer4', {choices: ['Layer4', 'Layer7', 'Both']}));
     fields.appendChild(createField('Methods (comma-separated, empty = all)', 'methods', 'text', ''));
-    fields.appendChild(createField('API Key (replaces {apikey})', 'api_key', 'text', ''));
+    fields.appendChild(createApiKeyField(''));
     fields.appendChild(createField('Enabled', 'enabled', 'checkbox', true));
     openModal('Add Server');
 }
@@ -744,7 +769,7 @@ function editServer(server) {
 
     fields.appendChild(createField('Layer', 'layer', 'select', server.layer || 'Layer4', {choices: ['Layer4', 'Layer7', 'Both']}));
     fields.appendChild(createField('Methods (comma-separated, empty = all)', 'methods', 'text', (server.methods || []).join(', ')));
-    fields.appendChild(createField('API Key (replaces {apikey})', 'api_key', 'text', server.api_key || ''));
+    fields.appendChild(createApiKeyField(server.api_key || ''));
     fields.appendChild(createField('Enabled', 'enabled', 'checkbox', server.enabled));
     openModal('Edit Server');
 }
