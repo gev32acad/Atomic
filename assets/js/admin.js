@@ -750,7 +750,7 @@ async function getAdminMethods() {
 
 function createMethodsMultiSelect(allMethods, selectedMethods, layer) {
     const div = document.createElement('div');
-    const filterFn = m => layer === 'Layer4' ? m.layer4 : layer === 'Layer7' ? m.layer7 : true;
+    const filterFn = m => layer === 'Layer4' ? m.layer4 : m.layer7;
     const filtered = allMethods.filter(filterFn);
     const optionsHtml = filtered.map(m =>
         `<option value="${escapeHtml(m.name)}" ${selectedMethods.includes(m.name) ? 'selected' : ''}>${escapeHtml(m.name)}${m.premium ? ' ⭐' : ''}</option>`

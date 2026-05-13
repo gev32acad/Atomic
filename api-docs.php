@@ -4,7 +4,8 @@ $user = require_auth();
 include __DIR__ . '/includes/header.php';
 include __DIR__ . '/includes/sidebar.php';
 
-$api_link = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . rtrim(dirname($_SERVER['REQUEST_URI']), '/') . '/api';
+$host = preg_replace('/[^a-zA-Z0-9.\-:\[\]]/', '', $_SERVER['HTTP_HOST'] ?? '');
+$api_link = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $host . rtrim(dirname($_SERVER['REQUEST_URI']), '/') . '/api';
 ?>
 
 <div class="min-h-screen p-6 text-white">
