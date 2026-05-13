@@ -38,7 +38,7 @@ for ($i = 6; $i >= 0; $i--) {
 }
 
 json_response([
-    'active_servers' => 4,
+    'active_servers' => count(read_json('servers.json')),
     'total_attacks' => count($attacks),
     'running_attacks' => $running,
     'registered_users' => count($users),
