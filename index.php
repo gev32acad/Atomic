@@ -16,7 +16,7 @@ include __DIR__ . '/includes/sidebar.php';
     <div class="relative z-10 max-w-4xl mx-auto">
         <!-- Badge -->
         <div class="inline-flex items-center gap-2 bg-blue-600/10 border border-blue-500/30 text-blue-400 text-xs font-semibold px-4 py-1.5 rounded-full mb-6 uppercase tracking-widest">
-            <span class="status-dot status-live" style="width:7px;height:7px;"></span>
+            <span class="status-dot status-live status-dot-sm"></span>
             All systems operational
         </div>
 
