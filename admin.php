@@ -155,24 +155,32 @@ include __DIR__ . '/includes/sidebar.php';
         <div id="admin-servers" class="admin-tab-content hidden">
             <div class="bg-panel border border-gray-700/50 rounded-2xl p-6">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-white">Server Management</h3>
+                    <h3 class="text-lg font-semibold text-white">Backend Server Management</h3>
                     <button onclick="showAddServerModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition text-sm">
                         <i class="fas fa-plus mr-1"></i> Add Server
                     </button>
                 </div>
+                <p class="text-gray-500 text-xs mb-4">
+                    Add backend attack servers. The API URL supports placeholders:
+                    <code class="text-blue-400">{host}</code>, <code class="text-blue-400">{port}</code>,
+                    <code class="text-blue-400">{time}</code>, <code class="text-blue-400">{method}</code>,
+                    <code class="text-blue-400">{apikey}</code>, <code class="text-blue-400">{concurrents}</code>
+                </p>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm text-left">
                         <thead class="text-gray-400 border-b border-gray-700">
                             <tr>
                                 <th class="px-4 py-3">Name</th>
-                                <th class="px-4 py-3">URL</th>
                                 <th class="px-4 py-3">Layer</th>
                                 <th class="px-4 py-3">Methods</th>
+                                <th class="px-4 py-3">API URL</th>
+                                <th class="px-4 py-3">Enabled</th>
+                                <th class="px-4 py-3">Status</th>
                                 <th class="px-4 py-3">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="servers-table" class="text-gray-300">
-                            <tr><td colspan="5" class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading servers...</td></tr>
+                            <tr><td colspan="7" class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading servers...</td></tr>
                         </tbody>
                     </table>
                 </div>

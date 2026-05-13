@@ -2,7 +2,7 @@
 $current_page = basename($_SERVER['PHP_SELF'], '.php');
 $user = get_authenticated_user();
 $logged_in = $user !== null;
-$admin = $logged_in && $user['rule'] === 'admin';
+$admin = $logged_in && $user['role'] === 'admin';
 ?>
 <!DOCTYPE html>
 <html lang="en" class="dark">
@@ -43,11 +43,38 @@ $admin = $logged_in && $user['rule'] === 'admin';
             <!-- Brand -->
             <a href="index.php" class="flex items-center gap-2 shrink-0 min-w-0">
                 <img src="assets/imagens/logo.png" alt="Logo" class="w-8 h-8 shrink-0" onerror="this.style.display='none'">
-                <span class="text-base sm:text-lg font-bold text-white truncate">ATOMICSTRESSER</span>
+                <span class="text-base sm:text-lg font-bold text-white truncate">NETSTRESS.ME</span>
             </a>
+            <!-- Desktop nav links (shown when logged in) -->
+            <?php if ($logged_in): ?>
+            <nav class="hidden lg:flex items-center gap-1 flex-1 justify-center">
+                <?php
+                $header_nav = [
+                    ['href' => 'dashboard.php', 'icon' => 'fa-chart-line', 'label' => 'Dashboard', 'page' => 'dashboard'],
+                    ['href' => 'panel.php',     'icon' => 'fa-bolt',       'label' => 'Hub',       'page' => 'panel'],
+                    ['href' => 'history.php',   'icon' => 'fa-history',    'label' => 'History',   'page' => 'history'],
+                    ['href' => 'store.php',     'icon' => 'fa-shopping-cart','label' => 'Store',   'page' => 'store'],
+                    ['href' => 'api-docs.php',  'icon' => 'fa-code',       'label' => 'API',       'page' => 'api-docs'],
+                    ['href' => 'profile.php',   'icon' => 'fa-user',       'label' => 'Profile',   'page' => 'profile'],
+                ];
+                if ($admin) {
+                    $header_nav[] = ['href' => 'admin.php', 'icon' => 'fa-shield-alt', 'label' => 'Admin', 'page' => 'admin'];
+                }
+                foreach ($header_nav as $item):
+                    $active = $current_page === $item['page'];
+                    $cls = $active ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-700/50';
+                ?>
+                <a href="<?= htmlspecialchars($item['href']) ?>" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition <?= $cls ?>">
+                    <i class="fas <?= htmlspecialchars($item['icon']) ?> text-xs"></i>
+                    <?= htmlspecialchars($item['label']) ?>
+                </a>
+                <?php endforeach; ?>
+            </nav>
+            <?php endif; ?>
+
             <!-- Right actions -->
             <div class="flex items-center gap-3 shrink-0">
-                <a href="https://t.me/atomicstresser" target="_blank" class="text-gray-400 hover:text-blue-400 transition" title="Telegram Support">
+                <a href="https://t.me/netstressme" target="_blank" class="text-gray-400 hover:text-blue-400 transition" title="Telegram Support">
                     <i class="fab fa-telegram text-xl"></i>
                 </a>
                 <?php if ($logged_in): ?>

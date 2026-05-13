@@ -5,7 +5,7 @@ require_once __DIR__ . '/../includes/auth.php';
 header('Content-Type: application/json');
 
 $user = get_authenticated_user();
-if (!$user || $user['rule'] !== 'admin') {
+if (!$user || $user['role'] !== 'admin') {
     json_error('Forbidden', 403);
 }
 
@@ -51,7 +51,7 @@ if ($method_req === 'PUT') {
     }
 
     $order['status']     = $action === 'approve' ? 'approved' : 'rejected';
-    $order['admin_note'] = htmlspecialchars($note, ENT_QUOTES, 'UTF-8');
+    $order['admin_note'] = $note;
     $order['updated_at'] = date('c');
 
     if ($action === 'approve') {

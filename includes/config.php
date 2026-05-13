@@ -2,8 +2,11 @@
 session_start();
 
 define('DATA_DIR', __DIR__ . '/../data/');
-define('SITE_NAME', 'AtomicStresser');
-define('TOKEN_SECRET', 'atomic_secret_key_change_me');
+define('SITE_NAME', 'NetStress');
+define('TOKEN_SECRET', 'a7f3c9e2b1d8f64ec3a2b9d7f5e38c1ab4d6f2e9c71a3b5d1f8e4c2a6b3d9f7');
+
+// Hardcoded crypto exchange rates (approximate USD values) - used server-side for amount validation
+define('CRYPTO_RATES', ['BTC' => 65000, 'ETH' => 3200, 'LTC' => 80, 'XMR' => 170]);
 
 // Crypto wallet addresses for payments
 define('CRYPTO_BTC_ADDRESS', '1A1zP1eP5QGefi2DMPTfTL5SLmv7Divf');
@@ -12,13 +15,23 @@ define('CRYPTO_LTC_ADDRESS', 'LaMT348PWRnrqeeWArpwQPbuanpXDZGEUz');
 define('CRYPTO_XMR_ADDRESS', '888tNkZrPN6JsEgekjMnABU4TBzc2Dt29EPAvkRDZVN');
 
 // Telegram support link
-define('TELEGRAM_LINK', 'https://t.me/atomicstresser');
+define('TELEGRAM_LINK', 'https://t.me/netstressme');
 
 
 
 // Rate limiting settings
 define('RATE_LIMIT_MAX_ATTEMPTS', 5);
 define('RATE_LIMIT_WINDOW', 900); // 15 minutes
+
+// =================== Security Headers ===================
+
+function send_security_headers() {
+    header('X-Frame-Options: DENY');
+    header('X-Content-Type-Options: nosniff');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data:; font-src 'self' https://cdnjs.cloudflare.com; connect-src 'self'; frame-ancestors 'none'");
+}
+send_security_headers();
 
 // Helper functions for JSON data
 function read_json($file) {
@@ -88,118 +101,87 @@ function verify_csrf_token() {
 
 function check_rate_limit($action, $identifier) {
     $rate_file = DATA_DIR . 'rate_limits.json';
-    $limits = [];
-    if (file_exists($rate_file)) {
-        $limits = json_decode(file_get_contents($rate_file), true) ?: [];
-    }
-    
     $key = $action . ':' . $identifier;
     $now = time();
-    
+
+    $fp = fopen($rate_file, 'c+');
+    if (!$fp) {
+        // If the lock file cannot be opened, deny the request to fail safely
+        return RATE_LIMIT_WINDOW;
+    }
+
+    flock($fp, LOCK_EX);
+
+    $content = '';
+    while (!feof($fp)) {
+        $content .= fread($fp, 8192);
+    }
+    $limits = json_decode($content, true) ?: [];
+
     // Clean up expired entries
     foreach ($limits as $k => $entries) {
-        $limits[$k] = array_filter($entries, function($timestamp) use ($now) {
+        $limits[$k] = array_values(array_filter($entries, function($timestamp) use ($now) {
             return ($now - $timestamp) < RATE_LIMIT_WINDOW;
-        });
+        }));
         if (empty($limits[$k])) {
             unset($limits[$k]);
         }
     }
-    
+
     // Check current count
     $attempts = $limits[$key] ?? [];
     if (count($attempts) >= RATE_LIMIT_MAX_ATTEMPTS) {
         $oldest = min($attempts);
         $retry_after = RATE_LIMIT_WINDOW - ($now - $oldest);
-        return $retry_after; // Return seconds until retry is allowed
+        flock($fp, LOCK_UN);
+        fclose($fp);
+        return $retry_after;
     }
-    
-    // Record this attempt
+
+    // Record this attempt and persist atomically
     $limits[$key][] = $now;
-    $write_result = file_put_contents($rate_file, json_encode($limits, JSON_PRETTY_PRINT), LOCK_EX);
-    if ($write_result === false) {
-        error_log("Failed to write rate limit file: $rate_file");
-    }
-    
+    ftruncate($fp, 0);
+    rewind($fp);
+    fwrite($fp, json_encode($limits, JSON_PRETTY_PRINT));
+    fflush($fp);
+    flock($fp, LOCK_UN);
+    fclose($fp);
+
     return false; // Not rate limited
 }
 
 function clear_rate_limit($action, $identifier) {
     $rate_file = DATA_DIR . 'rate_limits.json';
-    if (!file_exists($rate_file)) return;
-    $limits = json_decode(file_get_contents($rate_file), true) ?: [];
+
+    $fp = @fopen($rate_file, 'c+');
+    if (!$fp) return;
+
+    flock($fp, LOCK_EX);
+
+    $content = '';
+    while (!feof($fp)) {
+        $content .= fread($fp, 8192);
+    }
+    $limits = json_decode($content, true) ?: [];
     $key = $action . ':' . $identifier;
     unset($limits[$key]);
-    file_put_contents($rate_file, json_encode($limits, JSON_PRETTY_PRINT), LOCK_EX);
+
+    ftruncate($fp, 0);
+    rewind($fp);
+    fwrite($fp, json_encode($limits, JSON_PRETTY_PRINT));
+    fflush($fp);
+    flock($fp, LOCK_UN);
+    fclose($fp);
 }
 
 // =================== Input Validation ===================
 
 function validate_ipv4($ip) {
-    return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false;
+    return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false;
 }
 
 function validate_url($url) {
     return filter_var($url, FILTER_VALIDATE_URL) !== false && preg_match('/^https?:\/\//', $url);
-}
-
-// =================== Server Dispatch ===================
-
-/**
- * Return a randomly selected server that supports $method_name, or null if none.
- */
-function find_server_for_method(string $method_name): ?array {
-    $servers = read_json('servers.json');
-    $matching = array_values(array_filter($servers, function ($s) use ($method_name) {
-        return in_array($method_name, $s['methods'] ?? [], true);
-    }));
-    if (empty($matching)) {
-        return null;
-    }
-    return $matching[array_rand($matching)];
-}
-
-/**
- * Forward an attack to a specific server.
- * Returns ['ok' => true, 'response' => array] on success,
- * or ['ok' => false, 'message' => string] on failure / unreachable server.
- */
-function send_to_server(array $server, array $params): array {
-    $base_url = rtrim($server['api_url'], '/');
-
-    if (!empty($server['api_key'])) {
-        $params['key'] = $server['api_key'];
-    }
-
-    $url = $base_url . '?' . http_build_query($params);
-
-    $ch = curl_init();
-    curl_setopt_array($ch, [
-        CURLOPT_URL            => $url,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT        => 5,
-        CURLOPT_FOLLOWLOCATION => false,
-        CURLOPT_SSL_VERIFYPEER => true,
-        CURLOPT_SSL_VERIFYHOST => 2,
-    ]);
-
-    $response  = curl_exec($ch);
-    $err       = curl_error($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    if ($err || $response === false || $http_code === 0) {
-        error_log("Server dispatch failed for '{$server['name']}': $err");
-        return ['ok' => false, 'message' => 'The attack server is currently unavailable. Please try again later.'];
-    }
-
-    $decoded = json_decode($response, true);
-    if ($decoded === null) {
-        error_log("Server '{$server['name']}' returned non-JSON: " . substr($response, 0, 200));
-        return ['ok' => false, 'message' => 'Attack server returned an unexpected response.'];
-    }
-
-    return ['ok' => true, 'response' => $decoded];
 }
 
 function validate_attack_target($target, $layer) {

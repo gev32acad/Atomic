@@ -9,7 +9,6 @@ if (!$user) {
     json_error('Unauthorized', 401);
 }
 
-$users = read_json('users.json');
 $attacks = read_json('attacks.json');
 
 // Count running attacks (those that haven't expired)
@@ -37,10 +36,23 @@ for ($i = 6; $i >= 0; $i--) {
     $days[] = ['name' => $day_name, 'attacks' => $count];
 }
 
-json_response([
-    'active_servers' => count(read_json('servers.json')),
-    'total_attacks' => count($attacks),
-    'running_attacks' => $running,
-    'registered_users' => count($users),
-    'attacks_last_7_days' => $days
-]);
+// Active servers from servers.json (#12)
+$servers = read_json('servers.json');
+$active_servers = count(array_filter($servers, function($s) { return !empty($s['enabled']); }));
+
+$response = [
+    'active_servers'      => $active_servers,
+    'total_attacks'       => count($attacks),
+    'running_attacks'     => $running,
+    'attacks_last_7_days' => $days,
+];
+
+// Restrict sensitive platform stats to admins only (#11)
+if ($user['role'] === 'admin') {
+    $users = read_json('users.json');
+    $response['registered_users'] = count($users);
+} else {
+    $response['registered_users'] = null;
+}
+
+json_response($response);

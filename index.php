@@ -5,48 +5,78 @@ include __DIR__ . '/includes/sidebar.php';
 ?>
 
 <!-- Hero Section -->
-<section class="relative flex flex-col items-center justify-center text-center px-4 py-24 overflow-hidden">
-    <div class="absolute inset-0 opacity-10">
-        <div class="w-full h-full bg-gradient-to-b from-blue-900/20 to-transparent"></div>
-    </div>
+<section class="hero-section relative flex flex-col items-center justify-center text-center px-4 py-32 overflow-hidden">
+    <!-- Animated background orbs -->
+    <div class="hero-orb hero-orb-1"></div>
+    <div class="hero-orb hero-orb-2"></div>
+    <div class="hero-orb hero-orb-3"></div>
+    <!-- Grid overlay -->
+    <div class="hero-grid"></div>
+
     <div class="relative z-10 max-w-4xl mx-auto">
-        <h1 class="text-5xl md:text-6xl font-bold text-white mb-6">
-            The Most Powerful <span class="text-blue-500">IP Stresser</span>
+        <!-- Badge -->
+        <div class="inline-flex items-center gap-2 bg-blue-600/10 border border-blue-500/30 text-blue-400 text-xs font-semibold px-4 py-1.5 rounded-full mb-6 uppercase tracking-widest">
+            <span class="status-dot status-live status-dot-sm"></span>
+            All systems operational
+        </div>
+
+        <h1 class="text-5xl md:text-7xl font-extrabold text-white mb-6 leading-tight">
+            The Most Powerful<br>
+            <span class="hero-gradient-text">IP Stresser</span>
         </h1>
-        <p class="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-            High-performance load testing tool with advanced methods. Test your infrastructure with enterprise-grade power.
+        <p class="text-lg md:text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+            Enterprise-grade network stress testing with advanced Layer&nbsp;4 &amp; Layer&nbsp;7 methods.<br class="hidden md:block"> Instant setup. Crypto payments. 24/7 support.
         </p>
-        <div class="flex gap-4 justify-center flex-wrap">
-            <a href="register.php" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-lg transition transform hover:scale-105">
-                Get Started Free
+
+        <div class="flex gap-3 justify-center flex-wrap mb-14">
+            <a href="register.php" class="hero-btn-primary">
+                <i class="fas fa-rocket mr-2"></i>Get Started Free
             </a>
-            <a href="store.php" class="bg-transparent border border-blue-500 hover:bg-blue-900/30 text-blue-400 hover:text-blue-300 font-semibold px-8 py-3 rounded-lg transition">
-                <i class="fas fa-shopping-cart mr-2"></i>Buy a Plan
+            <a href="store.php" class="hero-btn-secondary">
+                <i class="fas fa-shopping-cart mr-2"></i>View Plans
             </a>
-            <a href="#features" class="border border-gray-600 hover:border-blue-500 text-gray-300 hover:text-white font-semibold px-8 py-3 rounded-lg transition">
-                Learn More
-            </a>
+        </div>
+
+        <!-- Stats row -->
+        <div class="grid grid-cols-3 gap-4 max-w-lg mx-auto">
+            <div class="hero-stat">
+                <span class="hero-stat-value">10<span class="text-blue-400">Gbps</span></span>
+                <span class="hero-stat-label">Network Power</span>
+            </div>
+            <div class="hero-stat">
+                <span class="hero-stat-value">99.9<span class="text-blue-400">%</span></span>
+                <span class="hero-stat-label">Uptime</span>
+            </div>
+            <div class="hero-stat">
+                <span class="hero-stat-value">24<span class="text-blue-400">/7</span></span>
+                <span class="hero-stat-label">Support</span>
+            </div>
         </div>
     </div>
 </section>
 
 <!-- Features Section -->
-<section id="features" class="py-20 px-4">
+<section id="features" class="py-24 px-4">
     <div class="max-w-6xl mx-auto">
-        <h2 class="text-3xl font-bold text-center text-white mb-12">Why Choose AtomicStresser?</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="section-label">Why NetStress?</div>
+        <h2 class="section-title">Built for Performance</h2>
+        <p class="section-sub">Everything you need to stress-test your infrastructure at scale.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mt-14">
             <?php
             $features = [
-                ['icon' => 'fa-bolt', 'title' => 'High-Speed Network', 'desc' => 'Enterprise-grade network infrastructure for maximum performance.'],
-                ['icon' => 'fa-eye-slash', 'title' => 'Untraceable', 'desc' => 'Advanced anonymization ensures complete privacy.'],
-                ['icon' => 'fa-layer-group', 'title' => 'Advanced Methods', 'desc' => 'Layer 4 & Layer 7 attack vectors with premium options.'],
-                ['icon' => 'fa-headset', 'title' => '24/7 Support', 'desc' => 'Round-the-clock support via Telegram and Discord.']
+                ['icon' => 'fa-bolt',        'color' => 'text-yellow-400', 'bg' => 'bg-yellow-400/10', 'title' => 'High-Speed Network',  'desc' => 'Enterprise-grade infrastructure delivering maximum throughput.'],
+                ['icon' => 'fa-eye-slash',   'color' => 'text-purple-400', 'bg' => 'bg-purple-400/10', 'title' => 'Untraceable',         'desc' => 'Advanced anonymization and IP masking for complete privacy.'],
+                ['icon' => 'fa-layer-group', 'color' => 'text-blue-400',   'bg' => 'bg-blue-400/10',   'title' => 'Advanced Methods',    'desc' => 'Layer 4 & Layer 7 vectors with premium bypass options.'],
+                ['icon' => 'fa-headset',     'color' => 'text-green-400',  'bg' => 'bg-green-400/10',  'title' => '24/7 Support',        'desc' => 'Round-the-clock help via Telegram and Discord.'],
             ];
-            foreach ($features as $feature): ?>
-            <div class="bg-panel border border-gray-700/50 rounded-xl p-6 hover:border-blue-500/50 transition">
-                <div class="text-blue-400 text-3xl mb-4"><i class="fas <?= $feature['icon'] ?>"></i></div>
-                <h3 class="text-lg font-semibold text-white mb-2"><?= $feature['title'] ?></h3>
-                <p class="text-gray-400 text-sm"><?= $feature['desc'] ?></p>
+            foreach ($features as $f): ?>
+            <div class="feature-card group">
+                <div class="feature-icon-wrap <?= $f['bg'] ?> <?= $f['color'] ?>">
+                    <i class="fas <?= $f['icon'] ?>"></i>
+                </div>
+                <h3 class="text-white font-semibold mt-4 mb-2"><?= $f['title'] ?></h3>
+                <p class="text-gray-500 text-sm leading-relaxed"><?= $f['desc'] ?></p>
             </div>
             <?php endforeach; ?>
         </div>
@@ -54,165 +84,159 @@ include __DIR__ . '/includes/sidebar.php';
 </section>
 
 <!-- Pricing Section -->
-<section id="pricing" class="py-20 px-4 bg-panel/30">
-    <div class="max-w-6xl mx-auto">
-        <h2 class="text-3xl font-bold text-center text-white mb-4">Pricing Plans</h2>
-        <p class="text-center text-gray-400 mb-12">Upgrade with crypto — instant, private, secure.</p>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<section id="pricing" class="py-24 px-4 relative overflow-hidden">
+    <div class="pricing-bg-glow"></div>
+    <div class="max-w-6xl mx-auto relative z-10">
+        <div class="section-label">Pricing</div>
+        <h2 class="section-title">Choose Your Plan</h2>
+        <p class="section-sub">Upgrade instantly with crypto &mdash; private, secure, no KYC.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mt-14">
             <?php
             $plans_data = read_json('plans.json');
             foreach ($plans_data as $plan):
                 $is_free = $plan['price'] == 0;
                 $popular = !empty($plan['premium']) && $plan['name'] === 'Advanced';
             ?>
-            <div class="relative bg-panel border <?= $popular ? 'border-blue-500' : 'border-gray-700/50' ?> rounded-xl p-6 hover:border-blue-500/50 transition flex flex-col">
+            <div class="pricing-card <?= $popular ? 'pricing-card-popular' : '' ?> flex flex-col">
                 <?php if ($popular): ?>
-                <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs px-3 py-1 rounded-full">Popular</span>
+                <div class="pricing-popular-badge">⭐ Most Popular</div>
                 <?php endif; ?>
-                <h3 class="text-xl font-bold text-white mb-2"><?= htmlspecialchars($plan['name']) ?></h3>
-                <p class="text-3xl font-bold text-blue-400 mb-1"><?= $is_free ? 'Free' : '$' . number_format($plan['price'], 2) ?></p>
-                <?php if (!$is_free): ?>
-                <p class="text-gray-500 text-xs mb-4">/ <?= $plan['duration_days'] ?? 30 ?> days</p>
-                <?php else: ?>
-                <p class="text-gray-500 text-xs mb-4">forever</p>
-                <?php endif; ?>
-                <ul class="space-y-3 flex-1">
-                    <li class="text-gray-300 text-sm flex items-center gap-2">
-                        <i class="fas fa-check text-green-400 text-xs"></i> <?= $plan['max_concurrents'] ?> Concurrent<?= $plan['max_concurrents'] > 1 ? 's' : '' ?>
-                    </li>
-                    <li class="text-gray-300 text-sm flex items-center gap-2">
-                        <i class="fas fa-check text-green-400 text-xs"></i> <?= $plan['max_seconds'] >= 3600 ? floor($plan['max_seconds']/3600).'h' : $plan['max_seconds'].'s' ?> Max
-                    </li>
-                    <li class="text-gray-300 text-sm flex items-center gap-2">
-                        <?php if (!empty($plan['premium'])): ?>
-                        <i class="fas fa-check text-green-400 text-xs"></i> Premium Methods
-                        <?php else: ?>
-                        <i class="fas fa-times text-gray-600 text-xs"></i> <span class="text-gray-500">Basic Methods</span>
+
+                <div class="mb-5">
+                    <h3 class="text-lg font-bold text-white mb-3"><?= htmlspecialchars($plan['name']) ?></h3>
+                    <div class="flex items-end gap-1">
+                        <span class="text-4xl font-extrabold <?= $popular ? 'text-blue-400' : 'text-white' ?>">
+                            <?= $is_free ? 'Free' : '$' . number_format($plan['price'], 2) ?>
+                        </span>
+                        <?php if (!$is_free): ?>
+                        <span class="text-gray-500 text-sm mb-1.5">/ <?= $plan['duration_days'] ?? 30 ?>d</span>
                         <?php endif; ?>
+                    </div>
+                </div>
+
+                <ul class="space-y-2.5 flex-1 mb-6">
+                    <li class="pricing-feature">
+                        <i class="fas fa-check text-green-400 text-xs shrink-0"></i>
+                        <span><?= $plan['max_concurrents'] ?> Concurrent<?= $plan['max_concurrents'] > 1 ? 's' : '' ?></span>
                     </li>
-                    <li class="text-gray-300 text-sm flex items-center gap-2">
-                        <?php if (!empty($plan['api_access'])): ?>
-                        <i class="fas fa-check text-green-400 text-xs"></i> API Access
-                        <?php else: ?>
-                        <i class="fas fa-times text-gray-600 text-xs"></i> <span class="text-gray-500">No API Access</span>
-                        <?php endif; ?>
+                    <li class="pricing-feature">
+                        <i class="fas fa-check text-green-400 text-xs shrink-0"></i>
+                        <span><?= $plan['max_seconds'] >= 3600 ? floor($plan['max_seconds']/3600).'h' : $plan['max_seconds'].'s' ?> Max Duration</span>
+                    </li>
+                    <li class="pricing-feature <?= empty($plan['premium']) ? 'opacity-40' : '' ?>">
+                        <i class="fas <?= !empty($plan['premium']) ? 'fa-check text-green-400' : 'fa-times text-gray-600' ?> text-xs shrink-0"></i>
+                        <span>Premium Methods</span>
+                    </li>
+                    <li class="pricing-feature <?= empty($plan['api_access']) ? 'opacity-40' : '' ?>">
+                        <i class="fas <?= !empty($plan['api_access']) ? 'fa-check text-green-400' : 'fa-times text-gray-600' ?> text-xs shrink-0"></i>
+                        <span>API Access</span>
                     </li>
                 </ul>
-                <a href="<?= $is_free ? 'register.php' : 'store.php' ?>" class="mt-6 block text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition">
+
+                <a href="<?= $is_free ? 'register.php' : 'store.php' ?>"
+                   class="<?= $popular ? 'pricing-btn-primary' : 'pricing-btn-secondary' ?>">
                     <?= $is_free ? 'Get Started' : 'Buy Now' ?>
                 </a>
             </div>
             <?php endforeach; ?>
         </div>
-        <p class="text-center text-gray-500 text-sm mt-6">
-            <i class="fab fa-bitcoin mr-1"></i> Bitcoin &nbsp;
-            <i class="fab fa-ethereum mr-1"></i> Ethereum &nbsp;
-            <i class="fas fa-coins mr-1"></i> Litecoin &nbsp;
-            <i class="fas fa-shield-alt mr-1"></i> Monero
-            &mdash; accepted
-        </p>
-    </div>
-</section>
 
-<!-- Methods Section -->
-<section class="py-20 px-4">
-    <div class="max-w-6xl mx-auto">
-        <h2 class="text-3xl font-bold text-center text-white mb-12">Attack Methods</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-                <h3 class="text-xl font-semibold text-blue-400 mb-4"><i class="fas fa-globe"></i> Layer 7 Methods</h3>
-                <div class="space-y-3">
-                    <div class="bg-panel border border-gray-700/50 rounded-lg p-4">
-                        <span class="text-white font-medium">HTTP-GET</span>
-                        <p class="text-gray-400 text-sm">HTTP GET Flood</p>
-                    </div>
-                    <div class="bg-panel border border-gray-700/50 rounded-lg p-4">
-                        <span class="text-white font-medium">HTTP-POST</span>
-                        <p class="text-gray-400 text-sm">HTTP POST Flood</p>
-                    </div>
-                    <div class="bg-panel border border-gray-700/50 rounded-lg p-4">
-                        <span class="text-white font-medium">HTTP-OVH</span>
-                        <span class="ml-2 text-xs bg-yellow-600/20 text-yellow-400 px-2 py-0.5 rounded">Premium</span>
-                        <p class="text-gray-400 text-sm">Bypass OVH Protection</p>
-                    </div>
-                </div>
-            </div>
-            <div>
-                <h3 class="text-xl font-semibold text-blue-400 mb-4"><i class="fas fa-network-wired"></i> Layer 4 Methods</h3>
-                <div class="space-y-3">
-                    <div class="bg-panel border border-gray-700/50 rounded-lg p-4">
-                        <span class="text-white font-medium">TCP-FLOOD</span>
-                        <p class="text-gray-400 text-sm">TCP SYN Flood</p>
-                    </div>
-                    <div class="bg-panel border border-gray-700/50 rounded-lg p-4">
-                        <span class="text-white font-medium">UDP-FLOOD</span>
-                        <p class="text-gray-400 text-sm">UDP Flood Attack</p>
-                    </div>
-                    <div class="bg-panel border border-gray-700/50 rounded-lg p-4">
-                        <span class="text-white font-medium">SYN-FLOOD</span>
-                        <span class="ml-2 text-xs bg-yellow-600/20 text-yellow-400 px-2 py-0.5 rounded">Premium</span>
-                        <p class="text-gray-400 text-sm">SYN Flood Attack</p>
-                    </div>
-                    <div class="bg-panel border border-gray-700/50 rounded-lg p-4">
-                        <span class="text-white font-medium">DNS-AMP</span>
-                        <span class="ml-2 text-xs bg-yellow-600/20 text-yellow-400 px-2 py-0.5 rounded">Premium</span>
-                        <p class="text-gray-400 text-sm">DNS Amplification</p>
-                    </div>
-                </div>
-            </div>
+        <div class="flex items-center justify-center gap-5 mt-8 text-gray-600 text-sm flex-wrap">
+            <span><i class="fab fa-bitcoin mr-1 text-yellow-500"></i>Bitcoin</span>
+            <span><i class="fab fa-ethereum mr-1 text-purple-400"></i>Ethereum</span>
+            <span><i class="fas fa-coins mr-1 text-gray-400"></i>Litecoin</span>
+            <span><i class="fas fa-shield-alt mr-1 text-orange-400"></i>Monero</span>
         </div>
     </div>
 </section>
 
-<!-- FAQ Section -->
-<section class="py-20 px-4 bg-panel/30">
-    <div class="max-w-3xl mx-auto">
-        <h2 class="text-3xl font-bold text-center text-white mb-12">FAQ</h2>
-        <div class="space-y-4">
-            <?php
-            $faqs = [
-                ['q' => 'What is AtomicStresser?', 'a' => 'AtomicStresser is a high-performance IP stresser and load testing tool designed to test the resilience of your network infrastructure.'],
-                ['q' => 'What payment methods are accepted?', 'a' => 'We accept cryptocurrency payments (Bitcoin, Ethereum, Litecoin) for maximum privacy and security.'],
-                ['q' => 'Is it anonymous?', 'a' => 'Yes, all tests are completely private. We use advanced techniques to protect your identity.'],
-                ['q' => 'Is this legal?', 'a' => 'AtomicStresser should only be used for authorized testing of your own infrastructure. Unauthorized use against third-party systems is illegal.']
-            ];
-            foreach ($faqs as $i => $faq): ?>
-            <div class="bg-panel border border-gray-700/50 rounded-xl overflow-hidden">
-                <button onclick="toggleFaq(<?= $i ?>)" class="w-full flex items-center justify-between p-5 text-left">
-                    <span class="text-white font-medium"><?= $faq['q'] ?></span>
-                    <i id="faq-icon-<?= $i ?>" class="fas fa-chevron-down text-gray-400 transition-transform"></i>
-                </button>
-                <div id="faq-<?= $i ?>" class="hidden px-5 pb-5">
-                    <p class="text-gray-400"><?= $faq['a'] ?></p>
+<!-- Methods Section -->
+<section class="py-24 px-4">
+    <div class="max-w-5xl mx-auto">
+        <div class="section-label">Methods</div>
+        <h2 class="section-title">Attack Vectors</h2>
+        <p class="section-sub">Choose from a wide range of Layer 4 and Layer 7 attack methods.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-14">
+            <!-- Layer 7 -->
+            <div class="method-group">
+                <div class="method-group-header">
+                    <div class="method-group-icon bg-green-400/10 text-green-400">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <span class="text-white font-semibold">Layer 7 &mdash; Application</span>
+                </div>
+                <div class="space-y-3">
+                    <?php
+                    $l7 = [
+                        ['name' => 'HTTP-GET',  'desc' => 'HTTP GET Flood',         'premium' => false],
+                        ['name' => 'HTTP-POST', 'desc' => 'HTTP POST Flood',        'premium' => false],
+                        ['name' => 'HTTP-OVH',  'desc' => 'Bypass OVH Protection',  'premium' => true],
+                    ];
+                    foreach ($l7 as $m): ?>
+                    <div class="method-card">
+                        <div class="flex items-center gap-2">
+                            <span class="text-white font-mono font-semibold text-sm"><?= $m['name'] ?></span>
+                            <?php if ($m['premium']): ?>
+                            <span class="badge badge-premium">Premium</span>
+                            <?php endif; ?>
+                        </div>
+                        <p class="text-gray-500 text-xs mt-0.5"><?= $m['desc'] ?></p>
+                    </div>
+                    <?php endforeach; ?>
                 </div>
             </div>
-            <?php endforeach; ?>
+
+            <!-- Layer 4 -->
+            <div class="method-group">
+                <div class="method-group-header">
+                    <div class="method-group-icon bg-blue-400/10 text-blue-400">
+                        <i class="fas fa-network-wired"></i>
+                    </div>
+                    <span class="text-white font-semibold">Layer 4 &mdash; Transport</span>
+                </div>
+                <div class="space-y-3">
+                    <?php
+                    $l4 = [
+                        ['name' => 'TCP-FLOOD', 'desc' => 'TCP SYN Flood',      'premium' => false],
+                        ['name' => 'UDP-FLOOD', 'desc' => 'UDP Flood Attack',   'premium' => false],
+                        ['name' => 'SYN-FLOOD', 'desc' => 'SYN Flood Attack',   'premium' => true],
+                        ['name' => 'DNS-AMP',   'desc' => 'DNS Amplification',  'premium' => true],
+                    ];
+                    foreach ($l4 as $m): ?>
+                    <div class="method-card">
+                        <div class="flex items-center gap-2">
+                            <span class="text-white font-mono font-semibold text-sm"><?= $m['name'] ?></span>
+                            <?php if ($m['premium']): ?>
+                            <span class="badge badge-premium">Premium</span>
+                            <?php endif; ?>
+                        </div>
+                        <p class="text-gray-500 text-xs mt-0.5"><?= $m['desc'] ?></p>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
         </div>
     </div>
 </section>
 
 <!-- Footer -->
-<footer class="border-t border-gray-700/50 py-8 px-4">
+<footer class="border-t border-gray-700/30 py-10 px-4">
     <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-        <p class="text-gray-400 text-sm">&copy; <?= date('Y') ?> AtomicStresser. All rights reserved.</p>
-        <div class="flex items-center gap-4">
-            <a href="https://t.me/atomicstresser" target="_blank" class="text-gray-400 hover:text-blue-400 transition">
-                <i class="fab fa-telegram text-xl"></i>
+        <div class="flex items-center gap-2">
+            <img src="assets/imagens/logo.png" alt="Logo" class="w-6 h-6 opacity-60" onerror="this.style.display='none'">
+            <p class="text-gray-500 text-sm">&copy; <?= date('Y') ?> NetStress. All rights reserved.</p>
+        </div>
+        <div class="flex items-center gap-5">
+            <a href="https://t.me/netstressme" target="_blank" class="text-gray-500 hover:text-blue-400 transition text-sm flex items-center gap-1.5">
+                <i class="fab fa-telegram"></i> Telegram
             </a>
-            <a href="#" class="text-gray-400 hover:text-blue-400 transition">
-                <i class="fab fa-discord text-xl"></i>
+            <a href="#" class="text-gray-500 hover:text-indigo-400 transition text-sm flex items-center gap-1.5">
+                <i class="fab fa-discord"></i> Discord
             </a>
         </div>
     </div>
 </footer>
-
-<script>
-function toggleFaq(index) {
-    const content = document.getElementById('faq-' + index);
-    const icon = document.getElementById('faq-icon-' + index);
-    content.classList.toggle('hidden');
-    icon.classList.toggle('rotate-180');
-}
-</script>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>

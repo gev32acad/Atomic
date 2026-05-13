@@ -1,11 +1,11 @@
 <div align="center">
   <img width=115 src="https://github.com/user-attachments/assets/4ad8438e-d63f-4d8b-b44b-7001be28b81f" />
-  <h1>Atomic Stresser — PHP Edition</h1>
+  <h1>NetStress — PHP Edition</h1>
 </div>
 
 > Pure PHP with JSON file storage — just upload to your www folder and go!
 
-**AtomicStresser** is a powerful and modern stress testing platform:
+**NetStress** is a powerful and modern stress testing platform:
 
 * ✅ Pure PHP frontend (no build step needed)
 * ✅ JSON file storage (no database required)
@@ -105,4 +105,4 @@ Edit `includes/config.php` to change:
 
 ## 📄 License
 
-MIT License © 2025 — [AtomicStresser Team](#)
+MIT License © 2025 — [NetStress Team](#)

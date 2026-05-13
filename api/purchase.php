@@ -35,6 +35,11 @@ if ($method_req === 'POST') {
         json_error('plan_id, crypto and amount are required');
     }
 
+    if (!is_numeric($amount) || floatval($amount) <= 0 || floatval($amount) > 1000000) {
+        json_error('Amount must be a positive number (max 1,000,000)');
+    }
+    $amount = floatval($amount);
+
     $allowed_cryptos = ['BTC', 'ETH', 'LTC', 'XMR'];
     if (!in_array($crypto, $allowed_cryptos)) {
         json_error('Invalid crypto currency');
@@ -55,6 +60,16 @@ if ($method_req === 'POST') {
 
     if ($plan['price'] == 0) {
         json_error('Free plans cannot be purchased');
+    }
+
+    // Server-side amount validation – verify amount is plausible for plan price (#9)
+    $rates = CRYPTO_RATES;
+    if (isset($rates[$crypto]) && $rates[$crypto] > 0) {
+        $expected_amount = $plan['price'] / $rates[$crypto];
+        $tolerance = 0.25; // 25% tolerance to account for rate fluctuations
+        if ($amount < $expected_amount * (1 - $tolerance) || $amount > $expected_amount * (1 + $tolerance)) {
+            json_error('Invalid payment amount. Please recalculate using the current rate shown on the store page.');
+        }
     }
 
     // Rate limit: max 5 orders per user per hour

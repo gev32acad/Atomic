@@ -51,7 +51,7 @@ $exp_date = $user['expiration_date'] ? date('M j, Y', strtotime($user['expiratio
             </div>
             <div class="bg-panel border border-gray-600 rounded-lg p-4">
                 <p class="text-sm text-gray-400">Role</p>
-                <p class="text-white font-semibold"><?= htmlspecialchars($user['rule']) ?></p>
+                <p class="text-white font-semibold"><?= htmlspecialchars($user['role']) ?></p>
             </div>
             <div class="bg-panel border border-gray-600 rounded-lg p-4">
                 <p class="text-sm text-gray-400">Member Since</p>
@@ -70,13 +70,69 @@ $exp_date = $user['expiration_date'] ? date('M j, Y', strtotime($user['expiratio
                 <p class="text-white font-semibold"><?= $exp_date ?></p>
             </div>
         </div>
+
+        <!-- API Key Section -->
+        <div class="mt-6 bg-panel border border-gray-600 rounded-lg p-4">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-gray-400 font-medium">API Key</span>
+                <div class="flex gap-2">
+                    <button id="btn-copy-apikey" onclick="copyApiKey()" class="text-sm text-gray-400 hover:text-blue-400 transition" title="Copy API key">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                    <button onclick="regenerateApiKey()" class="text-sm text-gray-400 hover:text-green-400 transition flex items-center gap-1" title="Generate a new API key">
+                        <i class="fas fa-sync-alt"></i> Generate
+                    </button>
+                </div>
+            </div>
+            <?php if (!empty($user['api_key'])): ?>
+                <code id="apikey-display" class="block text-sm text-white break-all"><?= htmlspecialchars(substr($user['api_key'], 0, 10)) ?>••••••••••••••••••••••••</code>
+            <?php else: ?>
+                <p id="apikey-display" class="text-sm text-gray-500 italic">No API key yet — click Generate to create one.</p>
+            <?php endif; ?>
+            <p class="text-xs text-gray-600 mt-2">Use the API key in the <code class="text-blue-400">X-Api-Key</code> header to access the API. Generating a new key invalidates the previous one.</p>
+        </div>
     </div>
 </div>
 
 <script>
+const csrfToken = <?= json_encode(generate_csrf_token()) ?>;
+
 function copyToClipboard(text) {
     navigator.clipboard.writeText(text);
     showToast('Copied to clipboard!', 'success');
+}
+
+function copyApiKey() {
+    const display = document.getElementById('apikey-display');
+    const key = display.dataset.fullKey || '';
+    if (!key) { showToast('No API key to copy', 'error'); return; }
+    navigator.clipboard.writeText(key);
+    showToast('API key copied!', 'success');
+}
+
+async function regenerateApiKey() {
+    if (!confirm('Generate a new API key? The current key will be invalidated.')) return;
+    try {
+        const fd = new FormData();
+        fd.append('action', 'regenerate_api_key');
+        fd.append('csrf_token', csrfToken);
+        const res = await fetch('api/profile.php', {method: 'POST', body: fd});
+        const data = await res.json();
+        if (!res.ok) { showToast(data.detail || 'Error', 'error'); return; }
+        const display = document.getElementById('apikey-display');
+        if (display && display.tagName === 'P') {
+            const code = document.createElement('code');
+            code.id = 'apikey-display';
+            code.className = 'block text-sm text-white break-all';
+            display.replaceWith(code);
+        }
+        const keyEl = document.getElementById('apikey-display');
+        keyEl.dataset.fullKey = data.api_key;
+        keyEl.textContent = data.api_key.slice(0, 10) + '••••••••••••••••••••••••';
+        showToast('New API key generated!', 'success');
+    } catch (e) {
+        showToast('Connection error', 'error');
+    }
 }
 </script>
 

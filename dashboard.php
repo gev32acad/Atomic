@@ -137,7 +137,10 @@ async function loadDashboard() {
             document.getElementById('stat-servers').textContent = data.active_servers.toLocaleString();
             document.getElementById('stat-attacks').textContent = data.total_attacks.toLocaleString();
             document.getElementById('stat-running').textContent = data.running_attacks.toLocaleString();
-            document.getElementById('stat-users').textContent = data.registered_users.toLocaleString();
+            const usersEl = document.getElementById('stat-users');
+            if (usersEl) {
+                usersEl.textContent = data.registered_users !== null ? data.registered_users.toLocaleString() : '—';
+            }
             
             // Render chart
             const container = document.getElementById('chart-container');

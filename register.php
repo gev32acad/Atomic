@@ -9,7 +9,7 @@ include __DIR__ . '/includes/sidebar.php';
 <div class="flex justify-center bg-background px-4 pt-24">
     <div class="w-full max-w-md bg-panel p-8 rounded-xl shadow-xl border border-gray-700/50">
         <h1 class="text-2xl font-bold text-center text-white">Create Account</h1>
-        <p class="text-center text-gray-300 mb-6">Register to get started with AtomicStresser.</p>
+        <p class="text-center text-gray-300 mb-6">Register to get started with NetStress.</p>
         
         <form id="register-form" class="space-y-6">
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
