@@ -143,23 +143,32 @@ function validate_url($url) {
     return filter_var($url, FILTER_VALIDATE_URL) !== false && preg_match('/^https?:\/\//', $url);
 }
 
-// =================== Hub API ===================
+// =================== Server Dispatch ===================
 
 /**
- * Forward an attack to the external hub API configured in the admin settings.
- * Returns the decoded JSON response on success, or false on failure / when
- * no hub URL is configured.
+ * Return a randomly selected server that supports $method_name, or null if none.
  */
-function send_hub_request(array $params) {
-    $settings = read_json('settings.json');
-    $base_url = rtrim($settings['hub_api_url'] ?? '', '/');
-    if (empty($base_url)) {
-        return false; // Hub not configured
+function find_server_for_method(string $method_name): ?array {
+    $servers = read_json('servers.json');
+    $matching = array_values(array_filter($servers, function ($s) use ($method_name) {
+        return in_array($method_name, $s['methods'] ?? [], true);
+    }));
+    if (empty($matching)) {
+        return null;
     }
+    return $matching[array_rand($matching)];
+}
 
-    $hub_api_key = $settings['hub_api_key'] ?? '';
-    if (!empty($hub_api_key)) {
-        $params['key'] = $hub_api_key;
+/**
+ * Forward an attack to a specific server.
+ * Returns ['ok' => true, 'response' => array] on success,
+ * or ['ok' => false, 'message' => string] on failure / unreachable server.
+ */
+function send_to_server(array $server, array $params): array {
+    $base_url = rtrim($server['api_url'], '/');
+
+    if (!empty($server['api_key'])) {
+        $params['key'] = $server['api_key'];
     }
 
     $url = $base_url . '?' . http_build_query($params);
@@ -174,21 +183,23 @@ function send_hub_request(array $params) {
         CURLOPT_SSL_VERIFYHOST => 2,
     ]);
 
-    $response = curl_exec($ch);
-    $err      = curl_error($ch);
+    $response  = curl_exec($ch);
+    $err       = curl_error($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
-    if ($err || $response === false) {
-        error_log("Hub API request failed: $err");
-        return false;
+    if ($err || $response === false || $http_code === 0) {
+        error_log("Server dispatch failed for '{$server['name']}': $err");
+        return ['ok' => false, 'message' => 'The attack server is currently unavailable. Please try again later.'];
     }
 
     $decoded = json_decode($response, true);
     if ($decoded === null) {
-        error_log("Hub API returned non-JSON response: " . substr($response, 0, 200));
-        return false;
+        error_log("Server '{$server['name']}' returned non-JSON: " . substr($response, 0, 200));
+        return ['ok' => false, 'message' => 'Attack server returned an unexpected response.'];
     }
-    return $decoded;
+
+    return ['ok' => true, 'response' => $decoded];
 }
 
 function validate_attack_target($target, $layer) {

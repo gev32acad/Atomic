@@ -120,45 +120,47 @@ if ($method_req === 'POST') {
     if (!$valid_method) {
         json_error('Invalid method');
     }
-    
-    $new_attack = [
-        'id' => generate_id(),
-        'user_id' => $user['id'],
-        'target' => $target,
-        'port' => $port,
-        'time' => $time,
-        'method' => $method,
-        'concurrents' => $concurrents,
-        'layer' => $layer,
-        'start_time' => date('c'),
-        'status' => 'running'
-    ];
-    
-    $attacks[] = $new_attack;
-    write_json('attacks.json', $attacks);
 
-    // Forward attack to the external hub API if configured
-    $hub_params = [
-        'host'       => $target,
+    // Find a server that supports this method (before saving the attack)
+    $server = find_server_for_method($method);
+    if ($server === null) {
+        json_error('No server is available for this method. Please contact support.', 503);
+    }
+
+    // Try to dispatch to the server before recording the attack
+    $dispatch = send_to_server($server, [
+        'host'        => $target,
+        'port'        => $port,
+        'time'        => $time,
+        'method'      => $method,
+        'concurrents' => $concurrents,
+    ]);
+
+    if (!$dispatch['ok']) {
+        json_error($dispatch['message'], 503);
+    }
+
+    $new_attack = [
+        'id'         => generate_id(),
+        'user_id'    => $user['id'],
+        'target'     => $target,
         'port'       => $port,
         'time'       => $time,
         'method'     => $method,
         'concurrents'=> $concurrents,
+        'layer'      => $layer,
+        'start_time' => date('c'),
+        'status'     => 'running',
     ];
-    $hub_response = send_hub_request($hub_params);
 
-    $response_data = ['message' => 'Attack launched', 'attack' => $new_attack];
-    if ($hub_response !== false) {
-        $response_data['hub'] = $hub_response;
-    } else {
-        $settings = read_json('settings.json');
-        if (!empty($settings['hub_api_url'])) {
-            // Hub is configured but the request failed – warn the caller
-            $response_data['hub_warning'] = 'Attack queued locally; hub API could not be reached.';
-        }
-    }
+    $attacks[] = $new_attack;
+    write_json('attacks.json', $attacks);
 
-    json_response($response_data, 201);
+    json_response([
+        'message' => 'Attack launched',
+        'attack'  => $new_attack,
+        'server'  => $server['name'],
+    ], 201);
 }
 
 json_error('Method not allowed', 405);

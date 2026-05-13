@@ -24,8 +24,8 @@ include __DIR__ . '/includes/sidebar.php';
             <button onclick="switchAdminTab('methods')" id="admin-tab-methods" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition">
                 <i class="fas fa-bomb"></i> Methods
             </button>
-            <button onclick="switchAdminTab('settings')" id="admin-tab-settings" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition">
-                <i class="fas fa-cog"></i> Settings
+            <button onclick="switchAdminTab('servers')" id="admin-tab-servers" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition">
+                <i class="fas fa-server"></i> Servers
             </button>
         </div>
         
@@ -151,30 +151,31 @@ include __DIR__ . '/includes/sidebar.php';
             </div>
         </div>
 
-        <!-- Settings Tab -->
-        <div id="admin-settings" class="admin-tab-content hidden">
-            <div class="bg-panel border border-gray-700/50 rounded-2xl p-6 max-w-xl">
-                <h3 class="text-lg font-semibold text-white mb-4">Hub API Settings</h3>
-                <form id="settings-form" class="space-y-4">
-                    <?php echo csrf_token_field(); ?>
-                    <div>
-                        <label class="block text-sm text-gray-400 mb-1">Hub API URL</label>
-                        <input type="url" name="hub_api_url" id="settings-hub-url"
-                            placeholder="http://1.1.1.1/api.php"
-                            class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500">
-                        <p class="text-xs text-gray-500 mt-1">Leave empty to disable hub forwarding.</p>
-                    </div>
-                    <div>
-                        <label class="block text-sm text-gray-400 mb-1">Hub API Key</label>
-                        <input type="password" name="hub_api_key" id="settings-hub-key"
-                            placeholder="Leave blank to keep current key"
-                            class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500">
-                        <p class="text-xs text-gray-500 mt-1">Leave blank to keep the saved key. Clear the field and save to remove the key.</p>
-                    </div>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg transition">
-                        Save Settings
+        <!-- Servers Tab -->
+        <div id="admin-servers" class="admin-tab-content hidden">
+            <div class="bg-panel border border-gray-700/50 rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-white">Server Management</h3>
+                    <button onclick="showAddServerModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition text-sm">
+                        <i class="fas fa-plus mr-1"></i> Add Server
                     </button>
-                </form>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-gray-400 border-b border-gray-700">
+                            <tr>
+                                <th class="px-4 py-3">Name</th>
+                                <th class="px-4 py-3">URL</th>
+                                <th class="px-4 py-3">Layer</th>
+                                <th class="px-4 py-3">Methods</th>
+                                <th class="px-4 py-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="servers-table" class="text-gray-300">
+                            <tr><td colspan="5" class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading servers...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

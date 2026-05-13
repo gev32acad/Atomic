@@ -14,7 +14,7 @@ function switchAdminTab(tab) {
     document.querySelectorAll('.admin-tab-content').forEach(el => el.classList.add('hidden'));
     document.getElementById('admin-' + tab).classList.remove('hidden');
     
-    ['users', 'plans', 'orders', 'methods', 'settings'].forEach(t => {
+    ['users', 'plans', 'orders', 'methods', 'servers'].forEach(t => {
         const btn = document.getElementById('admin-tab-' + t);
         btn.className = t === tab
             ? 'flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-blue-600 text-white transition'
@@ -377,16 +377,31 @@ async function deleteMethod(id) {
 document.getElementById('modal-form').addEventListener('submit', async function(e) {
     e.preventDefault();
     
-    const formData = new FormData(this);
     const data = {};
     
     // Get all field values
     document.querySelectorAll('#modal-fields input, #modal-fields select').forEach(el => {
         if (el.type === 'checkbox') {
-            data[el.name] = el.checked;
+            // Multi-value checkboxes (name ending in []) are handled separately below
+            if (!el.name.endsWith('[]')) {
+                data[el.name] = el.checked;
+            }
         } else {
             data[el.name] = el.value;
         }
+    });
+
+    // Collect multi-value checkbox arrays (e.g. methods[])
+    const multiKeys = new Set();
+    document.querySelectorAll('#modal-fields input[type="checkbox"][name$="[]"]').forEach(cb => {
+        multiKeys.add(cb.name);
+    });
+    multiKeys.forEach(name => {
+        const key = name.replace(/\[\]$/, '');
+        data[key] = [];
+        document.querySelectorAll(`#modal-fields input[type="checkbox"][name="${CSS.escape(name)}"]:checked`).forEach(cb => {
+            data[key].push(cb.value);
+        });
     });
     
     const [type, action] = currentEditType.split('-');
@@ -396,7 +411,13 @@ document.getElementById('modal-form').addEventListener('submit', async function(
         url = `api/${type}s.php`;
         method = 'POST';
         const fd = new FormData();
-        Object.entries(data).forEach(([k, v]) => fd.append(k, v));
+        Object.entries(data).forEach(([k, v]) => {
+            if (Array.isArray(v)) {
+                v.forEach(item => fd.append(k + '[]', item));
+            } else {
+                fd.append(k, v);
+            }
+        });
         fd.append('csrf_token', getCsrfToken());
         body = fd;
     } else {
@@ -423,6 +444,7 @@ document.getElementById('modal-form').addEventListener('submit', async function(
             if (type === 'user') loadUsers();
             else if (type === 'plan') loadPlans();
             else if (type === 'method') loadMethods();
+            else if (type === 'server') loadServers();
         } else {
             const resData = await res.json();
             showToast(resData.detail || 'Failed to save', 'error');
@@ -586,39 +608,125 @@ loadPlans();
 loadOrders();
 loadMethods();
 
-// =================== SETTINGS ===================
-async function loadSettings() {
+// =================== SERVERS ===================
+async function loadServers() {
     try {
-        const res = await fetch('api/settings.php');
-        if (!res.ok) return;
-        const settings = await res.json();
-        const urlInput = document.getElementById('settings-hub-url');
-        if (urlInput) urlInput.value = settings.hub_api_url || '';
-        // Leave the key field empty – the placeholder explains the behaviour
+        const res = await fetch('api/servers.php');
+        const servers = await res.json();
+        const tbody = document.getElementById('servers-table');
+
+        if (!servers.length) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-400">No servers configured</td></tr>';
+            return;
+        }
+
+        const layerColor = { Layer4: 'text-orange-400', Layer7: 'text-purple-400', Both: 'text-blue-400' };
+
+        tbody.innerHTML = '';
+        servers.forEach(s => {
+            const tr = document.createElement('tr');
+            tr.className = 'border-t border-gray-700/50';
+            const methodsList = (s.methods || []).map(m => escapeHtml(m)).join(', ') || '<span class="text-gray-600">None</span>';
+            tr.innerHTML = `
+                <td class="px-4 py-3 text-white">${escapeHtml(s.name)}</td>
+                <td class="px-4 py-3 font-mono text-xs text-gray-400 max-w-xs truncate" title="${escapeHtml(s.api_url)}">${escapeHtml(s.api_url)}</td>
+                <td class="px-4 py-3"><span class="${layerColor[s.layer] || 'text-gray-400'}">${escapeHtml(s.layer)}</span></td>
+                <td class="px-4 py-3 text-xs text-gray-400">${methodsList}</td>
+                <td class="px-4 py-3"></td>
+            `;
+            const actionsCell = tr.querySelector('td:last-child');
+            const editBtn = document.createElement('button');
+            editBtn.className = 'text-blue-400 hover:text-blue-300 mr-2';
+            editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+            editBtn.addEventListener('click', () => editServer(s));
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'text-red-400 hover:text-red-300';
+            deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+            deleteBtn.addEventListener('click', () => deleteServer(s.id));
+            actionsCell.appendChild(editBtn);
+            actionsCell.appendChild(deleteBtn);
+            tbody.appendChild(tr);
+        });
     } catch (err) {
-        console.error('Failed to load settings:', err);
+        console.error('Failed to load servers:', err);
+        document.getElementById('servers-table').innerHTML = '<tr><td colspan="5" class="text-center py-8 text-red-400">Failed to load servers</td></tr>';
     }
 }
 
-document.getElementById('settings-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const fd = new FormData(this);
+async function buildServerModal(server = null) {
+    const fields = document.getElementById('modal-fields');
+    fields.innerHTML = '';
+
+    fields.appendChild(createField('Name', 'name', 'text', server?.name || '', { required: true }));
+    fields.appendChild(createField('API URL', 'api_url', 'url', server?.api_url || '', { required: true }));
+    fields.appendChild(createField('API Key', 'api_key', 'password', '', {}));
+    fields.appendChild(createField('Layer', 'layer', 'select', server?.layer || 'Layer4', { choices: ['Layer4', 'Layer7', 'Both'] }));
+
+    // Methods multi-checkbox section
+    const methodsDiv = document.createElement('div');
+    methodsDiv.innerHTML = '<label class="block text-sm text-gray-400 mb-2">Available Methods</label>';
+    const methodsGrid = document.createElement('div');
+    methodsGrid.className = 'grid grid-cols-2 gap-1 max-h-52 overflow-y-auto pr-1 border border-gray-700 rounded-lg p-3 bg-background';
+
     try {
-        const res = await fetch('api/settings.php', {
-            method: 'POST',
-            body: fd
+        const res = await fetch('api/methods.php');
+        const methods = await res.json();
+        const serverMethods = server?.methods || [];
+
+        methods.forEach(m => {
+            const label = document.createElement('label');
+            label.className = 'flex items-center gap-2 text-sm text-gray-300 cursor-pointer py-0.5';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.name = 'methods[]';
+            cb.value = m.name;
+            cb.className = 'rounded';
+            if (serverMethods.includes(m.name)) cb.checked = true;
+            const span = document.createElement('span');
+            span.textContent = m.name;
+            label.appendChild(cb);
+            label.appendChild(span);
+            methodsGrid.appendChild(label);
         });
-        const data = await res.json();
+    } catch (err) {
+        methodsGrid.innerHTML = '<p class="text-red-400 text-xs col-span-2">Failed to load methods</p>';
+    }
+
+    methodsDiv.appendChild(methodsGrid);
+    fields.appendChild(methodsDiv);
+}
+
+async function showAddServerModal() {
+    currentEditType = 'server-add';
+    openModal('Add Server');
+    await buildServerModal();
+}
+
+async function editServer(server) {
+    currentEditType = 'server-edit';
+    currentEditId = server.id;
+    openModal('Edit Server');
+    await buildServerModal(server);
+}
+
+async function deleteServer(id) {
+    if (!confirm('Are you sure you want to delete this server?')) return;
+    try {
+        const res = await fetch('api/servers.php', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
+            body: JSON.stringify({ id })
+        });
         if (res.ok) {
-            showToast('Settings saved!', 'success');
-            // Clear the key field after a successful save
-            document.getElementById('settings-hub-key').value = '';
+            showToast('Server deleted', 'success');
+            loadServers();
         } else {
-            showToast(data.detail || 'Failed to save settings', 'error');
+            const data = await res.json();
+            showToast(data.detail || 'Failed to delete server', 'error');
         }
     } catch (err) {
         showToast('Connection error', 'error');
     }
-});
+}
 
-loadSettings();
+loadServers();
