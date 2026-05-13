@@ -14,7 +14,7 @@ function switchAdminTab(tab) {
     document.querySelectorAll('.admin-tab-content').forEach(el => el.classList.add('hidden'));
     document.getElementById('admin-' + tab).classList.remove('hidden');
     
-    ['users', 'plans', 'orders', 'methods'].forEach(t => {
+    ['users', 'plans', 'orders', 'methods', 'settings'].forEach(t => {
         const btn = document.getElementById('admin-tab-' + t);
         btn.className = t === tab
             ? 'flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-blue-600 text-white transition'
@@ -585,3 +585,40 @@ loadUsers();
 loadPlans();
 loadOrders();
 loadMethods();
+
+// =================== SETTINGS ===================
+async function loadSettings() {
+    try {
+        const res = await fetch('api/settings.php');
+        if (!res.ok) return;
+        const settings = await res.json();
+        const urlInput = document.getElementById('settings-hub-url');
+        if (urlInput) urlInput.value = settings.hub_api_url || '';
+        // Leave the key field empty – the placeholder explains the behaviour
+    } catch (err) {
+        console.error('Failed to load settings:', err);
+    }
+}
+
+document.getElementById('settings-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const fd = new FormData(this);
+    try {
+        const res = await fetch('api/settings.php', {
+            method: 'POST',
+            body: fd
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showToast('Settings saved!', 'success');
+            // Clear the key field after a successful save
+            document.getElementById('settings-hub-key').value = '';
+        } else {
+            showToast(data.detail || 'Failed to save settings', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+});
+
+loadSettings();

@@ -14,10 +14,7 @@ define('CRYPTO_XMR_ADDRESS', '888tNkZrPN6JsEgekjMnABU4TBzc2Dt29EPAvkRDZVN');
 // Telegram support link
 define('TELEGRAM_LINK', 'https://t.me/atomicstresser');
 
-// Hub API settings – set HUB_API_URL to the external stresser endpoint
-// e.g. 'http://1.1.1.1/api.php'
-define('HUB_API_URL', '');
-define('HUB_API_KEY', '');
+
 
 // Rate limiting settings
 define('RATE_LIMIT_MAX_ATTEMPTS', 5);
@@ -149,18 +146,20 @@ function validate_url($url) {
 // =================== Hub API ===================
 
 /**
- * Forward an attack to the configured external hub API.
+ * Forward an attack to the external hub API configured in the admin settings.
  * Returns the decoded JSON response on success, or false on failure / when
- * HUB_API_URL is not configured.
+ * no hub URL is configured.
  */
 function send_hub_request(array $params) {
-    $base_url = rtrim(HUB_API_URL, '/');
+    $settings = read_json('settings.json');
+    $base_url = rtrim($settings['hub_api_url'] ?? '', '/');
     if (empty($base_url)) {
         return false; // Hub not configured
     }
 
-    if (!empty(HUB_API_KEY)) {
-        $params['key'] = HUB_API_KEY;
+    $hub_api_key = $settings['hub_api_key'] ?? '';
+    if (!empty($hub_api_key)) {
+        $params['key'] = $hub_api_key;
     }
 
     $url = $base_url . '?' . http_build_query($params);
