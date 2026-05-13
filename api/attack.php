@@ -268,7 +268,7 @@ function dispatch_to_server($server, $attack) {
         CURLOPT_SSL_VERIFYPEER => false,
         CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_MAXREDIRS      => 3,
-        CURLOPT_USERAGENT      => 'AtomicStresser/1.0',
+        CURLOPT_USERAGENT      => 'NetStress/1.0',
     ]);
     $response  = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);

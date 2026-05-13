@@ -81,7 +81,7 @@ if ($method_req === 'POST') {
         'max_concurrents' => $max_concurrents,
         'max_seconds' => $max_seconds,
         'expiration_date' => $expiration_date ?: null,
-        'api_key' => 'atomic_' . bin2hex(random_bytes(12))
+        'api_key' => 'netstress_' . bin2hex(random_bytes(12))
     ];
     
     $users[] = $new_user;

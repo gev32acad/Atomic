@@ -1,4 +1,4 @@
-// AtomicStresser - Main JavaScript
+// NetStress - Main JavaScript
 
 // Toast notification system
 function showToast(message, type = 'info') {

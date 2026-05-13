@@ -43,11 +43,11 @@ $admin = $logged_in && $user['role'] === 'admin';
             <!-- Brand -->
             <a href="index.php" class="flex items-center gap-2 shrink-0 min-w-0">
                 <img src="assets/imagens/logo.png" alt="Logo" class="w-8 h-8 shrink-0" onerror="this.style.display='none'">
-                <span class="text-base sm:text-lg font-bold text-white truncate">ATOMICSTRESSER</span>
+                <span class="text-base sm:text-lg font-bold text-white truncate">NETSTRESS.ME</span>
             </a>
             <!-- Right actions -->
             <div class="flex items-center gap-3 shrink-0">
-                <a href="https://t.me/atomicstresser" target="_blank" class="text-gray-400 hover:text-blue-400 transition" title="Telegram Support">
+                <a href="https://t.me/netstressme" target="_blank" class="text-gray-400 hover:text-blue-400 transition" title="Telegram Support">
                     <i class="fab fa-telegram text-xl"></i>
                 </a>
                 <?php if ($logged_in): ?>
