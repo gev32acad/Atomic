@@ -76,7 +76,7 @@ async function loadUsers() {
         const tbody = document.getElementById('users-table');
         
         if (!users.length) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">No users found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-400">No users found</td></tr>';
             return;
         }
         
@@ -89,10 +89,6 @@ async function loadUsers() {
             const tdUsername = document.createElement('td');
             tdUsername.className = 'px-4 py-3 text-white';
             tdUsername.textContent = u.username;
-            
-            const tdEmail = document.createElement('td');
-            tdEmail.className = 'px-4 py-3';
-            tdEmail.textContent = u.email;
             
             const tdPlan = document.createElement('td');
             tdPlan.className = 'px-4 py-3';
@@ -123,7 +119,6 @@ async function loadUsers() {
             tdActions.appendChild(deleteBtn);
             
             tr.appendChild(tdUsername);
-            tr.appendChild(tdEmail);
             tr.appendChild(tdPlan);
             tr.appendChild(tdRole);
             tr.appendChild(tdJoined);
@@ -132,7 +127,7 @@ async function loadUsers() {
         });
     } catch (err) {
         console.error('Failed to load users:', err);
-        document.getElementById('users-table').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-red-400">Failed to load users</td></tr>';
+        document.getElementById('users-table').innerHTML = '<tr><td colspan="5" class="text-center py-8 text-red-400">Failed to load users</td></tr>';
     }
 }
 
@@ -142,7 +137,6 @@ function showAddUserModal() {
     fields.innerHTML = '';
     const planChoices = loadedPlanNames.length ? loadedPlanNames : ['Starter'];
     fields.appendChild(createField('Username', 'username', 'text', '', {required: true}));
-    fields.appendChild(createField('Email', 'email', 'email', '', {required: true}));
     fields.appendChild(createField('Password', 'password', 'password', '', {required: true}));
     fields.appendChild(createField('Plan', 'plan', 'select', planChoices[0], {choices: planChoices}));
     fields.appendChild(createField('Role', 'role', 'select', 'user', {choices: ['user', 'admin']}));
@@ -158,7 +152,6 @@ function editUser(user) {
     fields.innerHTML = '';
     const planChoices = loadedPlanNames.length ? loadedPlanNames : ['Starter'];
     fields.appendChild(createField('Username', 'username', 'text', user.username));
-    fields.appendChild(createField('Email', 'email', 'email', user.email));
     fields.appendChild(createField('Password (leave blank to keep)', 'password', 'password', ''));
     fields.appendChild(createField('Plan', 'plan', 'select', user.plan, {choices: planChoices}));
     fields.appendChild(createField('Role', 'role', 'select', user.role || user.rule, {choices: ['user', 'admin']}));
@@ -394,6 +387,8 @@ document.getElementById('modal-form').addEventListener('submit', async function(
             if (!el.name.endsWith('[]')) {
                 data[el.name] = el.checked;
             }
+        } else if (el.tagName === 'SELECT' && el.multiple) {
+            // Multi-select: handled below with the multiKeys loop
         } else {
             data[el.name] = el.value;
         }
@@ -404,11 +399,18 @@ document.getElementById('modal-form').addEventListener('submit', async function(
     document.querySelectorAll('#modal-fields input[type="checkbox"][name$="[]"]').forEach(cb => {
         multiKeys.add(cb.name);
     });
+    // Collect multi-select (select[multiple]) arrays
+    document.querySelectorAll('#modal-fields select[multiple]').forEach(sel => {
+        multiKeys.add(sel.name);
+    });
     multiKeys.forEach(name => {
         const key = name.replace(/\[\]$/, '');
         data[key] = [];
         document.querySelectorAll(`#modal-fields input[type="checkbox"][name="${CSS.escape(name)}"]:checked`).forEach(cb => {
             data[key].push(cb.value);
+        });
+        document.querySelectorAll(`#modal-fields select[multiple][name="${CSS.escape(name)}"] option:checked`).forEach(opt => {
+            data[key].push(opt.value);
         });
     });
     
@@ -422,10 +424,19 @@ document.getElementById('modal-form').addEventListener('submit', async function(
         // Collect regular input/select values
         document.querySelectorAll('#modal-fields input, #modal-fields select').forEach(el => {
             if (el.type === 'checkbox') {
-                fd.append(el.name, el.checked);
+                if (!el.name.endsWith('[]')) {
+                    fd.append(el.name, el.checked);
+                }
+            } else if (el.tagName === 'SELECT' && el.multiple) {
+                // handled below
             } else {
                 fd.append(el.name, el.value);
             }
+        });
+        // Collect multi-select selected options
+        document.querySelectorAll('#modal-fields select[multiple]').forEach(sel => {
+            const key = sel.name.replace(/\[\]$/, '');
+            Array.from(sel.selectedOptions).forEach(opt => fd.append(key + '[]', opt.value));
         });
         // Collect textarea values
         document.querySelectorAll('#modal-fields textarea').forEach(el => {
@@ -636,7 +647,7 @@ async function loadServers() {
         const tbody = document.getElementById('servers-table');
 
         if (!servers.length) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">No servers configured yet. Click "Add Server" to add a backend attack server.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">No servers configured yet. Click "Add Server" to add a backend attack server.</td></tr>';
             return;
         }
 
@@ -670,6 +681,7 @@ async function loadServers() {
                 <td class="px-4 py-3 text-white font-medium">${escapeHtml(s.name)}</td>
                 <td class="px-4 py-3">${layerBadge}</td>
                 <td class="px-4 py-3">${methodsDisplay}</td>
+                <td class="px-4 py-3 text-gray-300 text-xs">${s.max_slots !== undefined && s.max_slots !== null ? escapeHtml(String(s.max_slots)) : '—'}</td>
                 <td class="px-4 py-3">${urlDisplay}</td>
                 <td class="px-4 py-3">${s.enabled ? '<span class="text-green-400">Yes</span>' : '<span class="text-gray-500">No</span>'}</td>
                 <td class="px-4 py-3 server-status-cell" id="server-status-${escapeHtml(s.id)}">
@@ -702,7 +714,7 @@ async function loadServers() {
     } catch (err) {
         console.error('Failed to load servers:', err);
         const tbody = document.getElementById('servers-table');
-        if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-red-400">Failed to load servers</td></tr>';
+        if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-red-400">Failed to load servers</td></tr>';
     }
 }
 
@@ -722,54 +734,76 @@ async function checkServerStatus(id) {
     }
 }
 
-function createApiKeyField(value) {
+// Cached methods list for server modal dropdowns
+let _cachedAdminMethods = null;
+
+async function getAdminMethods() {
+    if (_cachedAdminMethods) return _cachedAdminMethods;
+    try {
+        const res = await fetch('api/methods.php');
+        _cachedAdminMethods = await res.json();
+    } catch (e) {
+        _cachedAdminMethods = [];
+    }
+    return _cachedAdminMethods;
+}
+
+function createMethodsMultiSelect(allMethods, selectedMethods, layer) {
     const div = document.createElement('div');
+    const filterFn = m => layer === 'Layer4' ? m.layer4 : m.layer7;
+    const filtered = allMethods.filter(filterFn);
+    const optionsHtml = filtered.map(m =>
+        `<option value="${escapeHtml(m.name)}" ${selectedMethods.includes(m.name) ? 'selected' : ''}>${escapeHtml(m.name)}${m.premium ? ' ⭐' : ''}</option>`
+    ).join('');
     div.innerHTML = `
-        <label class="block text-sm text-gray-400 mb-1">API Key (replaces {apikey})</label>
-        <div class="flex gap-2">
-            <input type="text" name="api_key" value="${escapeHtml(value)}"
-                class="flex-1 bg-background border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 font-mono text-xs"
-                placeholder="Enter or generate an API key">
-            <button type="button" onclick="generateServerApiKey(this)"
-                class="shrink-0 bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-xs transition flex items-center gap-1">
-                <i class="fas fa-sync-alt"></i> Generate
-            </button>
-        </div>
+        <label class="block text-sm text-gray-400 mb-1">Methods (hold Ctrl/Cmd to select multiple; none = all)</label>
+        <select name="methods[]" multiple
+            class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 text-sm" style="min-height:100px">
+            ${optionsHtml}
+        </select>
     `;
     return div;
 }
 
-function generateServerApiKey(btn) {
-    const input = btn.closest('div').querySelector('input[name="api_key"]');
-    if (!input) return;
-    const arr = new Uint8Array(16);
-    crypto.getRandomValues(arr);
-    input.value = Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+function createEnabledToggle(checked) {
+    const div = document.createElement('div');
+    div.innerHTML = `
+        <label class="flex items-center justify-between cursor-pointer">
+            <span class="text-sm text-gray-400">Enabled</span>
+            <div class="relative">
+                <input type="checkbox" name="enabled" ${checked ? 'checked' : ''} class="sr-only peer" id="server-enabled-toggle">
+                <div class="w-11 h-6 bg-gray-700 rounded-full peer peer-checked:bg-blue-600 transition-colors"></div>
+                <div class="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
+            </div>
+        </label>
+    `;
+    return div;
 }
 
-function showAddServerModal() {
+async function showAddServerModal() {
     currentEditType = 'server-add';
     const fields = document.getElementById('modal-fields');
     fields.innerHTML = '';
     fields.appendChild(createField('Name', 'name', 'text', '', {required: true}));
 
-    // Custom textarea for api_url
     const urlDiv = document.createElement('div');
     urlDiv.innerHTML = `
         <label class="block text-sm text-gray-400 mb-1">API URL (use placeholders)</label>
-        <textarea name="api_url" rows="3" placeholder="http://example.com/api?host={host}&port={port}&time={time}&method={method}&key={apikey}"
+        <textarea name="api_url" rows="3" placeholder="http://example.com/api?host={host}&port={port}&time={time}&method={method}"
             class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 font-mono text-xs"></textarea>
     `;
     fields.appendChild(urlDiv);
 
-    fields.appendChild(createField('Layer', 'layer', 'select', 'Layer4', {choices: ['Layer4', 'Layer7', 'Both']}));
-    fields.appendChild(createField('Methods (comma-separated, empty = all)', 'methods', 'text', ''));
-    fields.appendChild(createApiKeyField(''));
-    fields.appendChild(createField('Enabled', 'enabled', 'checkbox', true));
+    fields.appendChild(createField('Layer', 'layer', 'select', 'Layer4', {choices: ['Layer4', 'Layer7']}));
+    fields.appendChild(createField('Max Slots', 'max_slots', 'number', '10'));
+
+    const allMethods = await getAdminMethods();
+    fields.appendChild(createMethodsMultiSelect(allMethods, [], 'Layer4'));
+    fields.appendChild(createEnabledToggle(true));
     openModal('Add Server');
 }
 
-function editServer(server) {
+async function editServer(server) {
     currentEditType = 'server-edit';
     currentEditId = server.id;
     const fields = document.getElementById('modal-fields');
@@ -784,10 +818,12 @@ function editServer(server) {
     `;
     fields.appendChild(urlDiv);
 
-    fields.appendChild(createField('Layer', 'layer', 'select', server.layer || 'Layer4', {choices: ['Layer4', 'Layer7', 'Both']}));
-    fields.appendChild(createField('Methods (comma-separated, empty = all)', 'methods', 'text', (server.methods || []).join(', ')));
-    fields.appendChild(createApiKeyField(server.api_key || ''));
-    fields.appendChild(createField('Enabled', 'enabled', 'checkbox', server.enabled));
+    fields.appendChild(createField('Layer', 'layer', 'select', server.layer || 'Layer4', {choices: ['Layer4', 'Layer7']}));
+    fields.appendChild(createField('Max Slots', 'max_slots', 'number', server.max_slots ?? 10));
+
+    const allMethods = await getAdminMethods();
+    fields.appendChild(createMethodsMultiSelect(allMethods, server.methods || [], server.layer || 'Layer4'));
+    fields.appendChild(createEnabledToggle(!!server.enabled));
     openModal('Edit Server');
 }
 

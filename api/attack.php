@@ -178,37 +178,45 @@ if ($method_req === 'POST') {
     fclose($fp);
 
     // Dispatch to backend server
-    $server = find_server_for_attack($method, $layer);
-    if ($server) {
-        $dispatch = dispatch_to_server($server, $new_attack);
-        $srv_resp = $dispatch['success'] ? 'ok' : ('error: ' . substr($dispatch['error'] ?: (string)$dispatch['status_code'], 0, 100));
-
-        // Update attack record with server info (locked write to avoid race condition)
-        $attacks_path2 = DATA_DIR . 'attacks.json';
-        $fp2 = @fopen($attacks_path2, 'c+');
-        if ($fp2) {
-            flock($fp2, LOCK_EX);
-            $c2 = '';
-            while (!feof($fp2)) $c2 .= fread($fp2, 8192);
-            $atk2 = json_decode($c2, true) ?: [];
-            foreach ($atk2 as &$a) {
-                if ($a['id'] === $new_attack['id']) {
-                    $a['server_id']       = $server['id'];
-                    $a['server_response'] = $srv_resp;
-                    break;
-                }
-            }
-            unset($a);
-            ftruncate($fp2, 0);
-            rewind($fp2);
-            fwrite($fp2, json_encode($atk2, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-            fflush($fp2);
-            flock($fp2, LOCK_UN);
-            fclose($fp2);
+    $server = find_server_for_attack($method, $layer, $attacks, $now);
+    if (!$server) {
+        // No server found – check whether a matching server exists at all (ignoring slot limit)
+        $any = find_server_for_attack($method, $layer, [], 0, true);
+        if ($any) {
+            json_error('All server slots are currently occupied. Please try again in a moment.', 503);
         }
-        $new_attack['server_id'] = $server['id'];
+        // No backend server configured at all – launch is recorded locally
+        json_response(['message' => 'Attack launched (no backend server available)', 'attack' => $new_attack], 201);
     }
-    
+
+    $dispatch = dispatch_to_server($server, $new_attack);
+    $srv_resp = $dispatch['success'] ? 'ok' : ('error: ' . substr($dispatch['error'] ?: (string)$dispatch['status_code'], 0, 100));
+
+    // Update attack record with server info (locked write to avoid race condition)
+    $attacks_path2 = DATA_DIR . 'attacks.json';
+    $fp2 = @fopen($attacks_path2, 'c+');
+    if ($fp2) {
+        flock($fp2, LOCK_EX);
+        $c2 = '';
+        while (!feof($fp2)) $c2 .= fread($fp2, 8192);
+        $atk2 = json_decode($c2, true) ?: [];
+        foreach ($atk2 as &$a) {
+            if ($a['id'] === $new_attack['id']) {
+                $a['server_id']       = $server['id'];
+                $a['server_response'] = $srv_resp;
+                break;
+            }
+        }
+        unset($a);
+        ftruncate($fp2, 0);
+        rewind($fp2);
+        fwrite($fp2, json_encode($atk2, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        fflush($fp2);
+        flock($fp2, LOCK_UN);
+        fclose($fp2);
+    }
+    $new_attack['server_id'] = $server['id'];
+
     json_response(['message' => 'Attack launched', 'attack' => $new_attack], 201);
 }
 
@@ -216,16 +224,43 @@ json_error('Method not allowed', 405);
 
 // =================== Helper: find a compatible backend server ===================
 
-function find_server_for_attack($method, $layer) {
+/**
+ * Find an available backend server for the given method/layer.
+ *
+ * @param string $method
+ * @param string $layer
+ * @param array  $running_attacks  Current in-memory attacks list (used for slot counting)
+ * @param int    $now              Current unix timestamp
+ * @param bool   $ignore_slots     When true, skip the slot-capacity check (used to detect "all full" vs "no server")
+ */
+function find_server_for_attack($method, $layer, $running_attacks = [], $now = 0, $ignore_slots = false) {
     $servers = read_json('servers.json');
     foreach ($servers as $server) {
         if (empty($server['enabled'])) continue;
         // Check layer compatibility
-        $srv_layer = $server['layer'] ?? 'Both';
-        if ($srv_layer !== 'Both' && $srv_layer !== $layer) continue;
+        $srv_layer = $server['layer'] ?? 'Layer4';
+        if ($srv_layer !== $layer) continue;
         // Empty methods list = server accepts all methods
         $srv_methods = $server['methods'] ?? [];
         if (!empty($srv_methods) && !in_array($method, $srv_methods, true)) continue;
+
+        if (!$ignore_slots) {
+            // Count running attacks currently dispatched to this server
+            $max_slots = intval($server['max_slots'] ?? PHP_INT_MAX);
+            if ($max_slots > 0) {
+                $used = 0;
+                foreach ($running_attacks as $a) {
+                    if (($a['server_id'] ?? null) !== $server['id']) continue;
+                    $start = strtotime($a['start_time'] ?? '');
+                    if ($start === false) continue; // skip if date is invalid
+                    if (($start + intval($a['time'])) > $now) {
+                        $used++;
+                    }
+                }
+                if ($used >= $max_slots) continue; // server full – try next
+            }
+        }
+
         return $server;
     }
     return null;
@@ -245,8 +280,6 @@ function dispatch_to_server($server, $attack) {
         '{port}'        => urlencode((string)$attack['port']),
         '{time}'        => urlencode((string)$attack['time']),
         '{method}'      => urlencode($attack['method']),
-        '{apikey}'      => urlencode($server['api_key'] ?? ''),
-        '{key}'         => urlencode($server['api_key'] ?? ''),
         '{concurrents}' => urlencode((string)$attack['concurrents']),
     ];
     $url = str_replace(array_keys($replacements), array_values($replacements), $url);

@@ -24,10 +24,9 @@ if ($rate_limited !== false) {
 }
 
 $username = $_POST['username'] ?? '';
-$email = $_POST['email'] ?? '';
 $password = $_POST['password'] ?? '';
 
-if (empty($username) || empty($email) || empty($password)) {
+if (empty($username) || empty($password)) {
     json_error('All fields are required');
 }
 
@@ -43,30 +42,22 @@ if (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
     json_error('Username can only contain letters, numbers, and underscores');
 }
 
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    json_error('Invalid email address');
-}
-
 if (strlen($password) < 6) {
     json_error('Password must be at least 6 characters');
 }
 
 $users = read_json('users.json');
 
-// Check if username or email already exists
+// Check if username already exists
 foreach ($users as $user) {
     if ($user['username'] === $username) {
         json_error('Username already exists');
-    }
-    if ($user['email'] === $email) {
-        json_error('Email already exists');
     }
 }
 
 $new_user = [
     'id' => generate_id(),
     'username' => $username,
-    'email' => $email,
     'password' => password_hash($password, PASSWORD_BCRYPT),
     'plan' => 'Starter',
     'role' => 'user',
