@@ -206,8 +206,21 @@ function validate_attack_target($target, $layer) {
         if ($type === 'ip' && $val === $target) {
             json_error('Target is blocked by the global blacklist');
         }
-        if ($type === 'cidr' && $layer === 'Layer4' && ip_in_cidr($target, $val)) {
-            json_error('Target is blocked by the global blacklist');
+        if ($type === 'cidr') {
+            // For Layer4 the target IS the IP; for Layer7 extract the host and resolve it
+            $check_ip = $target;
+            if ($layer === 'Layer7') {
+                $host = parse_url($target, PHP_URL_HOST);
+                if (!$host) continue;
+                // Only compare if the host looks like a valid IPv4 address
+                if (!filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) continue;
+                $check_ip = $host;
+            }
+            if ($layer === 'Layer4' || $layer === 'Layer7') {
+                if (ip_in_cidr($check_ip, $val)) {
+                    json_error('Target is blocked by the global blacklist');
+                }
+            }
         }
         if ($type === 'url' && $layer === 'Layer7') {
             $th = parse_url($target, PHP_URL_HOST);

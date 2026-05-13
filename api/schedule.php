@@ -11,39 +11,41 @@ if (!$user) {
     json_error('Unauthorized', 401);
 }
 
-// GET – list user's scheduled attacks
+// GET – list user's pending scheduled attacks (stored in attacks.json with status="scheduled")
 if ($method_req === 'GET') {
-    $all  = read_json('scheduled.json');
-    $mine = array_values(array_filter($all, function($s) use ($user) {
-        return ($s['user_id'] ?? '') === $user['id'] && ($s['status'] ?? '') === 'scheduled';
+    $all  = read_json('attacks.json');
+    $mine = array_values(array_filter($all, function($a) use ($user) {
+        return ($a['user_id'] ?? '') === $user['id'] && ($a['status'] ?? '') === 'scheduled';
     }));
     json_response($mine);
 }
 
-// DELETE – cancel a scheduled attack
+// DELETE – cancel a scheduled attack (removes it from attacks.json, freeing the slot)
 if ($method_req === 'DELETE') {
     verify_csrf_token();
     $body = json_decode(file_get_contents('php://input'), true) ?? [];
     $id   = $body['id'] ?? '';
     if (empty($id)) json_error('ID is required');
 
-    $sched_path = DATA_DIR . 'scheduled.json';
-    $fp = @fopen($sched_path, 'c+');
+    $atk_path = DATA_DIR . 'attacks.json';
+    $fp = @fopen($atk_path, 'c+');
     if (!$fp) json_error('Server error', 500);
     flock($fp, LOCK_EX);
+
     $content = '';
     while (!feof($fp)) $content .= fread($fp, 8192);
     $all = json_decode($content, true) ?: [];
 
     $found   = false;
     $updated = [];
-    foreach ($all as $s) {
-        if ($s['id'] === $id && ($s['user_id'] ?? '') === $user['id']) {
+    foreach ($all as $a) {
+        if ($a['id'] === $id && ($a['user_id'] ?? '') === $user['id'] && ($a['status'] ?? '') === 'scheduled') {
             $found = true;
-            continue;
+            continue; // drop this entry → frees the slot
         }
-        $updated[] = $s;
+        $updated[] = $a;
     }
+
     ftruncate($fp, 0);
     rewind($fp);
     fwrite($fp, json_encode($updated, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));

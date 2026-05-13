@@ -105,23 +105,38 @@ if ($method_req === 'POST') {
         json_error('Time exceeds your plan limit (' . $user['max_seconds'] . 's max)');
     }
 
-    // Validate min_seconds per plan (#8)
+    // Validate min_seconds per plan + resolve allow_schedule flag
     $plans = read_json('plans.json');
-    $min_seconds = 10;
+    $min_seconds    = 10;
+    $allow_schedule = false;
     foreach ($plans as $plan) {
         if ($plan['name'] === $user['plan']) {
-            $min_seconds = intval($plan['min_seconds'] ?? 10);
+            $min_seconds    = intval($plan['min_seconds'] ?? 10);
+            $allow_schedule = !empty($plan['allow_schedule']);
             break;
         }
     }
     if ($time < $min_seconds) {
         json_error("Time must be at least {$min_seconds} seconds for your plan");
     }
-    
+
     if ($concurrents < 1 || $concurrents > $user['max_concurrents']) {
         json_error('Concurrents exceed your plan limit (' . $user['max_concurrents'] . ' max)');
     }
-    
+
+    // Gate scheduled attacks behind plan feature
+    $want_schedule = false;
+    if (!empty($scheduled_at)) {
+        if (!$allow_schedule) {
+            json_error('Your plan does not include Attack Scheduling. Upgrade to Advanced or Enterprise to unlock it.');
+        }
+        $scheduled_ts = strtotime($scheduled_at);
+        if ($scheduled_ts === false || $scheduled_ts < time() + 30) {
+            json_error('Scheduled time must be at least 30 seconds in the future');
+        }
+        $want_schedule = true;
+    }
+
     // Verify method exists and check premium access
     $methods = read_json('methods.json');
     $valid_method = false;
@@ -136,12 +151,14 @@ if ($method_req === 'POST') {
             break;
         }
     }
-    
+
     if (!$valid_method) {
         json_error('Invalid method');
     }
 
-    // Lock attacks.json for atomic concurrent-count check + insert (#7)
+    // Lock attacks.json for atomic concurrent-count check + insert.
+    // Both running and scheduled attacks consume a slot – all stored in attacks.json
+    // so this single flock() prevents races between concurrent requests.
     $attacks_path = DATA_DIR . 'attacks.json';
     $fp = @fopen($attacks_path, 'c+');
     if (!$fp) {
@@ -156,67 +173,59 @@ if ($method_req === 'POST') {
     $now = time();
     $running_count = 0;
     foreach ($attacks as $attack) {
-        if ($attack['user_id'] === $user['id']) {
-            $start = strtotime($attack['start_time']);
-            $duration = $attack['time'];
-            if (($start + $duration) > $now) {
-                $running_count++;
-            }
+        if ($attack['user_id'] !== $user['id']) continue;
+        // Scheduled attacks occupy a slot until they fire or are cancelled
+        if (($attack['status'] ?? '') === 'scheduled') {
+            $running_count++;
+            continue;
+        }
+        // Still-running attacks
+        $start    = strtotime($attack['start_time'] ?? '');
+        $duration = intval($attack['time'] ?? 0);
+        if ($start && ($start + $duration) > $now) {
+            $running_count++;
         }
     }
-    
+
     if ($running_count >= $user['max_concurrents']) {
         flock($fp, LOCK_UN);
         fclose($fp);
         json_error('Maximum concurrent attacks reached');
     }
-    
+
     $new_attack = [
         'id'          => generate_id(),
         'user_id'     => $user['id'],
         'target'      => $target,
-        'port'        => $port_num,   // stored as integer (Bug 14)
+        'port'        => $port_num,
         'time'        => $time,
         'method'      => $method,
         'concurrents' => $concurrents,
         'layer'       => $layer,
-        'start_time'  => date('c'),
         'status'      => 'running',
         'server_id'   => null,
         'server_response' => null
     ];
 
-    // Handle scheduled attacks (Feature P)
-    if (!empty($scheduled_at)) {
-        $scheduled_ts = strtotime($scheduled_at);
-        if ($scheduled_ts !== false && $scheduled_ts > time()) {
-            // Store as a scheduled (pending) attack
-            flock($fp, LOCK_UN);
-            fclose($fp);
+    // Scheduled attack: stored in attacks.json with status="scheduled" so the slot
+    // is reserved atomically under this same flock – prevents unlimited scheduling abuse.
+    if ($want_schedule) {
+        $new_attack['status']       = 'scheduled';
+        $new_attack['scheduled_at'] = date('c', $scheduled_ts);
+        // start_time is intentionally omitted; set by process_due_scheduled_attacks when it fires
 
-            $new_attack['status']       = 'scheduled';
-            $new_attack['scheduled_at'] = date('c', $scheduled_ts);
-            unset($new_attack['start_time']); // will be set when launched
+        $attacks[] = $new_attack;
+        ftruncate($fp, 0);
+        rewind($fp);
+        fwrite($fp, json_encode($attacks, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        fflush($fp);
+        flock($fp, LOCK_UN);
+        fclose($fp);
 
-            $sched_path = DATA_DIR . 'scheduled.json';
-            $sfp = @fopen($sched_path, 'c+');
-            if ($sfp) {
-                flock($sfp, LOCK_EX);
-                $sc = '';
-                while (!feof($sfp)) $sc .= fread($sfp, 8192);
-                $scheduled = json_decode($sc, true) ?: [];
-                $scheduled[] = $new_attack;
-                ftruncate($sfp, 0);
-                rewind($sfp);
-                fwrite($sfp, json_encode($scheduled, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-                fflush($sfp);
-                flock($sfp, LOCK_UN);
-                fclose($sfp);
-            }
-            json_response(['message' => 'Attack scheduled', 'attack' => $new_attack], 201);
-        }
+        json_response(['message' => 'Attack scheduled', 'attack' => $new_attack], 201);
     }
 
+    $new_attack['start_time'] = date('c'); // set only for immediate (non-scheduled) attacks
     $attacks[] = $new_attack;
 
     ftruncate($fp, 0);
@@ -368,61 +377,41 @@ function dispatch_to_server($server, $attack) {
 // =================== Scheduled Attack Processor ===================
 
 function process_due_scheduled_attacks($user) {
-    $sched_path = DATA_DIR . 'scheduled.json';
-    if (!file_exists($sched_path)) return;
-
-    $sfp = @fopen($sched_path, 'c+');
-    if (!$sfp) return;
-    flock($sfp, LOCK_EX);
+    // Scheduled attacks are stored in attacks.json with status="scheduled".
+    // This function promotes due ones to status="running" inside the same file,
+    // keeping everything under one flock() so slot counts stay consistent.
+    $atk_path = DATA_DIR . 'attacks.json';
+    $fp = @fopen($atk_path, 'c+');
+    if (!$fp) return;
+    flock($fp, LOCK_EX);
 
     $content = '';
-    while (!feof($sfp)) $content .= fread($sfp, 8192);
-    $scheduled = json_decode($content, true) ?: [];
+    while (!feof($fp)) $content .= fread($fp, 8192);
+    $attacks = json_decode($content, true) ?: [];
 
     $now     = time();
-    $to_run  = [];
-    $remaining_scheduled = [];
+    $changed = false;
 
-    foreach ($scheduled as $s) {
-        if (($s['user_id'] ?? '') !== $user['id']) {
-            $remaining_scheduled[] = $s;
-            continue;
-        }
-        $ts = isset($s['scheduled_at']) ? strtotime($s['scheduled_at']) : 0;
-        if ($ts <= $now && ($s['status'] ?? '') === 'scheduled') {
-            $s['status']     = 'running';
-            $s['start_time'] = date('c');
-            unset($s['scheduled_at']);
-            $to_run[] = $s;
-        } else {
-            $remaining_scheduled[] = $s;
+    foreach ($attacks as &$a) {
+        if (($a['user_id'] ?? '') !== $user['id']) continue;
+        if (($a['status'] ?? '') !== 'scheduled') continue;
+
+        $ts = isset($a['scheduled_at']) ? strtotime($a['scheduled_at']) : 0;
+        if ($ts > 0 && $ts <= $now) {
+            $a['status']     = 'running';
+            $a['start_time'] = date('c');
+            unset($a['scheduled_at']);
+            $changed = true;
         }
     }
+    unset($a);
 
-    ftruncate($sfp, 0);
-    rewind($sfp);
-    fwrite($sfp, json_encode($remaining_scheduled, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-    fflush($sfp);
-    flock($sfp, LOCK_UN);
-    fclose($sfp);
-
-    if (empty($to_run)) return;
-
-    // Append the now-due attacks to attacks.json
-    $atk_path = DATA_DIR . 'attacks.json';
-    $afp = @fopen($atk_path, 'c+');
-    if (!$afp) return;
-    flock($afp, LOCK_EX);
-    $ac = '';
-    while (!feof($afp)) $ac .= fread($afp, 8192);
-    $attacks = json_decode($ac, true) ?: [];
-    foreach ($to_run as $a) {
-        $attacks[] = $a;
+    if ($changed) {
+        ftruncate($fp, 0);
+        rewind($fp);
+        fwrite($fp, json_encode($attacks, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        fflush($fp);
     }
-    ftruncate($afp, 0);
-    rewind($afp);
-    fwrite($afp, json_encode($attacks, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-    fflush($afp);
-    flock($afp, LOCK_UN);
-    fclose($afp);
+    flock($fp, LOCK_UN);
+    fclose($fp);
 }

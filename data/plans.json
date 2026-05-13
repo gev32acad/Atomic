@@ -9,7 +9,8 @@
     "max_seconds": 60,
     "min_seconds": 10,
     "premium": false,
-    "api_access": false
+    "api_access": false,
+    "allow_schedule": false
   },
   {
     "id": "2",
@@ -21,7 +22,8 @@
     "max_seconds": 120,
     "min_seconds": 10,
     "premium": false,
-    "api_access": true
+    "api_access": true,
+    "allow_schedule": false
   },
   {
     "id": "3",
@@ -34,7 +36,8 @@
     "min_seconds": 10,
     "premium": true,
     "api_access": true,
-    "popular": true
+    "popular": true,
+    "allow_schedule": true
   },
   {
     "id": "4",
@@ -46,6 +49,7 @@
     "max_seconds": 3600,
     "min_seconds": 10,
     "premium": true,
-    "api_access": true
+    "api_access": true,
+    "allow_schedule": true
   }
 ]

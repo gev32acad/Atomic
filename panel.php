@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/config.php';
 $user = require_auth();
 $csrf_token = generate_csrf_token();
 $is_starter = $user['plan'] === 'Starter';
@@ -8,6 +9,16 @@ $max_s = $user['max_seconds'];
 $max_c = $user['max_concurrents'];
 $max_dur_label = $max_s >= 3600 ? floor($max_s/3600).'h' : $max_s.'s';
 $accent = $is_starter ? 'green' : 'blue';
+
+// Resolve per-plan feature flags
+$allow_schedule = false;
+foreach (read_json('plans.json') as $plan) {
+    if ($plan['name'] === $user['plan']) {
+        $allow_schedule = !empty($plan['allow_schedule']);
+        break;
+    }
+}
+
 $page_title = 'Hub';
 include __DIR__ . '/includes/header.php';
 include __DIR__ . '/includes/sidebar.php';
@@ -161,14 +172,20 @@ include __DIR__ . '/includes/sidebar.php';
                         <i class="fas fa-bolt mr-2"></i>Launch Attack
                     </button>
                     <div class="mt-3">
+                        <?php if ($allow_schedule): ?>
                         <button type="button" onclick="toggleScheduleL4()" class="text-xs text-gray-600 hover:text-blue-400 flex items-center gap-1 transition">
                             <i class="fas fa-calendar-alt"></i> Schedule for later
                         </button>
                         <div id="schedule-l4" class="hidden mt-2">
                             <label class="form-label">Scheduled Launch Time</label>
                             <input type="datetime-local" name="scheduled_at" class="form-input"
-                                min="<?= date('Y-m-d\TH:i') ?>">
+                                min="<?= date('Y-m-d\TH:i', time() + 30) ?>">
                         </div>
+                        <?php else: ?>
+                        <a href="store.php" class="inline-flex items-center gap-1 text-xs text-gray-700 hover:text-orange-400 transition">
+                            <i class="fas fa-lock"></i> Schedule for later <span class="text-orange-500/70">(Advanced+)</span>
+                        </a>
+                        <?php endif; ?>
                     </div>
                 </form>
 
@@ -216,14 +233,20 @@ include __DIR__ . '/includes/sidebar.php';
                         <i class="fas fa-bolt mr-2"></i>Launch Attack
                     </button>
                     <div class="mt-3">
+                        <?php if ($allow_schedule): ?>
                         <button type="button" onclick="toggleScheduleL7()" class="text-xs text-gray-600 hover:text-blue-400 flex items-center gap-1 transition">
                             <i class="fas fa-calendar-alt"></i> Schedule for later
                         </button>
                         <div id="schedule-l7" class="hidden mt-2">
                             <label class="form-label">Scheduled Launch Time</label>
                             <input type="datetime-local" name="scheduled_at" class="form-input"
-                                min="<?= date('Y-m-d\TH:i') ?>">
+                                min="<?= date('Y-m-d\TH:i', time() + 30) ?>">
                         </div>
+                        <?php else: ?>
+                        <a href="store.php" class="inline-flex items-center gap-1 text-xs text-gray-700 hover:text-orange-400 transition">
+                            <i class="fas fa-lock"></i> Schedule for later <span class="text-orange-500/70">(Advanced+)</span>
+                        </a>
+                        <?php endif; ?>
                     </div>
                 </form>
 
@@ -302,6 +325,7 @@ include __DIR__ . '/includes/sidebar.php';
 const csrfToken = <?= json_encode($csrf_token) ?>;
 const maxConcurrents = <?= $max_c ?>;
 const isPremium = <?= $is_premium ? 'true' : 'false' ?>;
+const allowSchedule = <?= $allow_schedule ? 'true' : 'false' ?>;
 let methodMeta = {};
 let attackTimers = {};
 
@@ -710,7 +734,7 @@ function connectSSE() {
 loadMethods();
 connectSSE();
 loadFavorites();
-loadScheduled();
+if (allowSchedule) loadScheduled();
 
 </script>
 

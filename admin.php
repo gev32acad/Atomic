@@ -89,11 +89,12 @@ include __DIR__ . '/includes/sidebar.php';
                                 <th class="px-4 py-3">Max Seconds</th>
                                 <th class="px-4 py-3">Premium</th>
                                 <th class="px-4 py-3">API</th>
+                                <th class="px-4 py-3">Schedule</th>
                                 <th class="px-4 py-3">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="plans-table" class="text-gray-300">
-                            <tr><td colspan="8" class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading plans...</td></tr>
+                            <tr><td colspan="9" class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading plans...</td></tr>
                         </tbody>
                     </table>
                 </div>

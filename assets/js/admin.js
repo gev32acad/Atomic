@@ -216,7 +216,7 @@ async function loadPlans() {
         const tbody = document.getElementById('plans-table');
         
         if (!plans.length) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">No plans found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-gray-400">No plans found</td></tr>';
             return;
         }
         
@@ -232,6 +232,7 @@ async function loadPlans() {
                 <td class="px-4 py-3">${parseInt(p.max_seconds)}s</td>
                 <td class="px-4 py-3">${p.premium ? '<span class="text-green-400">Yes</span>' : '<span class="text-gray-500">No</span>'}</td>
                 <td class="px-4 py-3">${p.api_access ? '<span class="text-green-400">Yes</span>' : '<span class="text-gray-500">No</span>'}</td>
+                <td class="px-4 py-3">${p.allow_schedule ? '<span class="text-yellow-400"><i class="fas fa-calendar-alt mr-1"></i>Yes</span>' : '<span class="text-gray-500">No</span>'}</td>
                 <td class="px-4 py-3"></td>
             `;
             const actionsCell = tr.querySelector('td:last-child');
@@ -249,7 +250,7 @@ async function loadPlans() {
         });
     } catch (err) {
         console.error('Failed to load plans:', err);
-        document.getElementById('plans-table').innerHTML = '<tr><td colspan="8" class="text-center py-8 text-red-400">Failed to load plans</td></tr>';
+        document.getElementById('plans-table').innerHTML = '<tr><td colspan="9" class="text-center py-8 text-red-400">Failed to load plans</td></tr>';
     }
 }
 
@@ -266,6 +267,7 @@ function showAddPlanModal() {
     fields.appendChild(createField('Min Seconds', 'min_seconds', 'number', '10'));
     fields.appendChild(createField('Premium', 'premium', 'checkbox', false));
     fields.appendChild(createField('API Access', 'api_access', 'checkbox', false));
+    fields.appendChild(createField('Allow Scheduling', 'allow_schedule', 'checkbox', false));
     openModal('Add Plan');
 }
 
@@ -283,6 +285,7 @@ function editPlan(plan) {
     fields.appendChild(createField('Min Seconds', 'min_seconds', 'number', plan.min_seconds));
     fields.appendChild(createField('Premium', 'premium', 'checkbox', plan.premium));
     fields.appendChild(createField('API Access', 'api_access', 'checkbox', plan.api_access));
+    fields.appendChild(createField('Allow Scheduling', 'allow_schedule', 'checkbox', !!plan.allow_schedule));
     openModal('Edit Plan');
 }
 
