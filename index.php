@@ -33,7 +33,7 @@ include __DIR__ . '/includes/sidebar.php';
 <!-- Features Section -->
 <section id="features" class="py-20 px-4">
     <div class="max-w-6xl mx-auto">
-        <h2 class="text-3xl font-bold text-center text-white mb-12">Why Choose AtomicStresser?</h2>
+        <h2 class="text-3xl font-bold text-center text-white mb-12">Why Choose NetStress?</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <?php
             $features = [
@@ -171,10 +171,10 @@ include __DIR__ . '/includes/sidebar.php';
         <div class="space-y-4">
             <?php
             $faqs = [
-                ['q' => 'What is AtomicStresser?', 'a' => 'AtomicStresser is a high-performance IP stresser and load testing tool designed to test the resilience of your network infrastructure.'],
+                ['q' => 'What is NetStress?', 'a' => 'NetStress is a high-performance IP stresser and load testing tool designed to test the resilience of your network infrastructure.'],
                 ['q' => 'What payment methods are accepted?', 'a' => 'We accept cryptocurrency payments (Bitcoin, Ethereum, Litecoin) for maximum privacy and security.'],
                 ['q' => 'Is it anonymous?', 'a' => 'Yes, all tests are completely private. We use advanced techniques to protect your identity.'],
-                ['q' => 'Is this legal?', 'a' => 'AtomicStresser should only be used for authorized testing of your own infrastructure. Unauthorized use against third-party systems is illegal.']
+                ['q' => 'Is this legal?', 'a' => 'NetStress should only be used for authorized testing of your own infrastructure. Unauthorized use against third-party systems is illegal.']
             ];
             foreach ($faqs as $i => $faq): ?>
             <div class="bg-panel border border-gray-700/50 rounded-xl overflow-hidden">
@@ -194,9 +194,9 @@ include __DIR__ . '/includes/sidebar.php';
 <!-- Footer -->
 <footer class="border-t border-gray-700/50 py-8 px-4">
     <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-        <p class="text-gray-400 text-sm">&copy; <?= date('Y') ?> AtomicStresser. All rights reserved.</p>
+        <p class="text-gray-400 text-sm">&copy; <?= date('Y') ?> NetStress. All rights reserved.</p>
         <div class="flex items-center gap-4">
-            <a href="https://t.me/atomicstresser" target="_blank" class="text-gray-400 hover:text-blue-400 transition">
+            <a href="https://t.me/netstressme" target="_blank" class="text-gray-400 hover:text-blue-400 transition">
                 <i class="fab fa-telegram text-xl"></i>
             </a>
             <a href="#" class="text-gray-400 hover:text-blue-400 transition">

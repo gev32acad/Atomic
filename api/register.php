@@ -74,7 +74,7 @@ $new_user = [
     'max_concurrents' => 1,
     'max_seconds' => 60,
     'expiration_date' => null,
-    'api_key' => 'atomic_' . bin2hex(random_bytes(12))
+    'api_key' => 'netstress_' . bin2hex(random_bytes(12))
 ];
 
 $users[] = $new_user;

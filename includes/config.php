@@ -2,7 +2,7 @@
 session_start();
 
 define('DATA_DIR', __DIR__ . '/../data/');
-define('SITE_NAME', 'AtomicStresser');
+define('SITE_NAME', 'NetStress');
 define('TOKEN_SECRET', 'a7f3c9e2b1d8f64ec3a2b9d7f5e38c1ab4d6f2e9c71a3b5d1f8e4c2a6b3d9f7');
 
 // Hardcoded crypto exchange rates (approximate USD values) - used server-side for amount validation
@@ -15,7 +15,7 @@ define('CRYPTO_LTC_ADDRESS', 'LaMT348PWRnrqeeWArpwQPbuanpXDZGEUz');
 define('CRYPTO_XMR_ADDRESS', '888tNkZrPN6JsEgekjMnABU4TBzc2Dt29EPAvkRDZVN');
 
 // Telegram support link
-define('TELEGRAM_LINK', 'https://t.me/atomicstresser');
+define('TELEGRAM_LINK', 'https://t.me/netstressme');
 
 // Rate limiting settings
 define('RATE_LIMIT_MAX_ATTEMPTS', 5);

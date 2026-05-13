@@ -1,4 +1,4 @@
-// AtomicStresser - Admin Panel JavaScript
+// NetStress - Admin Panel JavaScript
 
 let currentEditId = null;
 let currentEditType = null;
