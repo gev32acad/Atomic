@@ -251,7 +251,8 @@ function find_server_for_attack($method, $layer, $running_attacks = [], $now = 0
                 $used = 0;
                 foreach ($running_attacks as $a) {
                     if (($a['server_id'] ?? null) !== $server['id']) continue;
-                    $start = strtotime($a['start_time']);
+                    $start = strtotime($a['start_time'] ?? '');
+                    if ($start === false) continue; // skip if date is invalid
                     if (($start + intval($a['time'])) > $now) {
                         $used++;
                     }

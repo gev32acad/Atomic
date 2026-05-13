@@ -5,6 +5,10 @@ include __DIR__ . '/includes/header.php';
 include __DIR__ . '/includes/sidebar.php';
 
 $host = preg_replace('/[^a-zA-Z0-9.\-:\[\]]/', '', $_SERVER['HTTP_HOST'] ?? '');
+// Validate: must look like a hostname, IPv4, or bracketed IPv6
+if (!preg_match('/^(\[[\da-fA-F:]+\]|[\w.\-]+(:\d+)?)$/', $host)) {
+    $host = 'localhost';
+}
 $api_link = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $host . rtrim(dirname($_SERVER['REQUEST_URI']), '/') . '/api';
 ?>
 
