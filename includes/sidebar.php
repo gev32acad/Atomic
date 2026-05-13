@@ -47,21 +47,6 @@ function render_nav_items($nav_items, $current_page, $admin) {
     return $html;
 }
 ?>
-<!-- Sidebar -->
-<aside id="sidebar" class="hidden lg:block fixed left-0 top-14 bottom-0 w-64 bg-panel border-r border-gray-700/50 overflow-y-auto z-30">
-    <nav class="p-4 space-y-2">
-        <!-- Plan badge -->
-        <div class="flex items-center justify-between px-4 py-2 mb-1">
-            <span class="text-xs text-gray-600 font-medium uppercase tracking-wide">Navigation</span>
-            <span class="<?= $badge_class ?>">
-                <i class="fas <?= $badge_icon ?> text-xs"></i>
-                <?= htmlspecialchars($plan_name) ?>
-            </span>
-        </div>
-        <?= render_nav_items($nav_items, $current_page, $admin) ?>
-    </nav>
-</aside>
-
 <!-- Mobile sidebar overlay -->
 <div id="sidebar-overlay" class="hidden fixed inset-0 bg-black/50 z-20 lg:hidden" onclick="toggleSidebar()"></div>
 <aside id="mobile-sidebar" class="hidden fixed left-0 top-14 bottom-0 w-64 bg-panel border-r border-gray-700/50 overflow-y-auto z-30 lg:hidden">
@@ -79,4 +64,4 @@ function render_nav_items($nav_items, $current_page, $admin) {
 <?php endif; ?>
 
 <!-- Main Content -->
-<main class="<?= $logged_in ? 'lg:ml-64' : '' ?> flex-1 min-h-[calc(100vh-57px)]">
+<main class="flex-1 min-h-[calc(100vh-57px)]">
