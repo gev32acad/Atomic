@@ -540,11 +540,14 @@ async function loadScheduled() {
                     <p class="text-gray-500 text-xs">${escapeHtml(s.method)} · ${escapeHtml(s.layer)} · ${escapeHtml(String(s.time))}s</p>
                     <p class="text-yellow-400 text-xs mt-0.5"><i class="fas fa-clock mr-1"></i>${new Date(s.scheduled_at).toLocaleString()}</p>
                 </div>
-                <button onclick="cancelScheduled('${escapeHtml(s.id)}')" class="text-gray-600 hover:text-red-400 transition text-sm" title="Cancel">
+                <button class="cancel-sched-btn text-gray-600 hover:text-red-400 transition text-sm" data-id="${escapeHtml(s.id)}" title="Cancel">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
         `).join('');
+        container.querySelectorAll('.cancel-sched-btn').forEach(btn => {
+            btn.addEventListener('click', () => cancelScheduled(btn.dataset.id));
+        });
     } catch (err) { /* silent */ }
 }
 
@@ -572,16 +575,22 @@ async function loadFavorites() {
         }
         container.innerHTML = favs.map(f => `
             <div class="flex items-center gap-1">
-                <button onclick="applyFavorite(${escapeHtml(JSON.stringify(f))})"
-                    class="flex items-center gap-1.5 bg-background border border-gray-700 hover:border-blue-500 text-gray-300 hover:text-white text-xs rounded-lg px-3 py-1.5 transition">
+                <button class="fav-apply-btn flex items-center gap-1.5 bg-background border border-gray-700 hover:border-blue-500 text-gray-300 hover:text-white text-xs rounded-lg px-3 py-1.5 transition"
+                    data-fav='${escapeHtml(JSON.stringify(f))}'>
                     <i class="fas fa-star text-yellow-400 text-xs"></i>
                     ${escapeHtml(f.name)}
                 </button>
-                <button onclick="deleteFavorite('${escapeHtml(f.id)}')" class="text-gray-700 hover:text-red-400 transition text-xs" title="Remove">
+                <button class="fav-delete-btn text-gray-700 hover:text-red-400 transition text-xs" data-id="${escapeHtml(f.id)}" title="Remove">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
         `).join('');
+        container.querySelectorAll('.fav-apply-btn').forEach(btn => {
+            btn.addEventListener('click', () => applyFavorite(JSON.parse(btn.dataset.fav)));
+        });
+        container.querySelectorAll('.fav-delete-btn').forEach(btn => {
+            btn.addEventListener('click', () => deleteFavorite(btn.dataset.id));
+        });
     } catch (err) { /* silent */ }
 }
 

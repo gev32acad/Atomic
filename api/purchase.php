@@ -41,7 +41,7 @@ if ($method_req === 'POST') {
     }
     $amount = floatval($amount);
 
-    if (!empty($tx_hash) && !preg_match('/^[a-fA-F0-9x]{10,200}$/', $tx_hash)) {
+    if (!empty($tx_hash) && !preg_match('/^(0x)?[a-fA-F0-9]{8,200}$/', $tx_hash)) {
         json_error('Invalid transaction hash format');
     }
 

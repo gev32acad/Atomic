@@ -33,7 +33,8 @@ if ($method_req === 'POST') {
     if ($type === 'url' && !filter_var($value, FILTER_VALIDATE_URL)) json_error('Invalid URL');
     if ($type === 'cidr') {
         $parts = explode('/', $value, 2);
-        if (count($parts) !== 2 || !filter_var($parts[0], FILTER_VALIDATE_IP) || !ctype_digit($parts[1]) || intval($parts[1]) > 32) {
+        if (count($parts) !== 2 || !filter_var($parts[0], FILTER_VALIDATE_IP)
+            || !ctype_digit($parts[1]) || intval($parts[1]) > 32) {
             json_error('Invalid CIDR notation (e.g. 10.0.0.0/8)');
         }
     }
@@ -53,7 +54,7 @@ if ($method_req === 'DELETE') {
     if (empty($id)) json_error('ID is required');
 
     $all     = read_json($bl_file);
-    $updated = array_values(array_filter($all, fn($e) => $e['id'] !== $id));
+    $updated = array_values(array_filter($all, function($e) use ($id) { return $e['id'] !== $id; }));
     if (count($updated) === count($all)) json_error('Entry not found', 404);
     write_json($bl_file, $updated);
     json_response(['message' => 'Entry deleted']);

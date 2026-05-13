@@ -223,8 +223,9 @@ function validate_attack_target($target, $layer) {
 
 function ip_in_cidr($ip, $cidr) {
     if (strpos($cidr, '/') === false) return $ip === $cidr;
-    [$subnet, $bits] = explode('/', $cidr, 2);
-    $bits = intval($bits);
+    $parts  = explode('/', $cidr, 2);
+    $subnet = $parts[0];
+    $bits   = intval($parts[1]);
     if ($bits < 0 || $bits > 32) return false;
     $mask       = -1 << (32 - $bits);
     $ip_long    = ip2long($ip);
