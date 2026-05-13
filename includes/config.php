@@ -32,7 +32,7 @@ function send_security_headers() {
     header('X-Frame-Options: DENY');
     header('X-Content-Type-Options: nosniff');
     header('Referrer-Policy: strict-origin-when-cross-origin');
-    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data:; font-src 'self' https://cdnjs.cloudflare.com; connect-src 'self'; frame-ancestors 'none'");
+    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data:; font-src 'self' https://cdnjs.cloudflare.com; connect-src 'self'; frame-ancestors 'none'");
 }
 send_security_headers();
 
@@ -66,6 +66,15 @@ function write_json($file, $data) {
 
 function generate_id() {
     return uniqid() . bin2hex(random_bytes(4));
+}
+
+function generate_user_id() {
+    $users = read_json('users.json');
+    $existing_ids = array_column($users, 'id');
+    do {
+        $id = (string)random_int(100000, 999999);
+    } while (in_array($id, $existing_ids));
+    return $id;
 }
 
 function json_response($data, $code = 200) {

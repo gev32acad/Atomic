@@ -13,13 +13,13 @@ $nav_items = [
 $plan_name = $user['plan'] ?? 'Starter';
 if ($plan_name === 'Starter') {
     $badge_class = 'plan-badge plan-badge-free';
-    $badge_icon  = 'fa-user';
+    $badge_icon  = '';
 } elseif (in_array($plan_name, ['Advanced', 'Enterprise'])) {
     $badge_class = 'plan-badge plan-badge-premium';
-    $badge_icon  = 'fa-star';
+    $badge_icon  = '';
 } else {
     $badge_class = 'plan-badge plan-badge-paid';
-    $badge_icon  = 'fa-check-circle';
+    $badge_icon  = '';
 }
 
 function render_nav_items($nav_items, $current_page, $admin) {
@@ -53,7 +53,7 @@ function render_nav_items($nav_items, $current_page, $admin) {
     <nav class="p-4 space-y-2">
         <div class="flex items-center justify-end px-4 py-2 mb-1">
             <span class="<?= $badge_class ?>">
-                <i class="fas <?= $badge_icon ?> text-xs"></i>
+                <?php if ($badge_icon): ?><i class="fas <?= $badge_icon ?> text-xs"></i><?php endif; ?>
                 <?= htmlspecialchars($plan_name) ?>
             </span>
         </div>

@@ -243,8 +243,8 @@ if ($method_req === 'POST') {
         if ($any) {
             json_error('All server slots are currently occupied. Please try again in a moment.', 503);
         }
-        // No backend server configured at all – launch is recorded locally
-        json_response(['message' => 'Attack launched (no backend server available)', 'attack' => $new_attack], 201);
+        // No backend server configured for this layer/method – reject the attack
+        json_error('No backend server is available for this layer/method. Please contact an administrator.', 503);
     }
 
     $dispatch = dispatch_to_server($server, $new_attack);

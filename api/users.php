@@ -66,7 +66,7 @@ if ($method_req === 'POST') {
     }
     
     $new_user = [
-        'id' => generate_id(),
+        'id' => generate_user_id(),
         'username' => $username,
         'password' => password_hash($password, PASSWORD_BCRYPT),
         'plan' => $plan,

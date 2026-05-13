@@ -56,7 +56,7 @@ foreach ($users as $user) {
 }
 
 $new_user = [
-    'id' => generate_id(),
+    'id' => generate_user_id(),
     'username' => $username,
     'password' => password_hash($password, PASSWORD_BCRYPT),
     'plan' => 'Starter',
