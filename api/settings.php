@@ -31,8 +31,8 @@ if ($method_req === 'POST') {
     $hub_api_url = trim($_POST['hub_api_url'] ?? '');
     $hub_api_key = $_POST['hub_api_key'] ?? '';
 
-    if (!empty($hub_api_url) && !filter_var($hub_api_url, FILTER_VALIDATE_URL)) {
-        json_error('Invalid Hub API URL');
+    if (!empty($hub_api_url) && (!filter_var($hub_api_url, FILTER_VALIDATE_URL) || !preg_match('/^https?:\/\//', $hub_api_url))) {
+        json_error('Invalid Hub API URL. Must start with http:// or https://');
     }
 
     $settings['hub_api_url'] = $hub_api_url;
