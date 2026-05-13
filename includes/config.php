@@ -17,6 +17,8 @@ define('CRYPTO_XMR_ADDRESS', '888tNkZrPN6JsEgekjMnABU4TBzc2Dt29EPAvkRDZVN');
 // Telegram support link
 define('TELEGRAM_LINK', 'https://t.me/netstressme');
 
+
+
 // Rate limiting settings
 define('RATE_LIMIT_MAX_ATTEMPTS', 5);
 define('RATE_LIMIT_WINDOW', 900); // 15 minutes

@@ -385,16 +385,31 @@ async function deleteMethod(id) {
 document.getElementById('modal-form').addEventListener('submit', async function(e) {
     e.preventDefault();
     
-    const formData = new FormData(this);
     const data = {};
     
     // Get all field values
     document.querySelectorAll('#modal-fields input, #modal-fields select').forEach(el => {
         if (el.type === 'checkbox') {
-            data[el.name] = el.checked;
+            // Multi-value checkboxes (name ending in []) are handled separately below
+            if (!el.name.endsWith('[]')) {
+                data[el.name] = el.checked;
+            }
         } else {
             data[el.name] = el.value;
         }
+    });
+
+    // Collect multi-value checkbox arrays (e.g. methods[])
+    const multiKeys = new Set();
+    document.querySelectorAll('#modal-fields input[type="checkbox"][name$="[]"]').forEach(cb => {
+        multiKeys.add(cb.name);
+    });
+    multiKeys.forEach(name => {
+        const key = name.replace(/\[\]$/, '');
+        data[key] = [];
+        document.querySelectorAll(`#modal-fields input[type="checkbox"][name="${CSS.escape(name)}"]:checked`).forEach(cb => {
+            data[key].push(cb.value);
+        });
     });
     
     const [type, action] = currentEditType.split('-');
@@ -613,6 +628,7 @@ loadServers();
 
 // =================== SERVERS ===================
 
+
 async function loadServers() {
     try {
         const res = await fetch('api/servers.php');
@@ -623,6 +639,7 @@ async function loadServers() {
             tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">No servers configured yet. Click "Add Server" to add a backend attack server.</td></tr>';
             return;
         }
+
 
         tbody.innerHTML = '';
         servers.forEach(s => {
@@ -793,3 +810,4 @@ async function deleteServer(id) {
         showToast('Connection error', 'error');
     }
 }
+

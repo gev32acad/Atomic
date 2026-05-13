@@ -167,7 +167,7 @@ if ($method_req === 'POST') {
         'server_id' => null,
         'server_response' => null
     ];
-    
+
     $attacks[] = $new_attack;
 
     ftruncate($fp, 0);
