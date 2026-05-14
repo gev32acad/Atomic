@@ -28,6 +28,9 @@ include __DIR__ . '/includes/sidebar.php';
             <button onclick="switchAdminTab('methods')" id="admin-tab-methods" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition shrink-0">
                 <i class="fas fa-bomb"></i> Methods
             </button>
+            <button onclick="switchAdminTab('categories')" id="admin-tab-categories" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition shrink-0">
+                <i class="fas fa-tags"></i> Categories
+            </button>
             <button onclick="switchAdminTab('servers')" id="admin-tab-servers" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition shrink-0">
                 <i class="fas fa-server"></i> Servers
             </button>
@@ -168,6 +171,39 @@ include __DIR__ . '/includes/sidebar.php';
                         </thead>
                         <tbody id="methods-table" class="text-gray-300">
                             <tr><td colspan="6" class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading methods...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories Tab -->
+        <div id="admin-categories" class="admin-tab-content hidden">
+            <div class="bg-panel border border-gray-700/50 rounded-2xl p-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <h3 class="text-lg font-semibold text-white">Category Management</h3>
+                        <div class="flex gap-1">
+                            <button onclick="filterCategoriesLayer('all')" id="categories-layer-all" class="text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white transition shrink-0">All</button>
+                            <button onclick="filterCategoriesLayer('l4')" id="categories-layer-l4" class="text-xs px-3 py-1.5 rounded-lg bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition shrink-0">Layer 4</button>
+                            <button onclick="filterCategoriesLayer('l7')" id="categories-layer-l7" class="text-xs px-3 py-1.5 rounded-lg bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition shrink-0">Layer 7</button>
+                        </div>
+                    </div>
+                    <button onclick="showAddCategoryModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition text-sm shrink-0">
+                        <i class="fas fa-plus mr-1"></i> Add Category
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-gray-400 border-b border-gray-700">
+                            <tr>
+                                <th class="px-4 py-3">Name</th>
+                                <th class="px-4 py-3">Layer</th>
+                                <th class="px-4 py-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categories-table" class="text-gray-300">
+                            <tr><td colspan="3" class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading categories...</td></tr>
                         </tbody>
                     </table>
                 </div>

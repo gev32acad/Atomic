@@ -1,0 +1,27 @@
+[
+  {
+    "id": "cat_l4_tcp",
+    "name": "TCP",
+    "layer": "Layer4"
+  },
+  {
+    "id": "cat_l4_udp",
+    "name": "UDP",
+    "layer": "Layer4"
+  },
+  {
+    "id": "cat_l4_icmp",
+    "name": "ICMP",
+    "layer": "Layer4"
+  },
+  {
+    "id": "cat_l4_amp",
+    "name": "Amplification",
+    "layer": "Layer4"
+  },
+  {
+    "id": "cat_l7_http",
+    "name": "HTTP",
+    "layer": "Layer7"
+  }
+]

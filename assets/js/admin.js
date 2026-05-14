@@ -3,6 +3,7 @@
 let currentEditId = null;
 let currentEditType = null;
 let loadedPlanNames = []; // populated by loadPlans() for user modals
+const UNCATEGORIZED_LABEL = 'Uncategorized (legacy)';
 
 // Get CSRF token from page
 function getCsrfToken() {
@@ -15,7 +16,7 @@ function switchAdminTab(tab) {
     document.querySelectorAll('.admin-tab-content').forEach(el => el.classList.add('hidden'));
     document.getElementById('admin-' + tab).classList.remove('hidden');
     
-    ['users', 'plans', 'orders', 'attacks', 'methods', 'servers', 'blacklist'].forEach(t => {
+    ['users', 'plans', 'orders', 'attacks', 'methods', 'categories', 'servers', 'blacklist'].forEach(t => {
         const btn = document.getElementById('admin-tab-' + t);
         if (!btn) return;
         btn.className = t === tab
@@ -31,6 +32,10 @@ function switchAdminTab(tab) {
     if (tab === 'blacklist' && !window._blacklistLoaded) {
         window._blacklistLoaded = true;
         loadBlacklist();
+    }
+    if (tab === 'categories' && !window._categoriesLoaded) {
+        window._categoriesLoaded = true;
+        loadCategories();
     }
 }
 
@@ -313,6 +318,129 @@ async function deletePlan(id) {
     }
 }
 
+// =================== CATEGORIES ===================
+let _allCategoriesData = [];
+let _cachedAdminCategories = null;
+let _categoriesLayerFilter = 'all';
+
+async function loadCategories() {
+    _cachedAdminCategories = null;
+    try {
+        const res = await fetch('api/categories.php');
+        _allCategoriesData = await res.json();
+        renderCategories(_allCategoriesData);
+    } catch (err) {
+        console.error('Failed to load categories:', err);
+        const tbody = document.getElementById('categories-table');
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="3" class="text-center py-8 text-red-400">Failed to load categories</td></tr>';
+        }
+    }
+}
+
+async function getAdminCategories() {
+    if (_cachedAdminCategories) return _cachedAdminCategories;
+    try {
+        const res = await fetch('api/categories.php');
+        _cachedAdminCategories = await res.json();
+    } catch (e) {
+        _cachedAdminCategories = [];
+    }
+    return _cachedAdminCategories;
+}
+
+function filterCategoriesLayer(f) {
+    _categoriesLayerFilter = f;
+    ['all', 'l4', 'l7'].forEach(tab => {
+        const btn = document.getElementById('categories-layer-' + tab);
+        if (!btn) return;
+        btn.className = tab === f
+            ? 'text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white transition shrink-0'
+            : 'text-xs px-3 py-1.5 rounded-lg bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition shrink-0';
+    });
+    renderCategories(_allCategoriesData);
+}
+
+function renderCategories(categories) {
+    const tbody = document.getElementById('categories-table');
+    if (!tbody) return;
+
+    const filtered = _categoriesLayerFilter === 'l4' ? categories.filter(c => c.layer === 'Layer4')
+        : _categoriesLayerFilter === 'l7' ? categories.filter(c => c.layer === 'Layer7')
+        : categories;
+
+    if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center py-8 text-gray-400">No categories found</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = '';
+    filtered.forEach(c => {
+        const layerBadge = c.layer === 'Layer4'
+            ? '<span class="text-blue-400 text-xs font-bold">L4</span>'
+            : '<span class="text-purple-400 text-xs font-bold">L7</span>';
+        const tr = document.createElement('tr');
+        tr.className = 'border-t border-gray-700/50';
+        tr.innerHTML = `
+            <td class="px-4 py-3 text-white">${escapeHtml(c.name)}</td>
+            <td class="px-4 py-3">${layerBadge}</td>
+            <td class="px-4 py-3"></td>
+        `;
+        const actionsCell = tr.querySelector('td:last-child');
+        const editBtn = document.createElement('button');
+        editBtn.className = 'text-blue-400 hover:text-blue-300 mr-2';
+        editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+        editBtn.addEventListener('click', () => editCategory(c));
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'text-red-400 hover:text-red-300';
+        deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+        deleteBtn.addEventListener('click', () => deleteCategory(c.id));
+        actionsCell.appendChild(editBtn);
+        actionsCell.appendChild(deleteBtn);
+        tbody.appendChild(tr);
+    });
+}
+
+function showAddCategoryModal() {
+    currentEditType = 'category-add';
+    const fields = document.getElementById('modal-fields');
+    fields.innerHTML = '';
+    fields.appendChild(createField('Name', 'name', 'text', '', {required: true}));
+    fields.appendChild(createField('Layer', 'layer', 'select', 'Layer4', {choices: ['Layer4', 'Layer7']}));
+    openModal('Add Category');
+}
+
+function editCategory(category) {
+    currentEditType = 'category-edit';
+    currentEditId = category.id;
+    const fields = document.getElementById('modal-fields');
+    fields.innerHTML = '';
+    fields.appendChild(createField('Name', 'name', 'text', category.name, {required: true}));
+    fields.appendChild(createField('Layer', 'layer', 'select', category.layer || 'Layer4', {choices: ['Layer4', 'Layer7']}));
+    openModal('Edit Category');
+}
+
+async function deleteCategory(id) {
+    if (!confirm('Delete this category? It can only be removed if no method is using it.')) return;
+    try {
+        const res = await fetch('api/categories.php', {
+            method: 'DELETE',
+            headers: {'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken()},
+            body: JSON.stringify({id})
+        });
+        if (res.ok) {
+            showToast('Category deleted', 'success');
+            loadCategories();
+            loadMethods();
+        } else {
+            const data = await res.json();
+            showToast(data.detail || 'Failed to delete category', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
 // =================== METHODS ===================
 // Cached methods list for server modal dropdowns and method modals
 let _cachedAdminMethods = null;
@@ -388,40 +516,42 @@ function renderMethods(methods) {
     });
 }
 
-// Build a category input with datalist suggestions filtered by layer.
-// Methods that support both layers contribute their category to both layer dropdowns.
-function buildCategoryDatalist(allMethods, layer, currentCategory) {
+function getLayerCategories(categories, layer) {
+    return categories
+        .filter(c => c.layer === layer)
+        .map(c => c.name);
+}
+
+// Build a category select filtered by layer.
+function buildCategorySelect(categories, layer, currentCategory) {
     const div = document.createElement('div');
-    const cats = [];
-    allMethods.forEach(m => {
-        // Include the category if the method belongs to the requested layer
-        const matchesLayer = layer === 'Layer4' ? !!m.layer4 : !!m.layer7;
-        if (matchesLayer && m.category && !cats.includes(m.category)) {
-            cats.push(m.category);
-        }
-    });
-    const datalistOptions = cats.map(c => `<option value="${escapeHtml(c)}">`).join('');
+    const cats = getLayerCategories(categories, layer);
+    const chosen = (cats.length > 0 && currentCategory && cats.includes(currentCategory))
+        ? currentCategory
+        : (cats[0] || '');
+    const options = cats.length
+        ? cats.map(c => `<option value="${escapeHtml(c)}" ${c === chosen ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('')
+        : '<option value="">No categories available</option>';
     div.innerHTML = `
         <label class="block text-sm text-gray-400 mb-1">Category</label>
-        <input type="text" name="category" list="method-category-list" autocomplete="off"
-            value="${escapeHtml(currentCategory || '')}"
-            placeholder="${layer === 'Layer4' ? 'e.g. TCP, UDP, ICMP' : 'e.g. HTTP'}"
-            class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500">
-        <datalist id="method-category-list">${datalistOptions}</datalist>
+        <select name="category" class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500" ${cats.length ? '' : 'disabled'}>
+            ${options}
+        </select>
+        ${cats.length ? '' : '<p class="text-xs text-yellow-400 mt-1">Create a category for this layer first.</p>'}
     `;
     return div;
 }
 
-// Replace category datalist contents when the layer dropdown changes.
+// Replace category select contents when the layer dropdown changes.
 // Each modal open creates a fresh layerSelect element, so this listener is attached once per element.
-function attachCategoryLayerListener(layerSelect, allMethods) {
+function attachCategoryLayerListener(layerSelect, categories) {
     if (!layerSelect) return;
     layerSelect.addEventListener('change', function() {
         const wrapper = document.getElementById('method-category-wrapper');
         if (!wrapper) return;
-        const curCat = wrapper.querySelector('input[name="category"]')?.value || '';
+        const curCat = wrapper.querySelector('select[name="category"]')?.value || '';
         wrapper.innerHTML = '';
-        const node = buildCategoryDatalist(allMethods, this.value, curCat);
+        const node = buildCategorySelect(categories, this.value, curCat);
         while (node.firstChild) wrapper.appendChild(node.firstChild);
     });
 }
@@ -434,19 +564,19 @@ async function showAddMethodModal() {
     fields.appendChild(createField('Name', 'name', 'text', '', {required: true}));
     fields.appendChild(createField('Description', 'description', 'text', ''));
 
-    const allMethods = await getAdminMethods();
+    const allCategories = await getAdminCategories();
     // Fresh element created for each modal open — only one listener is ever attached to it
     const layerField = createField('Layer', 'layer', 'select', 'Layer4', {choices: ['Layer4', 'Layer7']});
     fields.appendChild(layerField);
 
     const catWrapper = document.createElement('div');
     catWrapper.id = 'method-category-wrapper';
-    const catNode = buildCategoryDatalist(allMethods, 'Layer4', '');
+    const catNode = buildCategorySelect(allCategories, 'Layer4', '');
     while (catNode.firstChild) catWrapper.appendChild(catNode.firstChild);
     fields.appendChild(catWrapper);
 
     fields.appendChild(createField('Premium', 'premium', 'checkbox', false));
-    attachCategoryLayerListener(layerField.querySelector('select[name="layer"]'), allMethods);
+    attachCategoryLayerListener(layerField.querySelector('select[name="layer"]'), allCategories);
     openModal('Add Method');
 }
 
@@ -459,7 +589,7 @@ async function editMethod(method) {
     fields.appendChild(createField('Name', 'name', 'text', method.name));
     fields.appendChild(createField('Description', 'description', 'text', method.description));
 
-    const allMethods = await getAdminMethods();
+    const allCategories = await getAdminCategories();
     const currentLayer = method.layer7 && !method.layer4 ? 'Layer7' : 'Layer4';
     // Fresh element created for each modal open — only one listener is ever attached to it
     const layerField = createField('Layer', 'layer', 'select', currentLayer, {choices: ['Layer4', 'Layer7']});
@@ -467,12 +597,12 @@ async function editMethod(method) {
 
     const catWrapper = document.createElement('div');
     catWrapper.id = 'method-category-wrapper';
-    const catNode = buildCategoryDatalist(allMethods, currentLayer, method.category || '');
+    const catNode = buildCategorySelect(allCategories, currentLayer, method.category || '');
     while (catNode.firstChild) catWrapper.appendChild(catNode.firstChild);
     fields.appendChild(catWrapper);
 
     fields.appendChild(createField('Premium', 'premium', 'checkbox', method.premium));
-    attachCategoryLayerListener(layerField.querySelector('select[name="layer"]'), allMethods);
+    attachCategoryLayerListener(layerField.querySelector('select[name="layer"]'), allCategories);
     openModal('Edit Method');
 }
 
@@ -501,6 +631,9 @@ async function deleteMethod(id) {
 // Translate 'layer' select value in a JSON data object to layer4/layer7 booleans.
 function applyMethodLayerToData(data) {
     const layerVal = data.layer || 'Layer4';
+    if (!data.category || !String(data.category).trim()) {
+        throw new Error('Please create/select a category for the selected layer first.');
+    }
     data.layer4 = layerVal === 'Layer4';
     data.layer7 = layerVal === 'Layer7';
     data.amplification = (data.category || '').toLowerCase() === 'amplification';
@@ -511,6 +644,9 @@ function applyMethodLayerToData(data) {
 // Translate 'layer' select value in a FormData object to layer4/layer7 booleans.
 function applyMethodLayerToFormData(fd) {
     const layerVal = fd.get('layer') || 'Layer4';
+    if (!fd.get('category') || !String(fd.get('category')).trim()) {
+        throw new Error('Please create/select a category for the selected layer first.');
+    }
     fd.delete('layer');
     fd.set('layer4', layerVal === 'Layer4');
     fd.set('layer7', layerVal === 'Layer7');
@@ -563,7 +699,12 @@ document.getElementById('modal-form').addEventListener('submit', async function(
     // Special handling for method: translate 'layer' select to layer4/layer7 booleans,
     // and derive amplification/proxy automatically.
     if (type === 'method') {
-        applyMethodLayerToData(data);
+        try {
+            applyMethodLayerToData(data);
+        } catch (err) {
+            showToast(err.message || 'Invalid method category', 'error');
+            return;
+        }
     }
 
     // Special handling for blacklist-add (maps to api/blacklist.php)
@@ -592,7 +733,7 @@ document.getElementById('modal-form').addEventListener('submit', async function(
     let url, method, body;
     
     if (action === 'add') {
-        url = `api/${type}s.php`;
+        url = type === 'category' ? 'api/categories.php' : `api/${type}s.php`;
         method = 'POST';
         const fd = new FormData();
         // Collect regular input/select values
@@ -619,11 +760,16 @@ document.getElementById('modal-form').addEventListener('submit', async function(
         fd.append('csrf_token', getCsrfToken());
         // For method-add: translate 'layer' select to layer4/layer7 booleans
         if (type === 'method') {
-            applyMethodLayerToFormData(fd);
+            try {
+                applyMethodLayerToFormData(fd);
+            } catch (err) {
+                showToast(err.message || 'Invalid method category', 'error');
+                return;
+            }
         }
         body = fd;
     } else {
-        url = `api/${type}s.php`;
+        url = type === 'category' ? 'api/categories.php' : `api/${type}s.php`;
         method = 'PUT';
         data.id = currentEditId;
         // Also collect textareas for edit (PUT sends JSON)
@@ -650,6 +796,10 @@ document.getElementById('modal-form').addEventListener('submit', async function(
             if (type === 'user') loadUsers();
             else if (type === 'plan') loadPlans();
             else if (type === 'method') loadMethods();
+            else if (type === 'category') {
+                loadCategories();
+                loadMethods();
+            }
             else if (type === 'server') loadServers();
             else if (type === 'blacklist') loadBlacklist();
         } else {
@@ -943,11 +1093,21 @@ async function getAdminMethods() {
 
 function createMethodsMultiSelect(allMethods, selectedMethods, layer) {
     const div = document.createElement('div');
-    const filterFn = m => layer === 'Layer4' ? m.layer4 : m.layer7;
-    const filtered = allMethods.filter(filterFn);
-    const optionsHtml = filtered.map(m =>
-        `<option value="${escapeHtml(m.name)}" ${selectedMethods.includes(m.name) ? 'selected' : ''}>${escapeHtml(m.name)}${m.premium ? ' ⭐' : ''}</option>`
-    ).join('');
+    const filtered = allMethods.filter(m => layer === 'Layer4' ? !!m.layer4 : !!m.layer7);
+    const grouped = {};
+    filtered.forEach(m => {
+        const cat = m.category || UNCATEGORIZED_LABEL;
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(m);
+    });
+    const optionsHtml = Object.entries(grouped)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([cat, methods]) => {
+        const opts = methods.map(m =>
+            `<option value="${escapeHtml(m.name)}" ${selectedMethods.includes(m.name) ? 'selected' : ''}>${escapeHtml(m.name)}${m.premium ? ' ⭐' : ''}</option>`
+        ).join('');
+        return `<optgroup label="${escapeHtml(cat)}">${opts}</optgroup>`;
+    }).join('');
     div.innerHTML = `
         <label class="block text-sm text-gray-400 mb-1">Methods (hold Ctrl/Cmd to select multiple; none = all)</label>
         <select name="methods[]" multiple
