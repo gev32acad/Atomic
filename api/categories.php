@@ -97,17 +97,33 @@ if ($method_req === 'PUT') {
 
     if ($old_name !== '' && ($old_name !== $name || $old_layer !== $layer)) {
         $methods = read_json('methods.json');
-        foreach ($methods as &$m) {
+        $in_use_on_old_layer = false;
+        foreach ($methods as $m) {
             $method_cat = trim($m['category'] ?? '');
-            if (strcasecmp($method_cat, $old_name) !== 0) {
-                continue;
-            }
+            if (strcasecmp($method_cat, $old_name) !== 0) continue;
             if (method_matches_layer($m, $old_layer)) {
-                $m['category'] = $name;
+                $in_use_on_old_layer = true;
+                break;
             }
         }
-        unset($m);
-        write_json('methods.json', $methods);
+
+        if ($old_layer !== $layer && $in_use_on_old_layer) {
+            json_error('Cannot change category layer while methods are using this category');
+        }
+
+        if ($old_name !== $name) {
+            foreach ($methods as &$m) {
+                $method_cat = trim($m['category'] ?? '');
+                if (strcasecmp($method_cat, $old_name) !== 0) {
+                    continue;
+                }
+                if (method_matches_layer($m, $old_layer)) {
+                    $m['category'] = $name;
+                }
+            }
+            unset($m);
+            write_json('methods.json', $methods);
+        }
     }
 
     write_json('categories.json', $categories);

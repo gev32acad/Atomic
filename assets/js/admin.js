@@ -3,6 +3,7 @@
 let currentEditId = null;
 let currentEditType = null;
 let loadedPlanNames = []; // populated by loadPlans() for user modals
+const UNCATEGORIZED_LABEL = 'Uncategorized (legacy)';
 
 // Get CSRF token from page
 function getCsrfToken() {
@@ -525,7 +526,7 @@ function getLayerCategories(categories, layer) {
 function buildCategorySelect(categories, layer, currentCategory) {
     const div = document.createElement('div');
     const cats = getLayerCategories(categories, layer);
-    const chosen = (currentCategory && cats.includes(currentCategory))
+    const chosen = (cats.length > 0 && currentCategory && cats.includes(currentCategory))
         ? currentCategory
         : (cats[0] || '');
     const options = cats.length
@@ -1095,7 +1096,7 @@ function createMethodsMultiSelect(allMethods, selectedMethods, layer) {
     const filtered = allMethods.filter(m => layer === 'Layer4' ? !!m.layer4 : !!m.layer7);
     const grouped = {};
     filtered.forEach(m => {
-        const cat = m.category || 'Uncategorized (legacy)';
+        const cat = m.category || UNCATEGORIZED_LABEL;
         if (!grouped[cat]) grouped[cat] = [];
         grouped[cat].push(m);
     });
