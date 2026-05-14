@@ -141,9 +141,16 @@ include __DIR__ . '/includes/sidebar.php';
         <!-- Methods Tab -->
         <div id="admin-methods" class="admin-tab-content hidden">
             <div class="bg-panel border border-gray-700/50 rounded-2xl p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-white">Method Management</h3>
-                    <button onclick="showAddMethodModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition text-sm">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <h3 class="text-lg font-semibold text-white">Method Management</h3>
+                        <div class="flex gap-1">
+                            <button onclick="filterMethodsLayer('all')" id="methods-layer-all" class="text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white transition shrink-0">All</button>
+                            <button onclick="filterMethodsLayer('l4')" id="methods-layer-l4" class="text-xs px-3 py-1.5 rounded-lg bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition shrink-0">Layer 4</button>
+                            <button onclick="filterMethodsLayer('l7')" id="methods-layer-l7" class="text-xs px-3 py-1.5 rounded-lg bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition shrink-0">Layer 7</button>
+                        </div>
+                    </div>
+                    <button onclick="showAddMethodModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition text-sm shrink-0">
                         <i class="fas fa-plus mr-1"></i> Add Method
                     </button>
                 </div>

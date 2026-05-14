@@ -44,4 +44,4 @@ function render_nav_items($nav_items, $current_page, $admin) {
 <?php endif; ?>
 
 <!-- Main Content -->
-<main class="flex-1 min-h-[calc(100vh-57px)]">
+<main class="flex-1 min-w-0 min-h-[calc(100vh-57px)] overflow-x-hidden">

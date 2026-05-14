@@ -314,80 +314,158 @@ async function deletePlan(id) {
 }
 
 // =================== METHODS ===================
-// Cached methods list for server modal dropdowns
+// Cached methods list for server modal dropdowns and method modals
 let _cachedAdminMethods = null;
+// Full methods list for the admin table + layer filtering
+let _allMethodsData = [];
+let _methodsLayerFilter = 'all';
 
 async function loadMethods() {
     // Invalidate cache so server modal picks up any newly added methods
     _cachedAdminMethods = null;
     try {
         const res = await fetch('api/methods.php');
-        const methods = await res.json();
-        const tbody = document.getElementById('methods-table');
-        
-        if (!methods.length) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">No methods found</td></tr>';
-            return;
-        }
-        
-        tbody.innerHTML = '';
-        methods.forEach(m => {
-            const layerLabel = m.layer4 && m.layer7 ? '<span class="text-green-400 text-xs">L4+L7</span>'
-                : m.layer4 ? '<span class="text-blue-400 text-xs">L4</span>'
-                : m.layer7 ? '<span class="text-purple-400 text-xs">L7</span>'
-                : '<span class="text-gray-500 text-xs">—</span>';
-            const tr = document.createElement('tr');
-            tr.className = 'border-t border-gray-700/50';
-            tr.innerHTML = `
-                <td class="px-4 py-3 text-white">${escapeHtml(m.name)}</td>
-                <td class="px-4 py-3 hidden md:table-cell text-gray-400 text-xs">${escapeHtml(m.description)}</td>
-                <td class="px-4 py-3">${layerLabel}</td>
-                <td class="px-4 py-3 hidden sm:table-cell text-gray-300 text-xs">${escapeHtml(m.category || 'Other')}</td>
-                <td class="px-4 py-3">${m.premium ? '<span class="text-yellow-400">Yes</span>' : '<span class="text-gray-500">No</span>'}</td>
-                <td class="px-4 py-3"></td>
-            `;
-            const actionsCell = tr.querySelector('td:last-child');
-            const editBtn = document.createElement('button');
-            editBtn.className = 'text-blue-400 hover:text-blue-300 mr-2';
-            editBtn.innerHTML = '<i class="fas fa-edit"></i>';
-            editBtn.addEventListener('click', () => editMethod(m));
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'text-red-400 hover:text-red-300';
-            deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
-            deleteBtn.addEventListener('click', () => deleteMethod(m.id));
-            actionsCell.appendChild(editBtn);
-            actionsCell.appendChild(deleteBtn);
-            tbody.appendChild(tr);
-        });
+        _allMethodsData = await res.json();
+        renderMethods(_allMethodsData);
     } catch (err) {
         console.error('Failed to load methods:', err);
         document.getElementById('methods-table').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-red-400">Failed to load methods</td></tr>';
     }
 }
 
-function showAddMethodModal() {
+function filterMethodsLayer(f) {
+    _methodsLayerFilter = f;
+    ['all', 'l4', 'l7'].forEach(tab => {
+        const btn = document.getElementById('methods-layer-' + tab);
+        if (!btn) return;
+        btn.className = tab === f
+            ? 'text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white transition shrink-0'
+            : 'text-xs px-3 py-1.5 rounded-lg bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition shrink-0';
+    });
+    renderMethods(_allMethodsData);
+}
+
+function renderMethods(methods) {
+    const filtered = _methodsLayerFilter === 'l4' ? methods.filter(m => m.layer4)
+        : _methodsLayerFilter === 'l7' ? methods.filter(m => m.layer7)
+        : methods;
+
+    const tbody = document.getElementById('methods-table');
+
+    if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">No methods found</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = '';
+    filtered.forEach(m => {
+        const layerLabel = m.layer4 && m.layer7 ? '<span class="text-green-400 text-xs">L4+L7</span>'
+            : m.layer4 ? '<span class="text-blue-400 text-xs">L4</span>'
+            : m.layer7 ? '<span class="text-purple-400 text-xs">L7</span>'
+            : '<span class="text-gray-500 text-xs">—</span>';
+        const tr = document.createElement('tr');
+        tr.className = 'border-t border-gray-700/50';
+        tr.innerHTML = `
+            <td class="px-4 py-3 text-white">${escapeHtml(m.name)}</td>
+            <td class="px-4 py-3 hidden md:table-cell text-gray-400 text-xs">${escapeHtml(m.description)}</td>
+            <td class="px-4 py-3">${layerLabel}</td>
+            <td class="px-4 py-3 hidden sm:table-cell text-gray-300 text-xs">${escapeHtml(m.category || 'Other')}</td>
+            <td class="px-4 py-3">${m.premium ? '<span class="text-yellow-400">Yes</span>' : '<span class="text-gray-500">No</span>'}</td>
+            <td class="px-4 py-3"></td>
+        `;
+        const actionsCell = tr.querySelector('td:last-child');
+        const editBtn = document.createElement('button');
+        editBtn.className = 'text-blue-400 hover:text-blue-300 mr-2';
+        editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+        editBtn.addEventListener('click', () => editMethod(m));
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'text-red-400 hover:text-red-300';
+        deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+        deleteBtn.addEventListener('click', () => deleteMethod(m.id));
+        actionsCell.appendChild(editBtn);
+        actionsCell.appendChild(deleteBtn);
+        tbody.appendChild(tr);
+    });
+}
+
+// Build a category input with datalist suggestions filtered by layer
+function buildCategoryDatalist(allMethods, layer, currentCategory) {
+    const div = document.createElement('div');
+    const cats = [];
+    allMethods.forEach(m => {
+        const matchesLayer = layer === 'Layer4' ? m.layer4 : m.layer7;
+        if (matchesLayer && m.category && !cats.includes(m.category)) {
+            cats.push(m.category);
+        }
+    });
+    const datalistOptions = cats.map(c => `<option value="${escapeHtml(c)}">`).join('');
+    div.innerHTML = `
+        <label class="block text-sm text-gray-400 mb-1">Category</label>
+        <input type="text" name="category" list="method-category-list" autocomplete="off"
+            value="${escapeHtml(currentCategory || '')}"
+            placeholder="${layer === 'Layer4' ? 'e.g. TCP, UDP, ICMP' : 'e.g. HTTP'}"
+            class="w-full bg-background border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500">
+        <datalist id="method-category-list">${datalistOptions}</datalist>
+    `;
+    return div;
+}
+
+// Attach layer-change listener to update the category datalist inside a given wrapper
+function wireCategoryLayerChange(layerSelect, allMethods) {
+    if (!layerSelect) return;
+    layerSelect.addEventListener('change', function() {
+        const wrapper = document.getElementById('method-category-wrapper');
+        if (!wrapper) return;
+        const curCat = wrapper.querySelector('input[name="category"]')?.value || '';
+        wrapper.innerHTML = '';
+        const node = buildCategoryDatalist(allMethods, this.value, curCat);
+        while (node.firstChild) wrapper.appendChild(node.firstChild);
+    });
+}
+
+async function showAddMethodModal() {
     currentEditType = 'method-add';
     const fields = document.getElementById('modal-fields');
     fields.innerHTML = '';
     fields.appendChild(createField('Name', 'name', 'text', '', {required: true}));
     fields.appendChild(createField('Description', 'description', 'text', ''));
-    fields.appendChild(createField('Layer', 'layer', 'select', 'Layer4', {choices: ['Layer4', 'Layer7']}));
-    fields.appendChild(createField('Category', 'category', 'text', ''));
+
+    const allMethods = await getAdminMethods();
+    const layerField = createField('Layer', 'layer', 'select', 'Layer4', {choices: ['Layer4', 'Layer7']});
+    fields.appendChild(layerField);
+
+    const catWrapper = document.createElement('div');
+    catWrapper.id = 'method-category-wrapper';
+    const catNode = buildCategoryDatalist(allMethods, 'Layer4', '');
+    while (catNode.firstChild) catWrapper.appendChild(catNode.firstChild);
+    fields.appendChild(catWrapper);
+
     fields.appendChild(createField('Premium', 'premium', 'checkbox', false));
+    wireCategoryLayerChange(layerField.querySelector('select[name="layer"]'), allMethods);
     openModal('Add Method');
 }
 
-function editMethod(method) {
+async function editMethod(method) {
     currentEditType = 'method-edit';
     currentEditId = method.id;
     const fields = document.getElementById('modal-fields');
     fields.innerHTML = '';
     fields.appendChild(createField('Name', 'name', 'text', method.name));
     fields.appendChild(createField('Description', 'description', 'text', method.description));
+
+    const allMethods = await getAdminMethods();
     const currentLayer = method.layer7 && !method.layer4 ? 'Layer7' : 'Layer4';
-    fields.appendChild(createField('Layer', 'layer', 'select', currentLayer, {choices: ['Layer4', 'Layer7']}));
-    fields.appendChild(createField('Category', 'category', 'text', method.category || ''));
+    const layerField = createField('Layer', 'layer', 'select', currentLayer, {choices: ['Layer4', 'Layer7']});
+    fields.appendChild(layerField);
+
+    const catWrapper = document.createElement('div');
+    catWrapper.id = 'method-category-wrapper';
+    const catNode = buildCategoryDatalist(allMethods, currentLayer, method.category || '');
+    while (catNode.firstChild) catWrapper.appendChild(catNode.firstChild);
+    fields.appendChild(catWrapper);
+
     fields.appendChild(createField('Premium', 'premium', 'checkbox', method.premium));
+    wireCategoryLayerChange(layerField.querySelector('select[name="layer"]'), allMethods);
     openModal('Edit Method');
 }
 
