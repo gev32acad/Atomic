@@ -34,6 +34,7 @@ if ($method_req === 'POST') {
     $amplification = filter_var($_POST['amplification'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
     $premium = filter_var($_POST['premium'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
     $proxy = filter_var($_POST['proxy'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
+    $category = trim($_POST['category'] ?? 'Other');
     
     if (empty($name)) {
         json_error('Method name is required');
@@ -47,7 +48,8 @@ if ($method_req === 'POST') {
         'layer4' => $layer4,
         'amplification' => $amplification,
         'premium' => $premium,
-        'proxy' => $proxy
+        'proxy' => $proxy,
+        'category' => $category
     ];
     
     $methods[] = $new_method;
@@ -72,6 +74,7 @@ if ($method_req === 'PUT') {
             $method['amplification'] = $input['amplification'] ?? $method['amplification'];
             $method['premium'] = $input['premium'] ?? $method['premium'];
             $method['proxy'] = $input['proxy'] ?? $method['proxy'];
+            $method['category'] = $input['category'] ?? ($method['category'] ?? 'Other');
             break;
         }
     }

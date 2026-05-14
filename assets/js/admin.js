@@ -127,11 +127,11 @@ function renderUsers(users) {
             tdPlan.innerHTML = `<span class="bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded text-xs">${escapeHtml(u.plan)}</span>`;
             
             const tdRole = document.createElement('td');
-            tdRole.className = 'px-4 py-3';
+            tdRole.className = 'px-4 py-3 hidden sm:table-cell';
             tdRole.textContent = u.role;
             
             const tdJoined = document.createElement('td');
-            tdJoined.className = 'px-4 py-3';
+            tdJoined.className = 'px-4 py-3 hidden sm:table-cell';
             tdJoined.textContent = new Date(u.join_date).toLocaleDateString();
             
             const tdActions = document.createElement('td');
@@ -230,13 +230,13 @@ async function loadPlans() {
             tr.className = 'border-t border-gray-700/50';
             tr.innerHTML = `
                 <td class="px-4 py-3 text-white">${escapeHtml(p.name)}</td>
-                <td class="px-4 py-3">${p.price == 0 ? '<span class="text-green-400">Free</span>' : '$' + parseFloat(p.price).toFixed(2)}</td>
-                <td class="px-4 py-3">${p.price == 0 ? '&infin;' : (parseInt(p.duration_days) || 30) + 'd'}</td>
-                <td class="px-4 py-3">${parseInt(p.max_concurrents)}</td>
-                <td class="px-4 py-3">${parseInt(p.max_seconds)}s</td>
+                <td class="px-4 py-3 hidden md:table-cell">${p.price == 0 ? '<span class="text-green-400">Free</span>' : '$' + parseFloat(p.price).toFixed(2)}</td>
+                <td class="px-4 py-3 hidden lg:table-cell">${p.price == 0 ? '&infin;' : (parseInt(p.duration_days) || 30) + 'd'}</td>
+                <td class="px-4 py-3 hidden sm:table-cell">${parseInt(p.max_concurrents)}</td>
+                <td class="px-4 py-3 hidden sm:table-cell">${parseInt(p.max_seconds)}s</td>
                 <td class="px-4 py-3">${p.premium ? '<span class="text-green-400">Yes</span>' : '<span class="text-gray-500">No</span>'}</td>
-                <td class="px-4 py-3">${p.api_access ? '<span class="text-green-400">Yes</span>' : '<span class="text-gray-500">No</span>'}</td>
-                <td class="px-4 py-3">${p.allow_schedule ? '<span class="text-yellow-400"><i class="fas fa-calendar-alt mr-1"></i>Yes</span>' : '<span class="text-gray-500">No</span>'}</td>
+                <td class="px-4 py-3 hidden lg:table-cell">${p.api_access ? '<span class="text-green-400">Yes</span>' : '<span class="text-gray-500">No</span>'}</td>
+                <td class="px-4 py-3 hidden lg:table-cell">${p.allow_schedule ? '<span class="text-yellow-400"><i class="fas fa-calendar-alt mr-1"></i>Yes</span>' : '<span class="text-gray-500">No</span>'}</td>
                 <td class="px-4 py-3"></td>
             `;
             const actionsCell = tr.querySelector('td:last-child');
@@ -314,7 +314,12 @@ async function deletePlan(id) {
 }
 
 // =================== METHODS ===================
+// Cached methods list for server modal dropdowns
+let _cachedAdminMethods = null;
+
 async function loadMethods() {
+    // Invalidate cache so server modal picks up any newly added methods
+    _cachedAdminMethods = null;
     try {
         const res = await fetch('api/methods.php');
         const methods = await res.json();
@@ -327,13 +332,17 @@ async function loadMethods() {
         
         tbody.innerHTML = '';
         methods.forEach(m => {
+            const layerLabel = m.layer4 && m.layer7 ? '<span class="text-green-400 text-xs">L4+L7</span>'
+                : m.layer4 ? '<span class="text-blue-400 text-xs">L4</span>'
+                : m.layer7 ? '<span class="text-purple-400 text-xs">L7</span>'
+                : '<span class="text-gray-500 text-xs">—</span>';
             const tr = document.createElement('tr');
             tr.className = 'border-t border-gray-700/50';
             tr.innerHTML = `
                 <td class="px-4 py-3 text-white">${escapeHtml(m.name)}</td>
-                <td class="px-4 py-3">${escapeHtml(m.description)}</td>
-                <td class="px-4 py-3">${m.layer4 ? '<span class="text-green-400">Yes</span>' : '<span class="text-gray-500">No</span>'}</td>
-                <td class="px-4 py-3">${m.layer7 ? '<span class="text-green-400">Yes</span>' : '<span class="text-gray-500">No</span>'}</td>
+                <td class="px-4 py-3 hidden md:table-cell text-gray-400 text-xs">${escapeHtml(m.description)}</td>
+                <td class="px-4 py-3">${layerLabel}</td>
+                <td class="px-4 py-3 hidden sm:table-cell text-gray-300 text-xs">${escapeHtml(m.category || 'Other')}</td>
                 <td class="px-4 py-3">${m.premium ? '<span class="text-yellow-400">Yes</span>' : '<span class="text-gray-500">No</span>'}</td>
                 <td class="px-4 py-3"></td>
             `;
@@ -362,11 +371,9 @@ function showAddMethodModal() {
     fields.innerHTML = '';
     fields.appendChild(createField('Name', 'name', 'text', '', {required: true}));
     fields.appendChild(createField('Description', 'description', 'text', ''));
-    fields.appendChild(createField('Layer 4', 'layer4', 'checkbox', false));
-    fields.appendChild(createField('Layer 7', 'layer7', 'checkbox', false));
-    fields.appendChild(createField('Amplification', 'amplification', 'checkbox', false));
+    fields.appendChild(createField('Layer', 'layer', 'select', 'Layer4', {choices: ['Layer4', 'Layer7']}));
+    fields.appendChild(createField('Category', 'category', 'text', ''));
     fields.appendChild(createField('Premium', 'premium', 'checkbox', false));
-    fields.appendChild(createField('Proxy', 'proxy', 'checkbox', false));
     openModal('Add Method');
 }
 
@@ -377,11 +384,10 @@ function editMethod(method) {
     fields.innerHTML = '';
     fields.appendChild(createField('Name', 'name', 'text', method.name));
     fields.appendChild(createField('Description', 'description', 'text', method.description));
-    fields.appendChild(createField('Layer 4', 'layer4', 'checkbox', method.layer4));
-    fields.appendChild(createField('Layer 7', 'layer7', 'checkbox', method.layer7));
-    fields.appendChild(createField('Amplification', 'amplification', 'checkbox', method.amplification));
+    const currentLayer = method.layer4 ? 'Layer4' : 'Layer7';
+    fields.appendChild(createField('Layer', 'layer', 'select', currentLayer, {choices: ['Layer4', 'Layer7']}));
+    fields.appendChild(createField('Category', 'category', 'text', method.category || ''));
     fields.appendChild(createField('Premium', 'premium', 'checkbox', method.premium));
-    fields.appendChild(createField('Proxy', 'proxy', 'checkbox', method.proxy));
     openModal('Edit Method');
 }
 
@@ -447,6 +453,17 @@ document.getElementById('modal-form').addEventListener('submit', async function(
     
     const [type, action] = currentEditType.split('-');
 
+    // Special handling for method: translate 'layer' select to layer4/layer7 booleans,
+    // and derive amplification/proxy automatically.
+    if (type === 'method') {
+        const layerVal = data.layer || 'Layer4';
+        data.layer4 = layerVal === 'Layer4';
+        data.layer7 = layerVal === 'Layer7';
+        data.amplification = (data.category || '').toLowerCase() === 'amplification';
+        data.proxy = layerVal === 'Layer7';
+        delete data.layer;
+    }
+
     // Special handling for blacklist-add (maps to api/blacklist.php)
     if (type === 'blacklist' && action === 'add') {
         const fd = new FormData();
@@ -498,6 +515,15 @@ document.getElementById('modal-form').addEventListener('submit', async function(
             fd.append(el.name, el.value);
         });
         fd.append('csrf_token', getCsrfToken());
+        // For method-add: translate 'layer' select to layer4/layer7 booleans
+        if (type === 'method') {
+            const layerVal = fd.get('layer') || 'Layer4';
+            fd.delete('layer');
+            fd.set('layer4', layerVal === 'Layer4');
+            fd.set('layer7', layerVal === 'Layer7');
+            fd.set('amplification', (fd.get('category') || '').toLowerCase() === 'amplification');
+            fd.set('proxy', layerVal === 'Layer7');
+        }
         body = fd;
     } else {
         url = `api/${type}s.php`;
@@ -619,15 +645,15 @@ function renderOrders() {
             <td class="px-4 py-3 font-mono text-xs text-gray-300">${escapeHtml(o.id)}</td>
             <td class="px-4 py-3 text-white">${escapeHtml(o.username)}</td>
             <td class="px-4 py-3"><span class="bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded text-xs">${escapeHtml(o.plan_name)}</span></td>
-            <td class="px-4 py-3 text-xs">${escapeHtml(o.amount)} ${escapeHtml(o.crypto)}<br><span class="text-gray-500">$${parseFloat(o.price_usd).toFixed(2)}</span></td>
-            <td class="px-4 py-3 font-mono text-xs text-gray-500">${o.tx_hash ? escapeHtml(String(o.tx_hash).substring(0, 20)) + '…' : '—'}</td>
+            <td class="px-4 py-3 text-xs hidden md:table-cell">${escapeHtml(o.amount)} ${escapeHtml(o.crypto)}<br><span class="text-gray-500">$${parseFloat(o.price_usd).toFixed(2)}</span></td>
+            <td class="px-4 py-3 font-mono text-xs text-gray-500 hidden lg:table-cell">${o.tx_hash ? escapeHtml(String(o.tx_hash).substring(0, 20)) + '…' : '—'}</td>
             <td class="px-4 py-3">
                 <span class="flex items-center gap-1 text-sm ${statusColors[o.status] || 'text-gray-400'}">
                     <i class="fas ${statusIcons[o.status] || 'fa-question-circle'}"></i>
                     ${escapeHtml(o.status.charAt(0).toUpperCase() + o.status.slice(1))}
                 </span>
             </td>
-            <td class="px-4 py-3 text-xs text-gray-400">${new Date(o.created_at).toLocaleString()}</td>
+            <td class="px-4 py-3 text-xs text-gray-400 hidden md:table-cell">${new Date(o.created_at).toLocaleString()}</td>
             <td class="px-4 py-3"></td>
         `;
 
@@ -752,11 +778,11 @@ async function loadServers() {
             tr.innerHTML = `
                 <td class="px-4 py-3 text-white font-medium">${escapeHtml(s.name)}</td>
                 <td class="px-4 py-3">${layerBadge}</td>
-                <td class="px-4 py-3">${methodsDisplay}</td>
-                <td class="px-4 py-3 text-gray-300 text-xs">${s.max_slots !== undefined && s.max_slots !== null ? escapeHtml(String(s.max_slots)) : '—'}</td>
-                <td class="px-4 py-3">${urlDisplay}</td>
-                <td class="px-4 py-3">${s.enabled ? '<span class="text-green-400">Yes</span>' : '<span class="text-gray-500">No</span>'}</td>
-                <td class="px-4 py-3 server-status-cell" id="server-status-${escapeHtml(s.id)}">
+                <td class="px-4 py-3 hidden sm:table-cell">${methodsDisplay}</td>
+                <td class="px-4 py-3 hidden lg:table-cell text-gray-300 text-xs">${s.max_slots !== undefined && s.max_slots !== null ? escapeHtml(String(s.max_slots)) : '—'}</td>
+                <td class="px-4 py-3 hidden lg:table-cell">${urlDisplay}</td>
+                <td class="px-4 py-3 hidden md:table-cell">${s.enabled ? '<span class="text-green-400">Yes</span>' : '<span class="text-gray-500">No</span>'}</td>
+                <td class="px-4 py-3 hidden md:table-cell server-status-cell" id="server-status-${escapeHtml(s.id)}">
                     <span class="text-gray-500 text-xs"><i class="fas fa-circle-notch fa-spin mr-1"></i>Checking…</span>
                 </td>
                 <td class="px-4 py-3"></td>
@@ -806,8 +832,6 @@ async function checkServerStatus(id) {
     }
 }
 
-// Cached methods list for server modal dropdowns
-let _cachedAdminMethods = null;
 
 async function getAdminMethods() {
     if (_cachedAdminMethods) return _cachedAdminMethods;
@@ -1000,9 +1024,9 @@ function renderAdminAttacks(attacks) {
             <td class="px-4 py-3 text-white">${escapeHtml(a.username || a.user_id || '—')}</td>
             <td class="px-4 py-3 font-mono text-xs text-gray-300">${escapeHtml(a.target || '—')}</td>
             <td class="px-4 py-3"><span class="badge badge-method">${escapeHtml(a.method || '—')}</span></td>
-            <td class="px-4 py-3"><span class="${a.layer === 'Layer7' ? 'badge badge-l7' : 'badge badge-l4'}">${escapeHtml(a.layer || '—')}</span></td>
-            <td class="px-4 py-3 text-gray-300">${escapeHtml(String(a.time || 0))}s</td>
-            <td class="px-4 py-3 text-xs text-gray-400">${a.start_time ? new Date(a.start_time).toLocaleString() : '—'}</td>
+            <td class="px-4 py-3 hidden sm:table-cell"><span class="${a.layer === 'Layer7' ? 'badge badge-l7' : 'badge badge-l4'}">${escapeHtml(a.layer || '—')}</span></td>
+            <td class="px-4 py-3 hidden sm:table-cell text-gray-300">${escapeHtml(String(a.time || 0))}s</td>
+            <td class="px-4 py-3 hidden md:table-cell text-xs text-gray-400">${a.start_time ? new Date(a.start_time).toLocaleString() : '—'}</td>
         `;
         tbody.appendChild(tr);
     });
@@ -1037,8 +1061,8 @@ function renderBlacklist(entries) {
         tr.innerHTML = `
             <td class="px-4 py-3 font-bold text-xs ${typeColors[e.type] || 'text-gray-400'}">${escapeHtml((e.type || '').toUpperCase())}</td>
             <td class="px-4 py-3 font-mono text-sm text-white">${escapeHtml(e.value || '')}</td>
-            <td class="px-4 py-3 text-xs text-gray-400">${escapeHtml(e.note || '—')}</td>
-            <td class="px-4 py-3 text-xs text-gray-500">${e.created_at ? new Date(e.created_at).toLocaleString() : '—'}</td>
+            <td class="px-4 py-3 text-xs text-gray-400 hidden sm:table-cell">${escapeHtml(e.note || '—')}</td>
+            <td class="px-4 py-3 text-xs text-gray-500 hidden md:table-cell">${e.created_at ? new Date(e.created_at).toLocaleString() : '—'}</td>
             <td class="px-4 py-3"></td>
         `;
         const actionsCell = tr.querySelector('td:last-child');

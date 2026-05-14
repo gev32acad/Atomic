@@ -351,6 +351,10 @@ async function loadMethods() {
         const l4 = document.getElementById('l4-methods');
         const l7 = document.getElementById('l7-methods');
 
+        // Build category → methods maps
+        const l4Cats = {};
+        const l7Cats = {};
+
         methods.forEach(m => {
             // Free users only see non-premium methods
             if (!isPremium && m.premium) return;
@@ -360,15 +364,30 @@ async function loadMethods() {
             if (m.amplification) descParts.push('[Amplification]');
             methodMeta[m.name] = descParts.join(' ');
 
+            const cat = m.category || 'Other';
+            const label = m.name + (m.premium ? ' ⭐' : '');
+
             if (m.layer4) {
-                const label = m.name + (m.premium ? ' ⭐' : '');
-                l4.add(new Option(label, m.name));
+                if (!l4Cats[cat]) l4Cats[cat] = [];
+                l4Cats[cat].push({label, value: m.name});
             }
             if (m.layer7) {
-                const label = m.name + (m.premium ? ' ⭐' : '');
-                l7.add(new Option(label, m.name));
+                if (!l7Cats[cat]) l7Cats[cat] = [];
+                l7Cats[cat].push({label, value: m.name});
             }
         });
+
+        // Populate selects with optgroups
+        [['l4', l4, l4Cats], ['l7', l7, l7Cats]].forEach(([prefix, sel, cats]) => {
+            sel.innerHTML = '';
+            Object.entries(cats).forEach(([cat, meths]) => {
+                const group = document.createElement('optgroup');
+                group.label = cat;
+                meths.forEach(m => group.appendChild(new Option(m.label, m.value)));
+                sel.appendChild(group);
+            });
+        });
+
         updateMethodDesc('l4');
         updateMethodDesc('l7');
     } catch (err) {

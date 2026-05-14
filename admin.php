@@ -56,8 +56,8 @@ include __DIR__ . '/includes/sidebar.php';
                             <tr>
                                 <th class="px-4 py-3">Username</th>
                                 <th class="px-4 py-3">Plan</th>
-                                <th class="px-4 py-3">Role</th>
-                                <th class="px-4 py-3">Joined</th>
+                                <th class="px-4 py-3 hidden sm:table-cell">Role</th>
+                                <th class="px-4 py-3 hidden sm:table-cell">Joined</th>
                                 <th class="px-4 py-3">Actions</th>
                             </tr>
                         </thead>
@@ -83,13 +83,13 @@ include __DIR__ . '/includes/sidebar.php';
                         <thead class="text-gray-400 border-b border-gray-700">
                             <tr>
                                 <th class="px-4 py-3">Name</th>
-                                <th class="px-4 py-3">Price</th>
-                                <th class="px-4 py-3">Days</th>
-                                <th class="px-4 py-3">Concurrents</th>
-                                <th class="px-4 py-3">Max Seconds</th>
+                                <th class="px-4 py-3 hidden md:table-cell">Price</th>
+                                <th class="px-4 py-3 hidden lg:table-cell">Days</th>
+                                <th class="px-4 py-3 hidden sm:table-cell">Concurrents</th>
+                                <th class="px-4 py-3 hidden sm:table-cell">Max Seconds</th>
                                 <th class="px-4 py-3">Premium</th>
-                                <th class="px-4 py-3">API</th>
-                                <th class="px-4 py-3">Schedule</th>
+                                <th class="px-4 py-3 hidden lg:table-cell">API</th>
+                                <th class="px-4 py-3 hidden lg:table-cell">Schedule</th>
                                 <th class="px-4 py-3">Actions</th>
                             </tr>
                         </thead>
@@ -123,10 +123,10 @@ include __DIR__ . '/includes/sidebar.php';
                                 <th class="px-4 py-3">Order ID</th>
                                 <th class="px-4 py-3">User</th>
                                 <th class="px-4 py-3">Plan</th>
-                                <th class="px-4 py-3">Payment</th>
-                                <th class="px-4 py-3">TX Hash</th>
+                                <th class="px-4 py-3 hidden md:table-cell">Payment</th>
+                                <th class="px-4 py-3 hidden lg:table-cell">TX Hash</th>
                                 <th class="px-4 py-3">Status</th>
-                                <th class="px-4 py-3">Date</th>
+                                <th class="px-4 py-3 hidden md:table-cell">Date</th>
                                 <th class="px-4 py-3">Actions</th>
                             </tr>
                         </thead>
@@ -152,9 +152,9 @@ include __DIR__ . '/includes/sidebar.php';
                         <thead class="text-gray-400 border-b border-gray-700">
                             <tr>
                                 <th class="px-4 py-3">Name</th>
-                                <th class="px-4 py-3">Description</th>
-                                <th class="px-4 py-3">L4</th>
-                                <th class="px-4 py-3">L7</th>
+                                <th class="px-4 py-3 hidden md:table-cell">Description</th>
+                                <th class="px-4 py-3">Layer</th>
+                                <th class="px-4 py-3 hidden sm:table-cell">Category</th>
                                 <th class="px-4 py-3">Premium</th>
                                 <th class="px-4 py-3">Actions</th>
                             </tr>
@@ -188,11 +188,11 @@ include __DIR__ . '/includes/sidebar.php';
                             <tr>
                                 <th class="px-4 py-3">Name</th>
                                 <th class="px-4 py-3">Layer</th>
-                                <th class="px-4 py-3">Methods</th>
-                                <th class="px-4 py-3">Max Slots</th>
-                                <th class="px-4 py-3">API URL</th>
-                                <th class="px-4 py-3">Enabled</th>
-                                <th class="px-4 py-3">Status</th>
+                                <th class="px-4 py-3 hidden sm:table-cell">Methods</th>
+                                <th class="px-4 py-3 hidden lg:table-cell">Max Slots</th>
+                                <th class="px-4 py-3 hidden lg:table-cell">API URL</th>
+                                <th class="px-4 py-3 hidden md:table-cell">Enabled</th>
+                                <th class="px-4 py-3 hidden md:table-cell">Status</th>
                                 <th class="px-4 py-3">Actions</th>
                             </tr>
                         </thead>
@@ -220,9 +220,9 @@ include __DIR__ . '/includes/sidebar.php';
                                 <th class="px-4 py-3">User</th>
                                 <th class="px-4 py-3">Target</th>
                                 <th class="px-4 py-3">Method</th>
-                                <th class="px-4 py-3">Layer</th>
-                                <th class="px-4 py-3">Duration</th>
-                                <th class="px-4 py-3">Started</th>
+                                <th class="px-4 py-3 hidden sm:table-cell">Layer</th>
+                                <th class="px-4 py-3 hidden sm:table-cell">Duration</th>
+                                <th class="px-4 py-3 hidden md:table-cell">Started</th>
                             </tr>
                         </thead>
                         <tbody id="admin-attacks-table" class="text-gray-300">
@@ -249,8 +249,8 @@ include __DIR__ . '/includes/sidebar.php';
                             <tr>
                                 <th class="px-4 py-3">Type</th>
                                 <th class="px-4 py-3">Value</th>
-                                <th class="px-4 py-3">Note</th>
-                                <th class="px-4 py-3">Added</th>
+                                <th class="px-4 py-3 hidden sm:table-cell">Note</th>
+                                <th class="px-4 py-3 hidden md:table-cell">Added</th>
                                 <th class="px-4 py-3">Actions</th>
                             </tr>
                         </thead>
