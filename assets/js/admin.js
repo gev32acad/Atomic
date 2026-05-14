@@ -389,7 +389,7 @@ function renderMethods(methods) {
 }
 
 // Build a category input with datalist suggestions filtered by layer.
-// Methods that support both layers contribute their category to both layer dropshots.
+// Methods that support both layers contribute their category to both layer dropdowns.
 function buildCategoryDatalist(allMethods, layer, currentCategory) {
     const div = document.createElement('div');
     const cats = [];
