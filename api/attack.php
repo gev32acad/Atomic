@@ -157,11 +157,11 @@ if ($method_req === 'POST') {
     }
 
     // Check that a backend server is available for this layer/method BEFORE committing the attack
-    $server_pre = find_server_for_attack($method, $layer, [], 0);
-    if (!$server_pre) {
+    $available_server = find_server_for_attack($method, $layer, [], 0);
+    if (!$available_server) {
         // Check if any server exists (ignoring slots) to give a better error message
-        $any_server = find_server_for_attack($method, $layer, [], 0, true);
-        if ($any_server) {
+        $any_matching_server = find_server_for_attack($method, $layer, [], 0, true);
+        if ($any_matching_server) {
             json_error('All server slots are currently occupied. Please try again in a moment.', 503);
         }
         json_error('No backend server is configured for this layer/method. Please contact an administrator.', 503);
