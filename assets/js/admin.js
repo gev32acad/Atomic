@@ -420,7 +420,7 @@ function editCategory(category) {
 }
 
 async function deleteCategory(id) {
-    if (!confirm('Delete this category? Methods assigned to it must be moved first.')) return;
+    if (!confirm('Delete this category? It can only be removed if no method is using it.')) return;
     try {
         const res = await fetch('api/categories.php', {
             method: 'DELETE',
@@ -1084,7 +1084,9 @@ function createMethodsMultiSelect(allMethods, selectedMethods, layer) {
         if (!grouped[cat]) grouped[cat] = [];
         grouped[cat].push(m);
     });
-    const optionsHtml = Object.entries(grouped).map(([cat, methods]) => {
+    const optionsHtml = Object.entries(grouped)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([cat, methods]) => {
         const opts = methods.map(m =>
             `<option value="${escapeHtml(m.name)}" ${selectedMethods.includes(m.name) ? 'selected' : ''}>${escapeHtml(m.name)}${m.premium ? ' ⭐' : ''}</option>`
         ).join('');

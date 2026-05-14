@@ -92,7 +92,7 @@ if ($method_req === 'PUT') {
         json_error('Category not found', 404);
     }
 
-    if ($old_name !== null && $old_name !== '' && ($old_name !== $name || $old_layer !== $layer)) {
+    if ($old_name !== '' && ($old_name !== $name || $old_layer !== $layer)) {
         $methods = read_json('methods.json');
         foreach ($methods as &$m) {
             $method_cat = trim($m['category'] ?? '');
