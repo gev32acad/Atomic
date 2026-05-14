@@ -156,6 +156,17 @@ if ($method_req === 'POST') {
         json_error('Invalid method');
     }
 
+    // Check that a backend server is available for this layer/method BEFORE committing the attack
+    $server_pre = find_server_for_attack($method, $layer, [], 0);
+    if (!$server_pre) {
+        // Check if any server exists (ignoring slots) to give a better error message
+        $any_server = find_server_for_attack($method, $layer, [], 0, true);
+        if ($any_server) {
+            json_error('All server slots are currently occupied. Please try again in a moment.', 503);
+        }
+        json_error('No backend server is configured for this layer/method. Please contact an administrator.', 503);
+    }
+
     // Lock attacks.json for atomic concurrent-count check + insert.
     // Both running and scheduled attacks consume a slot – all stored in attacks.json
     // so this single flock() prevents races between concurrent requests.
@@ -238,13 +249,8 @@ if ($method_req === 'POST') {
     // Dispatch to backend server
     $server = find_server_for_attack($method, $layer, $attacks, $now);
     if (!$server) {
-        // No server found – check whether a matching server exists at all (ignoring slot limit)
-        $any = find_server_for_attack($method, $layer, [], 0, true);
-        if ($any) {
-            json_error('All server slots are currently occupied. Please try again in a moment.', 503);
-        }
-        // No backend server configured at all – launch is recorded locally
-        json_response(['message' => 'Attack launched (no backend server available)', 'attack' => $new_attack], 201);
+        // Server became unavailable between pre-check and dispatch (race condition)
+        json_error('All server slots are currently occupied. Please try again in a moment.', 503);
     }
 
     $dispatch = dispatch_to_server($server, $new_attack);

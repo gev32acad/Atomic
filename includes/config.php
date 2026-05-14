@@ -68,6 +68,16 @@ function generate_id() {
     return uniqid() . bin2hex(random_bytes(4));
 }
 
+function generate_user_id() {
+    // Generate a unique random 6-digit numeric user ID
+    $users = read_json('users.json');
+    $existing_ids = array_column($users, 'id');
+    do {
+        $id = (string)random_int(100000, 999999);
+    } while (in_array($id, $existing_ids));
+    return $id;
+}
+
 function json_response($data, $code = 200) {
     http_response_code($code);
     header('Content-Type: application/json');

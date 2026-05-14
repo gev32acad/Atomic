@@ -29,8 +29,9 @@ foreach ($attacks as $attack) {
         continue;
     }
     
+    if (empty($attack['start_time'])) continue; // skip scheduled attacks without start_time
     $start = strtotime($attack['start_time']);
-    $duration = $attack['time'];
+    $duration = intval($attack['time'] ?? 0);
     $end_time = $start + $duration;
     
     $attack['end_time'] = date('c', $end_time);

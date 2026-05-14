@@ -6,9 +6,9 @@ include __DIR__ . '/includes/header.php';
 include __DIR__ . '/includes/sidebar.php';
 ?>
 
-<div class="min-h-screen p-6">
+<div class="min-h-screen p-4 lg:p-6">
     <div class="max-w-7xl mx-auto">
-        <div class="bg-panel border border-gray-700/50 rounded-2xl p-6">
+        <div class="bg-panel border border-gray-700/50 rounded-2xl p-4 lg:p-6">
             <div class="flex items-center justify-between mb-6">
                 <h2 class="text-xl font-bold text-white">Attack History</h2>
                 <div class="flex items-center gap-3">
@@ -24,7 +24,8 @@ include __DIR__ . '/includes/sidebar.php';
                 </div>
             </div>
             
-            <div class="overflow-x-auto">
+            <!-- Desktop table -->
+            <div class="hidden sm:block overflow-x-auto">
                 <table class="w-full text-sm text-left">
                     <thead class="text-gray-400 border-b border-gray-700">
                         <tr>
@@ -42,6 +43,11 @@ include __DIR__ . '/includes/sidebar.php';
                     </tbody>
                 </table>
             </div>
+
+            <!-- Mobile card list -->
+            <div id="history-cards" class="sm:hidden space-y-3">
+                <div class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading history...</div>
+            </div>
         </div>
     </div>
 </div>
@@ -57,6 +63,8 @@ async function loadHistory(page = 1) {
         
         if (!res.ok) {
             document.getElementById('history-table').innerHTML = '<tr><td colspan="7" class="text-center py-8 text-red-400">Failed to load history</td></tr>';
+            const cards = document.getElementById('history-cards');
+            if (cards) cards.innerHTML = '<div class="text-center py-8 text-red-400">Failed to load history</div>';
             return;
         }
         
@@ -68,17 +76,17 @@ async function loadHistory(page = 1) {
         document.getElementById('btn-next').disabled = currentPage >= totalPages;
         
         const tbody = document.getElementById('history-table');
+        const cards = document.getElementById('history-cards');
         
         if (!data.attacks.length) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">No attack history found</td></tr>';
+            if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">No attack history found</td></tr>';
+            if (cards) cards.innerHTML = '<div class="text-center py-8 text-gray-400">No attack history found</div>';
             return;
         }
         
-        tbody.innerHTML = '';
+        if (tbody) tbody.innerHTML = '';
+        if (cards) cards.innerHTML = '';
         data.attacks.forEach(a => {
-            const tr = document.createElement('tr');
-            tr.className = 'border-t border-gray-700/50';
-            
             const statusColors = {
                 'running': 'bg-green-600/20 text-green-400',
                 'completed': 'bg-gray-600/20 text-gray-400',
@@ -89,20 +97,47 @@ async function loadHistory(page = 1) {
             const startDate = new Date(a.start_time);
             const timeStr = startDate.toLocaleDateString() + ' ' + startDate.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
             
-            tr.innerHTML = `
-                <td class="px-4 py-3 text-white font-mono text-xs">${escapeHtml(a.target)}</td>
-                <td class="px-4 py-3"><span class="bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded text-xs">${escapeHtml(a.method)}</span></td>
-                <td class="px-4 py-3">${escapeHtml(a.layer)}</td>
-                <td class="px-4 py-3">${escapeHtml(String(a.port))}</td>
-                <td class="px-4 py-3">${a.time}s</td>
-                <td class="px-4 py-3 text-xs">${timeStr}</td>
-                <td class="px-4 py-3"><span class="${statusClass} px-2 py-0.5 rounded text-xs">${a.status}</span></td>
-            `;
-            tbody.appendChild(tr);
+            // Desktop table row
+            if (tbody) {
+                const tr = document.createElement('tr');
+                tr.className = 'border-t border-gray-700/50';
+                tr.innerHTML = `
+                    <td class="px-4 py-3 text-white font-mono text-xs">${escapeHtml(a.target)}</td>
+                    <td class="px-4 py-3"><span class="bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded text-xs">${escapeHtml(a.method)}</span></td>
+                    <td class="px-4 py-3">${escapeHtml(a.layer)}</td>
+                    <td class="px-4 py-3">${escapeHtml(String(a.port))}</td>
+                    <td class="px-4 py-3">${a.time}s</td>
+                    <td class="px-4 py-3 text-xs">${timeStr}</td>
+                    <td class="px-4 py-3"><span class="${statusClass} px-2 py-0.5 rounded text-xs">${a.status}</span></td>
+                `;
+                tbody.appendChild(tr);
+            }
+            
+            // Mobile card
+            if (cards) {
+                const card = document.createElement('div');
+                card.className = 'bg-background border border-gray-700/50 rounded-xl p-4 space-y-2';
+                card.innerHTML = `
+                    <div class="flex items-start justify-between gap-2">
+                        <p class="text-white font-mono text-sm font-medium break-all">${escapeHtml(a.target)}</p>
+                        <span class="${statusClass} px-2 py-0.5 rounded text-xs shrink-0">${escapeHtml(a.status)}</span>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5 text-xs">
+                        <span class="bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded">${escapeHtml(a.method)}</span>
+                        <span class="bg-gray-700/50 text-gray-300 px-2 py-0.5 rounded">${escapeHtml(a.layer)}</span>
+                        <span class="text-gray-500">Port ${escapeHtml(String(a.port))}</span>
+                        <span class="text-gray-500">${a.time}s</span>
+                    </div>
+                    <p class="text-xs text-gray-600">${timeStr}</p>
+                `;
+                cards.appendChild(card);
+            }
         });
     } catch (err) {
         console.error('Failed to load history:', err);
         document.getElementById('history-table').innerHTML = '<tr><td colspan="7" class="text-center py-8 text-red-400">Connection error</td></tr>';
+        const cards = document.getElementById('history-cards');
+        if (cards) cards.innerHTML = '<div class="text-center py-8 text-red-400">Connection error</div>';
     }
 }
 

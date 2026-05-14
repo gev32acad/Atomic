@@ -15,9 +15,10 @@ $attacks = read_json('attacks.json');
 $now = time();
 $running = 0;
 foreach ($attacks as $attack) {
+    if (empty($attack['start_time'])) continue; // skip scheduled attacks without start_time
     $start = strtotime($attack['start_time']);
-    $duration = $attack['time'];
-    if (($start + $duration) > $now) {
+    $duration = intval($attack['time'] ?? 0);
+    if ($start && ($start + $duration) > $now) {
         $running++;
     }
 }
@@ -29,6 +30,7 @@ for ($i = 6; $i >= 0; $i--) {
     $day_name = date('D', strtotime("-$i days"));
     $count = 0;
     foreach ($attacks as $attack) {
+        if (empty($attack['start_time'])) continue;
         if (date('Y-m-d', strtotime($attack['start_time'])) === $date) {
             $count++;
         }

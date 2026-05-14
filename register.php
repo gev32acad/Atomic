@@ -26,6 +26,12 @@ include __DIR__ . '/includes/sidebar.php';
                     class="w-full bg-transparent text-white placeholder-gray-500 focus:outline-none">
             </div>
             
+            <div class="flex items-center gap-2 border border-gray-700 rounded px-3 py-2 bg-background">
+                <i class="fas fa-lock text-gray-400"></i>
+                <input type="password" name="confirm_password" placeholder="Retype Password" required minlength="6"
+                    class="w-full bg-transparent text-white placeholder-gray-500 focus:outline-none">
+            </div>
+            
             <button type="submit" id="register-btn"
                 class="w-full py-2 rounded font-semibold bg-blue-600 text-white hover:bg-blue-700 transition disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed">
                 Register
@@ -41,6 +47,14 @@ include __DIR__ . '/includes/sidebar.php';
 <script>
 document.getElementById('register-form').addEventListener('submit', async function(e) {
     e.preventDefault();
+    
+    const password = this.querySelector('[name=password]').value;
+    const confirm = this.querySelector('[name=confirm_password]').value;
+    if (password !== confirm) {
+        showToast('Passwords do not match', 'error');
+        return;
+    }
+    
     const btn = document.getElementById('register-btn');
     btn.disabled = true;
     btn.textContent = 'Creating...';

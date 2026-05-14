@@ -37,11 +37,15 @@ function switchAdminTab(tab) {
 // Modal functions
 function openModal(title) {
     document.getElementById('modal-title').textContent = title;
-    document.getElementById('admin-modal').classList.remove('hidden');
+    const modal = document.getElementById('admin-modal');
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
 }
 
 function closeModal() {
-    document.getElementById('admin-modal').classList.add('hidden');
+    const modal = document.getElementById('admin-modal');
+    modal.classList.add('hidden');
+    modal.style.display = '';
     document.getElementById('modal-fields').innerHTML = '';
     currentEditId = null;
     currentEditType = null;

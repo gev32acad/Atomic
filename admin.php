@@ -11,27 +11,27 @@ include __DIR__ . '/includes/sidebar.php';
     <div class="max-w-7xl mx-auto">
         
         <!-- Tabs -->
-        <div class="flex flex-wrap gap-2 mb-6">
-            <button onclick="switchAdminTab('users')" id="admin-tab-users" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-blue-600 text-white transition">
+        <div class="flex flex-nowrap gap-2 mb-6 overflow-x-auto pb-1 -mx-1 px-1">
+            <button onclick="switchAdminTab('users')" id="admin-tab-users" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-blue-600 text-white transition shrink-0">
                 <i class="fas fa-users"></i> Users
             </button>
-            <button onclick="switchAdminTab('plans')" id="admin-tab-plans" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition">
+            <button onclick="switchAdminTab('plans')" id="admin-tab-plans" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition shrink-0">
                 <i class="fas fa-credit-card"></i> Plans
             </button>
-            <button onclick="switchAdminTab('orders')" id="admin-tab-orders" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition">
+            <button onclick="switchAdminTab('orders')" id="admin-tab-orders" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition shrink-0">
                 <i class="fas fa-receipt"></i> Orders
                 <span id="orders-badge" class="hidden bg-yellow-500 text-black text-xs rounded-full px-1.5 py-0.5 font-bold"></span>
             </button>
-            <button onclick="switchAdminTab('attacks')" id="admin-tab-attacks" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition">
+            <button onclick="switchAdminTab('attacks')" id="admin-tab-attacks" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition shrink-0">
                 <i class="fas fa-history"></i> Attacks
             </button>
-            <button onclick="switchAdminTab('methods')" id="admin-tab-methods" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition">
+            <button onclick="switchAdminTab('methods')" id="admin-tab-methods" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition shrink-0">
                 <i class="fas fa-bomb"></i> Methods
             </button>
-            <button onclick="switchAdminTab('servers')" id="admin-tab-servers" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition">
+            <button onclick="switchAdminTab('servers')" id="admin-tab-servers" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition shrink-0">
                 <i class="fas fa-server"></i> Servers
             </button>
-            <button onclick="switchAdminTab('blacklist')" id="admin-tab-blacklist" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition">
+            <button onclick="switchAdminTab('blacklist')" id="admin-tab-blacklist" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700/50 text-gray-300 hover:bg-gray-700 transition shrink-0">
                 <i class="fas fa-ban"></i> Blacklist
             </button>
         </div>

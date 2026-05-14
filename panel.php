@@ -675,12 +675,23 @@ async function saveFavoriteFromForm() {
 }
 
 async function deleteFavorite(id) {
+    // Optimistically remove from DOM for instant feedback
+    const btn = document.querySelector(`.fav-delete-btn[data-id="${CSS.escape(id)}"]`);
+    const wrapper = btn ? btn.closest('div') : null;
+    if (wrapper) wrapper.remove();
+    
     const res = await fetch('api/favorites.php', {
         method: 'DELETE',
         headers: {'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken},
         body: JSON.stringify({id})
     });
-    if (res.ok) { showToast('Favorite removed', 'success'); loadFavorites(); }
+    if (res.ok) {
+        showToast('Favorite removed', 'success');
+        loadFavorites(); // sync with server state
+    } else {
+        showToast('Failed to remove favorite', 'error');
+        loadFavorites(); // restore correct state on error
+    }
 }
 
 // =================== SSE (Server-Sent Events) ===================
@@ -735,6 +746,18 @@ loadMethods();
 connectSSE();
 loadFavorites();
 if (allowSchedule) loadScheduled();
+
+// Close SSE when navigating away to prevent blocking server connections
+window.addEventListener('beforeunload', function() {
+    if (evtSource) { evtSource.close(); evtSource = null; }
+});
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        if (evtSource) { evtSource.close(); evtSource = null; }
+    } else {
+        if (!evtSource) connectSSE();
+    }
+});
 
 </script>
 
