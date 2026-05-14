@@ -53,7 +53,7 @@ function render_nav_items($nav_items, $current_page, $admin) {
     <nav class="p-4 space-y-2">
         <div class="flex items-center justify-end px-4 py-2 mb-1">
             <span class="<?= $badge_class ?>">
-                <?= htmlspecialchars($plan_name) ?>
+                <i class="fas <?= $badge_icon ?>"></i>
             </span>
         </div>
         <?= render_nav_items($nav_items, $current_page, $admin) ?>

@@ -436,35 +436,7 @@ async function loadAttacks() {
     try {
         const res = await fetch('api/attack.php');
         const attacks = await res.json();
-        const container = document.getElementById('attack-logs');
-        const pulse = document.getElementById('attack-pulse');
-        const statEl = document.getElementById('stat-running');
-
-        if (statEl) statEl.textContent = attacks.length;
-
-        if (!attacks.length) {
-            clearAttackTimers();
-            if (pulse) { pulse.className = 'status-dot status-idle'; }
-            container.innerHTML = `
-                <div class="flex flex-col items-center justify-center py-14 text-center">
-                    <i class="fas fa-satellite-dish text-3xl text-gray-700 mb-3"></i>
-                    <p class="text-gray-600 text-sm">No active attacks</p>
-                    <p class="text-gray-700 text-xs mt-1">Launch an attack to see it here.</p>
-                </div>`;
-            return;
-        }
-
-        if (pulse) { pulse.className = 'status-dot status-live'; }
-
-        const currentIds = new Set(Object.keys(attackTimers));
-        const newIds = new Set(attacks.map(a => a.id));
-        const idsChanged = [...newIds].some(id => !currentIds.has(id)) || [...currentIds].some(id => !newIds.has(id));
-
-        if (idsChanged) {
-            clearAttackTimers();
-            container.innerHTML = attacks.map(renderAttack).join('');
-            attacks.forEach(a => startAttackTimer(a.id, a.remaining, a.time));
-        }
+        updateAttackDisplay(attacks);
     } catch (err) {
         console.error('Failed to load attacks:', err);
     }
@@ -474,17 +446,6 @@ function escapeHtml(text) {
     const d = document.createElement('div');
     d.textContent = String(text ?? '');
     return d.innerHTML;
-}
-
-// Manual poll fallback (also called after stop for immediate refresh)
-async function loadAttacks() {
-    try {
-        const res = await fetch('api/attack.php');
-        const attacks = await res.json();
-        updateAttackDisplay(attacks);
-    } catch (err) {
-        console.error('Failed to load attacks:', err);
-    }
 }
 
 async function stopAttack(id) {

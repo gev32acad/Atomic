@@ -866,12 +866,29 @@ async function showAddServerModal() {
     `;
     fields.appendChild(urlDiv);
 
-    fields.appendChild(createField('Layer', 'layer', 'select', 'Layer4', {choices: ['Layer4', 'Layer7']}));
+    const layerField = createField('Layer', 'layer', 'select', 'Layer4', {choices: ['Layer4', 'Layer7']});
+    fields.appendChild(layerField);
     fields.appendChild(createField('Max Slots', 'max_slots', 'number', '10'));
 
     const allMethods = await getAdminMethods();
-    fields.appendChild(createMethodsMultiSelect(allMethods, [], 'Layer4'));
+    const methodsWrapper = document.createElement('div');
+    methodsWrapper.id = 'server-methods-wrapper';
+    methodsWrapper.appendChild(createMethodsMultiSelect(allMethods, [], 'Layer4'));
+    fields.appendChild(methodsWrapper);
     fields.appendChild(createEnabledToggle(true));
+
+    // Update methods list when layer changes
+    const layerSelect = layerField.querySelector('select[name="layer"]');
+    if (layerSelect) {
+        layerSelect.addEventListener('change', function() {
+            const wrapper = document.getElementById('server-methods-wrapper');
+            if (!wrapper) return;
+            const selected = Array.from(wrapper.querySelectorAll('select[name="methods[]"] option:checked')).map(o => o.value);
+            wrapper.innerHTML = '';
+            wrapper.appendChild(createMethodsMultiSelect(allMethods, selected, this.value));
+        });
+    }
+
     openModal('Add Server');
 }
 
@@ -890,12 +907,29 @@ async function editServer(server) {
     `;
     fields.appendChild(urlDiv);
 
-    fields.appendChild(createField('Layer', 'layer', 'select', server.layer || 'Layer4', {choices: ['Layer4', 'Layer7']}));
+    const layerField = createField('Layer', 'layer', 'select', server.layer || 'Layer4', {choices: ['Layer4', 'Layer7']});
+    fields.appendChild(layerField);
     fields.appendChild(createField('Max Slots', 'max_slots', 'number', server.max_slots ?? 10));
 
     const allMethods = await getAdminMethods();
-    fields.appendChild(createMethodsMultiSelect(allMethods, server.methods || [], server.layer || 'Layer4'));
+    const methodsWrapper = document.createElement('div');
+    methodsWrapper.id = 'server-methods-wrapper';
+    methodsWrapper.appendChild(createMethodsMultiSelect(allMethods, server.methods || [], server.layer || 'Layer4'));
+    fields.appendChild(methodsWrapper);
     fields.appendChild(createEnabledToggle(!!server.enabled));
+
+    // Update methods list when layer changes
+    const layerSelect = layerField.querySelector('select[name="layer"]');
+    if (layerSelect) {
+        layerSelect.addEventListener('change', function() {
+            const wrapper = document.getElementById('server-methods-wrapper');
+            if (!wrapper) return;
+            const selected = Array.from(wrapper.querySelectorAll('select[name="methods[]"] option:checked')).map(o => o.value);
+            wrapper.innerHTML = '';
+            wrapper.appendChild(createMethodsMultiSelect(allMethods, selected, this.value));
+        });
+    }
+
     openModal('Edit Server');
 }
 

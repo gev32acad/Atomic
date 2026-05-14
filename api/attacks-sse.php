@@ -8,6 +8,10 @@ if (!$user) {
     exit;
 }
 
+// Release the PHP session lock immediately so other requests from the same
+// browser are not blocked while this long-running SSE stream is open.
+session_write_close();
+
 // Disable output compression and buffering
 if (function_exists('apache_setenv')) {
     @apache_setenv('no-gzip', '1');
