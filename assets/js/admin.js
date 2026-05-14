@@ -487,18 +487,24 @@ function renderMethods(methods) {
 
     tbody.innerHTML = '';
     filtered.forEach(m => {
-        const layerLabel = m.layer4 && m.layer7 ? '<span class="text-green-400 text-xs">L4+L7</span>'
-            : m.layer4 ? '<span class="text-blue-400 text-xs">L4</span>'
-            : m.layer7 ? '<span class="text-purple-400 text-xs">L7</span>'
+        const layerLabel = m.layer4 && m.layer7 ? '<span class="badge badge-l4 mr-1">L4</span><span class="badge badge-l7">L7</span>'
+            : m.layer4 ? '<span class="badge badge-l4">L4</span>'
+            : m.layer7 ? '<span class="badge badge-l7">L7</span>'
             : '<span class="text-gray-500 text-xs">—</span>';
+        const categoryBadge = m.category
+            ? `<span class="badge badge-method">${escapeHtml(m.category)}</span>`
+            : '<span class="text-gray-500 text-xs">—</span>';
+        const premiumBadge = m.premium
+            ? '<span class="badge badge-premium">⭐ Premium</span>'
+            : '<span class="text-gray-500 text-xs">No</span>';
         const tr = document.createElement('tr');
         tr.className = 'border-t border-gray-700/50';
         tr.innerHTML = `
-            <td class="px-4 py-3 text-white">${escapeHtml(m.name)}</td>
+            <td class="px-4 py-3 text-white font-medium">${escapeHtml(m.name)}</td>
             <td class="px-4 py-3 hidden md:table-cell text-gray-400 text-xs">${escapeHtml(m.description)}</td>
             <td class="px-4 py-3">${layerLabel}</td>
-            <td class="px-4 py-3 hidden sm:table-cell text-gray-300 text-xs">${escapeHtml(m.category || 'Other')}</td>
-            <td class="px-4 py-3">${m.premium ? '<span class="text-yellow-400">Yes</span>' : '<span class="text-gray-500">No</span>'}</td>
+            <td class="px-4 py-3 hidden sm:table-cell">${categoryBadge}</td>
+            <td class="px-4 py-3">${premiumBadge}</td>
             <td class="px-4 py-3"></td>
         `;
         const actionsCell = tr.querySelector('td:last-child');
