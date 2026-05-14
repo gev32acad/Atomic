@@ -388,12 +388,14 @@ function renderMethods(methods) {
     });
 }
 
-// Build a category input with datalist suggestions filtered by layer
+// Build a category input with datalist suggestions filtered by layer.
+// Methods that support both layers contribute their category to both layer dropshots.
 function buildCategoryDatalist(allMethods, layer, currentCategory) {
     const div = document.createElement('div');
     const cats = [];
     allMethods.forEach(m => {
-        const matchesLayer = layer === 'Layer4' ? m.layer4 : m.layer7;
+        // Include the category if the method belongs to the requested layer
+        const matchesLayer = layer === 'Layer4' ? !!m.layer4 : !!m.layer7;
         if (matchesLayer && m.category && !cats.includes(m.category)) {
             cats.push(m.category);
         }
@@ -410,8 +412,9 @@ function buildCategoryDatalist(allMethods, layer, currentCategory) {
     return div;
 }
 
-// Attach layer-change listener to update the category datalist inside a given wrapper
-function wireCategoryLayerChange(layerSelect, allMethods) {
+// Replace category datalist contents when the layer dropdown changes.
+// Each modal open creates a fresh layerSelect element, so this listener is attached once per element.
+function attachCategoryLayerListener(layerSelect, allMethods) {
     if (!layerSelect) return;
     layerSelect.addEventListener('change', function() {
         const wrapper = document.getElementById('method-category-wrapper');
@@ -426,11 +429,13 @@ function wireCategoryLayerChange(layerSelect, allMethods) {
 async function showAddMethodModal() {
     currentEditType = 'method-add';
     const fields = document.getElementById('modal-fields');
+    // Clearing fields removes previously created elements, including their event listeners
     fields.innerHTML = '';
     fields.appendChild(createField('Name', 'name', 'text', '', {required: true}));
     fields.appendChild(createField('Description', 'description', 'text', ''));
 
     const allMethods = await getAdminMethods();
+    // Fresh element created for each modal open — only one listener is ever attached to it
     const layerField = createField('Layer', 'layer', 'select', 'Layer4', {choices: ['Layer4', 'Layer7']});
     fields.appendChild(layerField);
 
@@ -441,7 +446,7 @@ async function showAddMethodModal() {
     fields.appendChild(catWrapper);
 
     fields.appendChild(createField('Premium', 'premium', 'checkbox', false));
-    wireCategoryLayerChange(layerField.querySelector('select[name="layer"]'), allMethods);
+    attachCategoryLayerListener(layerField.querySelector('select[name="layer"]'), allMethods);
     openModal('Add Method');
 }
 
@@ -449,12 +454,14 @@ async function editMethod(method) {
     currentEditType = 'method-edit';
     currentEditId = method.id;
     const fields = document.getElementById('modal-fields');
+    // Clearing fields removes previously created elements, including their event listeners
     fields.innerHTML = '';
     fields.appendChild(createField('Name', 'name', 'text', method.name));
     fields.appendChild(createField('Description', 'description', 'text', method.description));
 
     const allMethods = await getAdminMethods();
     const currentLayer = method.layer7 && !method.layer4 ? 'Layer7' : 'Layer4';
+    // Fresh element created for each modal open — only one listener is ever attached to it
     const layerField = createField('Layer', 'layer', 'select', currentLayer, {choices: ['Layer4', 'Layer7']});
     fields.appendChild(layerField);
 
@@ -465,7 +472,7 @@ async function editMethod(method) {
     fields.appendChild(catWrapper);
 
     fields.appendChild(createField('Premium', 'premium', 'checkbox', method.premium));
-    wireCategoryLayerChange(layerField.querySelector('select[name="layer"]'), allMethods);
+    attachCategoryLayerListener(layerField.querySelector('select[name="layer"]'), allMethods);
     openModal('Edit Method');
 }
 
