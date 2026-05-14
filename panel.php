@@ -378,7 +378,7 @@ async function loadMethods() {
         });
 
         // Populate selects with optgroups
-        [['l4', l4, l4Cats], ['l7', l7, l7Cats]].forEach(([prefix, sel, cats]) => {
+        [[l4, l4Cats], [l7, l7Cats]].forEach(([sel, cats]) => {
             sel.innerHTML = '';
             Object.entries(cats).forEach(([cat, meths]) => {
                 const group = document.createElement('optgroup');

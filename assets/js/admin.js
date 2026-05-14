@@ -384,7 +384,7 @@ function editMethod(method) {
     fields.innerHTML = '';
     fields.appendChild(createField('Name', 'name', 'text', method.name));
     fields.appendChild(createField('Description', 'description', 'text', method.description));
-    const currentLayer = method.layer4 ? 'Layer4' : 'Layer7';
+    const currentLayer = method.layer7 && !method.layer4 ? 'Layer7' : 'Layer4';
     fields.appendChild(createField('Layer', 'layer', 'select', currentLayer, {choices: ['Layer4', 'Layer7']}));
     fields.appendChild(createField('Category', 'category', 'text', method.category || ''));
     fields.appendChild(createField('Premium', 'premium', 'checkbox', method.premium));
@@ -409,6 +409,28 @@ async function deleteMethod(id) {
     } catch (err) {
         showToast('Connection error', 'error');
     }
+}
+
+// =================== METHOD LAYER HELPERS ===================
+
+// Translate 'layer' select value in a JSON data object to layer4/layer7 booleans.
+function applyMethodLayerToData(data) {
+    const layerVal = data.layer || 'Layer4';
+    data.layer4 = layerVal === 'Layer4';
+    data.layer7 = layerVal === 'Layer7';
+    data.amplification = (data.category || '').toLowerCase() === 'amplification';
+    data.proxy = layerVal === 'Layer7';
+    delete data.layer;
+}
+
+// Translate 'layer' select value in a FormData object to layer4/layer7 booleans.
+function applyMethodLayerToFormData(fd) {
+    const layerVal = fd.get('layer') || 'Layer4';
+    fd.delete('layer');
+    fd.set('layer4', layerVal === 'Layer4');
+    fd.set('layer7', layerVal === 'Layer7');
+    fd.set('amplification', (fd.get('category') || '').toLowerCase() === 'amplification');
+    fd.set('proxy', layerVal === 'Layer7');
 }
 
 // =================== FORM SUBMIT ===================
@@ -456,12 +478,7 @@ document.getElementById('modal-form').addEventListener('submit', async function(
     // Special handling for method: translate 'layer' select to layer4/layer7 booleans,
     // and derive amplification/proxy automatically.
     if (type === 'method') {
-        const layerVal = data.layer || 'Layer4';
-        data.layer4 = layerVal === 'Layer4';
-        data.layer7 = layerVal === 'Layer7';
-        data.amplification = (data.category || '').toLowerCase() === 'amplification';
-        data.proxy = layerVal === 'Layer7';
-        delete data.layer;
+        applyMethodLayerToData(data);
     }
 
     // Special handling for blacklist-add (maps to api/blacklist.php)
@@ -517,12 +534,7 @@ document.getElementById('modal-form').addEventListener('submit', async function(
         fd.append('csrf_token', getCsrfToken());
         // For method-add: translate 'layer' select to layer4/layer7 booleans
         if (type === 'method') {
-            const layerVal = fd.get('layer') || 'Layer4';
-            fd.delete('layer');
-            fd.set('layer4', layerVal === 'Layer4');
-            fd.set('layer7', layerVal === 'Layer7');
-            fd.set('amplification', (fd.get('category') || '').toLowerCase() === 'amplification');
-            fd.set('proxy', layerVal === 'Layer7');
+            applyMethodLayerToFormData(fd);
         }
         body = fd;
     } else {
