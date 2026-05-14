@@ -179,8 +179,12 @@ function normalize_categories($categories, $allowed_layers) {
         $name = trim($c['name'] ?? '');
         $layer = $c['layer'] ?? '';
         if ($name === '' || !in_array($layer, $allowed_layers, true)) continue;
+        $id = trim((string)($c['id'] ?? ''));
+        if ($id === '') {
+            $id = 'legacy_' . md5(strtolower($layer . '|' . $name));
+        }
         $out[] = [
-            'id' => (string)($c['id'] ?? generate_id()),
+            'id' => $id,
             'name' => $name,
             'layer' => $layer
         ];

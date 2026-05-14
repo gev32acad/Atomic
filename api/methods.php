@@ -41,7 +41,7 @@ if ($method_req === 'POST') {
     if (empty($name)) {
         json_error('Method name is required');
     }
-    if (!($layer4 xor $layer7)) {
+    if (($layer4 && $layer7) || (!$layer4 && !$layer7)) {
         json_error('Method must belong to exactly one layer: either Layer4 or Layer7, but not both or neither');
     }
     if (!category_allowed_for_method($category, $layer4, $layer7, $categories)) {
@@ -79,7 +79,7 @@ if ($method_req === 'PUT') {
             $new_layer4 = array_key_exists('layer4', $input) ? (bool)$input['layer4'] : !empty($method['layer4']);
             $new_category = trim((string)($input['category'] ?? ($method['category'] ?? 'Other')));
 
-            if (!($new_layer4 xor $new_layer7)) {
+            if (($new_layer4 && $new_layer7) || (!$new_layer4 && !$new_layer7)) {
                 json_error('Method must belong to exactly one layer: either Layer4 or Layer7, but not both or neither');
             }
             if (!category_allowed_for_method($new_category, $new_layer4, $new_layer7, $categories)) {
