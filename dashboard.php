@@ -156,11 +156,21 @@ async function loadDashboard() {
             
             // Show chart, hide spinner
             document.getElementById('chart-spinner').classList.add('hidden');
-            document.getElementById('attacks-chart').classList.remove('hidden');
 
-            // Render Chart.js bar chart
             const labels = data.attacks_last_7_days.map(d => d.name);
             const values = data.attacks_last_7_days.map(d => d.attacks);
+            const hasData = values.some(v => v > 0);
+
+            if (!hasData) {
+                document.getElementById('chart-container').innerHTML =
+                    '<div class="absolute inset-0 flex flex-col items-center justify-center text-center">' +
+                    '<i class="fas fa-chart-bar text-3xl text-gray-700 mb-2"></i>' +
+                    '<p class="text-gray-600 text-sm">No attacks in the last 7 days</p>' +
+                    '</div>';
+                return;
+            }
+
+            document.getElementById('attacks-chart').classList.remove('hidden');
 
             const ctx = document.getElementById('attacks-chart').getContext('2d');
             if (attacksChart) {

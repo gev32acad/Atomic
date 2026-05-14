@@ -7,7 +7,7 @@ include __DIR__ . '/includes/header.php';
 include __DIR__ . '/includes/sidebar.php';
 ?>
 
-<div class="min-h-screen p-6">
+<div class="min-h-screen p-3 sm:p-6 overflow-x-hidden">
     <div class="max-w-7xl mx-auto">
         
         <!-- Tabs -->
