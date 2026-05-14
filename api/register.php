@@ -25,9 +25,14 @@ if ($rate_limited !== false) {
 
 $username = $_POST['username'] ?? '';
 $password = $_POST['password'] ?? '';
+$confirm_password = $_POST['confirm_password'] ?? '';
 
-if (empty($username) || empty($password)) {
+if (empty($username) || empty($password) || empty($confirm_password)) {
     json_error('All fields are required');
+}
+
+if ($password !== $confirm_password) {
+    json_error('Passwords do not match');
 }
 
 if (strlen($username) < 3) {
@@ -56,7 +61,7 @@ foreach ($users as $user) {
 }
 
 $new_user = [
-    'id' => generate_id(),
+    'id' => generate_user_id(),
     'username' => $username,
     'password' => password_hash($password, PASSWORD_BCRYPT),
     'plan' => 'Starter',

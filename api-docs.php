@@ -13,16 +13,16 @@ if (!preg_match('/^(\[[\da-fA-F:]+\]|[\w.\-]+(:\d+)?)$/', $host)) {
 $api_link = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $host . rtrim(dirname($_SERVER['REQUEST_URI']), '/') . '/api';
 ?>
 
-<div class="min-h-screen p-6 text-white">
-    <div class="max-w-5xl mx-auto space-y-10">
-        <h1 class="text-4xl font-bold text-center">API Reference</h1>
+<div class="min-h-screen p-4 lg:p-6 text-white">
+    <div class="max-w-5xl mx-auto space-y-8">
+        <h1 class="text-2xl lg:text-4xl font-bold text-center">API Reference</h1>
 
         <!-- API Link -->
         <div>
-            <h2 class="text-2xl font-semibold mb-2">API Link</h2>
-            <div class="bg-panel border border-gray-700 rounded-lg px-4 py-3 flex items-center justify-between">
-                <code class="text-blue-400 break-all"><?= htmlspecialchars($api_link) ?></code>
-                <button onclick="copyText('<?= htmlspecialchars($api_link) ?>')">
+            <h2 class="text-xl lg:text-2xl font-semibold mb-2">API Link</h2>
+            <div class="bg-panel border border-gray-700 rounded-lg px-4 py-3 flex items-center justify-between gap-3">
+                <code class="text-blue-400 break-all text-sm"><?= htmlspecialchars($api_link) ?></code>
+                <button onclick="copyText('<?= htmlspecialchars($api_link) ?>')" class="shrink-0">
                     <i class="fas fa-copy text-gray-400 hover:text-white"></i>
                 </button>
             </div>
@@ -30,9 +30,9 @@ $api_link = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $host . rtri
 
         <!-- API Key -->
         <div>
-            <h2 class="text-2xl font-semibold mb-2">Your API Key</h2>
+            <h2 class="text-xl lg:text-2xl font-semibold mb-2">Your API Key</h2>
             <div class="bg-panel border border-gray-700 rounded-lg px-4 py-3 flex items-center justify-between gap-3">
-                <code id="api-key-display" class="text-green-400 break-all blur-sm select-none transition-all duration-200"><?= htmlspecialchars($user['api_key'] ?? 'N/A') ?></code>
+                <code id="api-key-display" class="text-green-400 break-all text-sm blur-sm select-none transition-all duration-200"><?= htmlspecialchars($user['api_key'] ?? 'N/A') ?></code>
                 <div class="flex items-center gap-2 shrink-0">
                     <button onclick="toggleKeyVisibility()" id="toggle-key-btn" title="Show/Hide key">
                         <i id="toggle-key-icon" class="fas fa-eye text-gray-400 hover:text-white"></i>
@@ -47,7 +47,7 @@ $api_link = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $host . rtri
 
         <!-- API Fields Table -->
         <div>
-            <h2 class="text-2xl font-semibold mb-2">API Fields</h2>
+            <h2 class="text-xl lg:text-2xl font-semibold mb-2">API Fields</h2>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm text-left text-gray-300 border border-gray-700 rounded-lg overflow-hidden">
                     <thead class="bg-gray-800 text-gray-100 uppercase text-xs">
@@ -72,10 +72,10 @@ $api_link = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $host . rtri
 
         <!-- Ongoing Tests -->
         <div>
-            <h2 class="text-2xl font-semibold mb-2">Ongoing Tests</h2>
+            <h2 class="text-xl lg:text-2xl font-semibold mb-2">Ongoing Tests</h2>
             <p class="text-sm text-gray-400 mb-2">Use this link to retrieve ongoing tests:</p>
-            <div class="bg-panel border border-gray-700 rounded-lg px-4 py-3">
-                <code class="break-all text-gray-300"><?= htmlspecialchars($api_link) ?>/attack.php?key=YOUR_API_KEY</code>
+            <div class="bg-panel border border-gray-700 rounded-lg px-4 py-3 overflow-x-auto">
+                <code class="break-all text-gray-300 text-sm"><?= htmlspecialchars($api_link) ?>/attack.php?key=YOUR_API_KEY</code>
             </div>
         </div>
     </div>
