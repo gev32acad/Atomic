@@ -630,6 +630,9 @@ async function deleteMethod(id) {
 // Translate 'layer' select value in a JSON data object to layer4/layer7 booleans.
 function applyMethodLayerToData(data) {
     const layerVal = data.layer || 'Layer4';
+    if (!data.category || !String(data.category).trim()) {
+        throw new Error('Please create/select a category for the selected layer first.');
+    }
     data.layer4 = layerVal === 'Layer4';
     data.layer7 = layerVal === 'Layer7';
     data.amplification = (data.category || '').toLowerCase() === 'amplification';
@@ -640,6 +643,9 @@ function applyMethodLayerToData(data) {
 // Translate 'layer' select value in a FormData object to layer4/layer7 booleans.
 function applyMethodLayerToFormData(fd) {
     const layerVal = fd.get('layer') || 'Layer4';
+    if (!fd.get('category') || !String(fd.get('category')).trim()) {
+        throw new Error('Please create/select a category for the selected layer first.');
+    }
     fd.delete('layer');
     fd.set('layer4', layerVal === 'Layer4');
     fd.set('layer7', layerVal === 'Layer7');
@@ -692,7 +698,12 @@ document.getElementById('modal-form').addEventListener('submit', async function(
     // Special handling for method: translate 'layer' select to layer4/layer7 booleans,
     // and derive amplification/proxy automatically.
     if (type === 'method') {
-        applyMethodLayerToData(data);
+        try {
+            applyMethodLayerToData(data);
+        } catch (err) {
+            showToast(err.message || 'Invalid method category', 'error');
+            return;
+        }
     }
 
     // Special handling for blacklist-add (maps to api/blacklist.php)
@@ -748,7 +759,12 @@ document.getElementById('modal-form').addEventListener('submit', async function(
         fd.append('csrf_token', getCsrfToken());
         // For method-add: translate 'layer' select to layer4/layer7 booleans
         if (type === 'method') {
-            applyMethodLayerToFormData(fd);
+            try {
+                applyMethodLayerToFormData(fd);
+            } catch (err) {
+                showToast(err.message || 'Invalid method category', 'error');
+                return;
+            }
         }
         body = fd;
     } else {
@@ -963,7 +979,6 @@ loadUsers();
 loadPlans();
 loadOrders();
 loadMethods();
-loadCategories();
 loadServers();
 
 // =================== SERVERS ===================
@@ -1080,7 +1095,7 @@ function createMethodsMultiSelect(allMethods, selectedMethods, layer) {
     const filtered = allMethods.filter(m => layer === 'Layer4' ? !!m.layer4 : !!m.layer7);
     const grouped = {};
     filtered.forEach(m => {
-        const cat = m.category || 'Other';
+        const cat = m.category || 'Uncategorized (legacy)';
         if (!grouped[cat]) grouped[cat] = [];
         grouped[cat].push(m);
     });

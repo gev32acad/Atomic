@@ -68,14 +68,17 @@ if ($method_req === 'PUT') {
     }
 
     foreach ($categories as $c) {
-        if (($c['id'] ?? '') !== $id && strcasecmp(trim($c['name'] ?? ''), $name) === 0 && ($c['layer'] ?? '') === $layer) {
+        $is_different_id = (($c['id'] ?? '') !== $id);
+        $is_same_name = (strcasecmp(trim($c['name'] ?? ''), $name) === 0);
+        $is_same_layer = (($c['layer'] ?? '') === $layer);
+        if ($is_different_id && $is_same_name && $is_same_layer) {
             json_error('Category already exists for this layer');
         }
     }
 
     $found = false;
-    $old_name = null;
-    $old_layer = null;
+    $old_name = '';
+    $old_layer = '';
     foreach ($categories as &$category) {
         if (($category['id'] ?? '') === $id) {
             $old_name = trim($category['name'] ?? '');
