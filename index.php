@@ -63,7 +63,7 @@ include __DIR__ . '/includes/sidebar.php';
                 ['icon' => 'fa-bolt',        'color' => 'text-yellow-400', 'bg' => 'bg-yellow-400/10', 'title' => 'High-Speed Network',  'desc' => 'Enterprise-grade infrastructure delivering maximum throughput.'],
                 ['icon' => 'fa-eye-slash',   'color' => 'text-purple-400', 'bg' => 'bg-purple-400/10', 'title' => 'Untraceable',         'desc' => 'Advanced anonymization and IP masking for complete privacy.'],
                 ['icon' => 'fa-layer-group', 'color' => 'text-blue-400',   'bg' => 'bg-blue-400/10',   'title' => 'Advanced Methods',    'desc' => 'Layer 4 & Layer 7 vectors with premium bypass options.'],
-                ['icon' => 'fa-headset',     'color' => 'text-green-400',  'bg' => 'bg-green-400/10',  'title' => '24/7 Support',        'desc' => 'Round-the-clock help via Telegram and Discord.'],
+                ['icon' => 'fa-headset',     'color' => 'text-green-400',  'bg' => 'bg-green-400/10',  'title' => '24/7 Support',        'desc' => 'Round-the-clock help via Telegram.'],
             ];
             foreach ($features as $f): ?>
             <div class="feature-card group">
@@ -156,9 +156,6 @@ include __DIR__ . '/includes/sidebar.php';
         <div class="flex items-center gap-5">
             <a href="https://t.me/netstressme" target="_blank" class="text-gray-500 hover:text-blue-400 transition text-sm flex items-center gap-1.5">
                 <i class="fab fa-telegram"></i> Telegram
-            </a>
-            <a href="#" class="text-gray-500 hover:text-indigo-400 transition text-sm flex items-center gap-1.5">
-                <i class="fab fa-discord"></i> Discord
             </a>
         </div>
     </div>
