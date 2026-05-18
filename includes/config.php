@@ -18,7 +18,7 @@ define('CRYPTO_LTC_ADDRESS', 'LaMT348PWRnrqeeWArpwQPbuanpXDZGEUz');
 define('CRYPTO_XMR_ADDRESS', '888tNkZrPN6JsEgekjMnABU4TBzc2Dt29EPAvkRDZVN');
 
 // Telegram support link
-define('TELEGRAM_LINK', 'https://t.me/netstressme');
+define('TELEGRAM_LINK', 'https://t.me/netstressooo');
 
 
 

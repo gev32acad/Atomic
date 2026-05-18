@@ -467,6 +467,15 @@ function escapeHtml(text) {
     return d.innerHTML;
 }
 
+function escapeAttr(str) {
+    return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 async function stopAttack(id) {
     const btn = document.querySelector(`#card-${id} .stop-btn`);
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
@@ -580,7 +589,7 @@ async function loadFavorites() {
         container.innerHTML = favs.map(f => `
             <div class="flex items-center gap-1">
                 <button class="fav-apply-btn flex items-center gap-1.5 bg-background border border-gray-700 hover:border-blue-500 text-gray-300 hover:text-white text-xs rounded-lg px-3 py-1.5 transition"
-                    data-fav='${escapeHtml(JSON.stringify(f))}'>
+                    data-fav="${escapeAttr(JSON.stringify(f))}">
                     <i class="fas fa-star text-yellow-400 text-xs"></i>
                     ${escapeHtml(f.name)}
                 </button>

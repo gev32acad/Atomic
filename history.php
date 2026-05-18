@@ -108,7 +108,7 @@ async function loadHistory(page = 1) {
                     <td class="px-4 py-3">${escapeHtml(String(a.port))}</td>
                     <td class="px-4 py-3">${a.time}s</td>
                     <td class="px-4 py-3 text-xs">${timeStr}</td>
-                    <td class="px-4 py-3"><span class="${statusClass} px-2 py-0.5 rounded text-xs">${a.status}</span></td>
+                    <td class="px-4 py-3"><span class="${statusClass} px-2 py-0.5 rounded text-xs">${escapeHtml(a.status)}</span></td>
                 `;
                 tbody.appendChild(tr);
             }

@@ -129,7 +129,8 @@ include __DIR__ . '/includes/sidebar.php';
                     </li>
                 </ul>
 
-                <a href="<?= $is_free ? 'register.php' : 'store.php' ?>"
+                <a href="<?= $is_free ? 'register.php' : 'https://t.me/netstressooo' ?>"
+                   <?= $is_free ? '' : 'target="_blank" rel="noopener noreferrer"' ?>
                    class="<?= $popular ? 'pricing-btn-primary' : 'pricing-btn-secondary' ?>">
                     <?= $is_free ? 'Get Started' : 'Buy Now' ?>
                 </a>
@@ -154,7 +155,7 @@ include __DIR__ . '/includes/sidebar.php';
             <p class="text-gray-500 text-sm">&copy; <?= date('Y') ?> NetStress. All rights reserved.</p>
         </div>
         <div class="flex items-center gap-5">
-            <a href="https://t.me/netstressme" target="_blank" class="text-gray-500 hover:text-blue-400 transition text-sm flex items-center gap-1.5">
+            <a href="https://t.me/netstressooo" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-blue-400 transition text-sm flex items-center gap-1.5">
                 <i class="fab fa-telegram"></i> Telegram
             </a>
         </div>
