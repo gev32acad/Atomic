@@ -129,8 +129,7 @@ include __DIR__ . '/includes/sidebar.php';
                     </li>
                 </ul>
 
-                <a href="<?= $is_free ? 'register.php' : 'https://t.me/netstressooo' ?>"
-                   <?= $is_free ? '' : 'target="_blank" rel="noopener noreferrer"' ?>
+                <a href="<?= $is_free ? 'register.php' : 'store.php' ?>"
                    class="<?= $popular ? 'pricing-btn-primary' : 'pricing-btn-secondary' ?>">
                     <?= $is_free ? 'Get Started' : 'Buy Now' ?>
                 </a>

@@ -18,7 +18,7 @@ include __DIR__ . '/includes/sidebar.php';
         </div>
 
         <!-- Stats Cards -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
             <div class="bg-panel border border-gray-700/50 p-5 rounded-2xl">
                 <div class="flex items-start justify-between">
                     <div>
@@ -34,7 +34,7 @@ include __DIR__ . '/includes/sidebar.php';
                 <div class="flex items-start justify-between">
                     <div>
                         <p id="stat-attacks" class="text-3xl font-bold text-white mb-1">-</p>
-                        <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Total Attacks</p>
+                        <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">My Total Attacks</p>
                     </div>
                     <div class="w-10 h-10 rounded-xl bg-purple-600/15 flex items-center justify-center">
                         <i class="fas fa-database text-purple-400"></i>
@@ -45,22 +45,10 @@ include __DIR__ . '/includes/sidebar.php';
                 <div class="flex items-start justify-between">
                     <div>
                         <p id="stat-running" class="text-3xl font-bold text-white mb-1">-</p>
-                        <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Running Now</p>
+                        <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">My Running Now</p>
                     </div>
                     <div class="w-10 h-10 rounded-xl bg-green-600/15 flex items-center justify-center">
                         <i class="fas fa-bolt text-green-400"></i>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-panel border border-gray-700/50 p-5 rounded-2xl">
-                <div class="flex items-start justify-between">
-                    <div>
-                        <p id="stat-users" class="text-3xl font-bold text-white mb-1">-</p>
-                        <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Registered Users</p>
-                        <p class="text-xs text-yellow-400 mt-1.5 font-medium"><span id="stat-paid-users">-</span> <span class="text-gray-500">Paid</span></p>
-                    </div>
-                    <div class="w-10 h-10 rounded-xl bg-yellow-600/15 flex items-center justify-center">
-                        <i class="fas fa-users text-yellow-400"></i>
                     </div>
                 </div>
             </div>
@@ -111,8 +99,8 @@ include __DIR__ . '/includes/sidebar.php';
             <div class="lg:col-span-2 bg-panel border border-gray-700/50 p-5 rounded-2xl">
                 <div class="flex items-center justify-between mb-5">
                     <div>
-                        <h2 class="text-sm font-bold text-white uppercase tracking-wide">Attacks (Last 7 Days)</h2>
-                        <p class="text-gray-500 text-xs mt-0.5">Total attacks per day</p>
+                        <h2 class="text-sm font-bold text-white uppercase tracking-wide">My Attacks (Last 7 Days)</h2>
+                        <p class="text-gray-500 text-xs mt-0.5">Your attacks per day</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="w-3 h-3 rounded-sm bg-blue-500"></span>
@@ -145,14 +133,6 @@ async function loadDashboard() {
             document.getElementById('stat-servers').textContent = data.active_servers.toLocaleString();
             document.getElementById('stat-attacks').textContent = data.total_attacks.toLocaleString();
             document.getElementById('stat-running').textContent = data.running_attacks.toLocaleString();
-            const usersEl = document.getElementById('stat-users');
-            if (usersEl) {
-                usersEl.textContent = data.registered_users !== null ? data.registered_users.toLocaleString() : '—';
-            }
-            const paidEl = document.getElementById('stat-paid-users');
-            if (paidEl) {
-                paidEl.textContent = (data.paid_users !== null && data.paid_users !== undefined) ? data.paid_users.toLocaleString() : '—';
-            }
             
             // Show chart, hide spinner
             document.getElementById('chart-spinner').classList.add('hidden');
