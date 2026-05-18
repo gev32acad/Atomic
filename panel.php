@@ -47,16 +47,23 @@ include __DIR__ . '/includes/sidebar.php';
         </div>
 
         <?php if ($is_starter): ?>
-        <!-- Upgrade banner -->
-        <div class="flex items-center gap-3 bg-orange-500/8 border border-orange-500/20 rounded-xl px-5 py-3">
-            <i class="fas fa-rocket text-orange-400 shrink-0"></i>
-            <p class="text-orange-200 text-sm flex-1">
-                You're on the <strong class="text-white">Starter (Free)</strong> plan.
-                Upgrade to unlock premium methods, more concurrents, and longer durations.
-            </p>
-            <a href="store.php" class="shrink-0 text-xs bg-orange-600 hover:bg-orange-700 text-white font-semibold px-4 py-1.5 rounded-lg transition">Upgrade</a>
+        <!-- Free server offline notice — replaces hub content -->
+        <div class="flex flex-col items-center justify-center py-20 text-center space-y-5">
+            <div class="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center">
+                <i class="fas fa-server text-red-400 text-3xl"></i>
+            </div>
+            <div>
+                <h2 class="text-xl font-bold text-white mb-2">Free Server Offline</h2>
+                <p class="text-gray-400 text-sm max-w-md">
+                    The free (Starter) server is currently <span class="text-red-400 font-semibold">offline for maintenance</span>.
+                    Upgrade to a paid plan to get instant access to all servers.
+                </p>
+            </div>
+            <a href="store.php" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2.5 rounded-xl transition">
+                <i class="fas fa-rocket"></i> Upgrade Plan
+            </a>
         </div>
-        <?php endif; ?>
+        <?php else: ?>
 
         <!-- Stats Bar -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -318,6 +325,8 @@ include __DIR__ . '/includes/sidebar.php';
             <div id="scheduled-list" class="space-y-2"></div>
         </div>
 
+        <?php endif; // end else (non-starter) ?>
+
     </div>
 </div>
 
@@ -467,6 +476,15 @@ function escapeHtml(text) {
     return d.innerHTML;
 }
 
+function escapeAttr(str) {
+    return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 async function stopAttack(id) {
     const btn = document.querySelector(`#card-${id} .stop-btn`);
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
@@ -580,7 +598,7 @@ async function loadFavorites() {
         container.innerHTML = favs.map(f => `
             <div class="flex items-center gap-1">
                 <button class="fav-apply-btn flex items-center gap-1.5 bg-background border border-gray-700 hover:border-blue-500 text-gray-300 hover:text-white text-xs rounded-lg px-3 py-1.5 transition"
-                    data-fav='${escapeHtml(JSON.stringify(f))}'>
+                    data-fav="${escapeAttr(JSON.stringify(f))}">
                     <i class="fas fa-star text-yellow-400 text-xs"></i>
                     ${escapeHtml(f.name)}
                 </button>

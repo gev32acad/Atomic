@@ -75,7 +75,7 @@ $admin = $logged_in && $user['role'] === 'admin';
 
             <!-- Right actions -->
             <div class="flex items-center gap-3 shrink-0">
-                <a href="https://t.me/netstressme" target="_blank" class="text-gray-400 hover:text-blue-400 transition" title="Telegram Support">
+                <a href="<?= htmlspecialchars(TELEGRAM_LINK) ?>" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-blue-400 transition" title="Telegram Support">
                     <i class="fab fa-telegram text-xl"></i>
                 </a>
                 <?php if ($logged_in): ?>

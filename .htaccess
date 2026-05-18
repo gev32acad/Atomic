@@ -1,0 +1,13 @@
+Options -Indexes
+
+# Block direct access to JSON files anywhere in the web root
+<FilesMatch "\.json$">
+    Require all denied
+</FilesMatch>
+
+# Block direct access to sensitive includes
+<FilesMatch "\.(php)$">
+    <If "%{REQUEST_URI} =~ m|^/includes/|">
+        Require all denied
+    </If>
+</FilesMatch>

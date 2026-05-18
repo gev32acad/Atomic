@@ -1,27 +1,12 @@
 [
-  {
-    "id": "cat_l4_tcp",
-    "name": "TCP",
-    "layer": "Layer4"
-  },
-  {
-    "id": "cat_l4_udp",
-    "name": "UDP",
-    "layer": "Layer4"
-  },
-  {
-    "id": "cat_l4_icmp",
-    "name": "ICMP",
-    "layer": "Layer4"
-  },
-  {
-    "id": "cat_l4_amp",
-    "name": "Amplification",
-    "layer": "Layer4"
-  },
-  {
-    "id": "cat_l7_http",
-    "name": "HTTP",
-    "layer": "Layer7"
-  }
+  {"id":"cat_l4_tcp","name":"TCP","layer":"Layer4"},
+  {"id":"cat_l4_udp","name":"UDP","layer":"Layer4"},
+  {"id":"cat_l4_amp","name":"AMP","layer":"Layer4"},
+  {"id":"cat_l4_misc","name":"MISC","layer":"Layer4"},
+  {"id":"cat_l4_ai","name":"AI","layer":"Layer4"},
+  {"id":"cat_l4_games","name":"Layer4_GAMES","layer":"Layer4"},
+  {"id":"cat_l4_special","name":"Layer4_Special","layer":"Layer4"},
+  {"id":"cat_l7_http2","name":"HTTP/2","layer":"Layer7"},
+  {"id":"cat_l7_http1","name":"HTTP/1","layer":"Layer7"},
+  {"id":"cat_l7_browser","name":"BROWSER","layer":"Layer7"}
 ]

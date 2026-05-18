@@ -23,7 +23,7 @@ include __DIR__ . '/includes/sidebar.php';
             <i class="fas fa-coins text-blue-400 mt-0.5 text-base"></i>
             <div>
                 <p class="text-blue-300 font-medium mb-1">Accepted: Bitcoin, Ethereum, Litecoin, Monero</p>
-                <p class="text-blue-200/70 text-xs">After payment, submit your order below. An admin will verify and activate your plan within minutes via Telegram.</p>
+                <p class="text-blue-200/70 text-xs">To purchase a plan, contact us directly on Telegram. An admin will activate your plan within minutes after payment.</p>
             </div>
         </div>
 
@@ -104,14 +104,14 @@ include __DIR__ . '/includes/sidebar.php';
                 </div>
                 <?php endif; ?>
                 <?php elseif (!$logged_in): ?>
-                <a href="register.php" class="w-full block text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition text-sm">
-                    Register to Buy
+                <a href="https://t.me/netstressooo" target="_blank" rel="noopener noreferrer" class="w-full block text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition text-sm">
+                    <i class="fab fa-telegram mr-1"></i> Contact on Telegram
                 </a>
                 <?php else: ?>
-                <button onclick="openBuyModal(<?= json_encode($plan['id']) ?>, <?= json_encode($plan['name']) ?>, <?= json_encode((float)$plan['price']) ?>, <?= json_encode((int)($plan['duration_days'] ?? 30)) ?>)"
-                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition text-sm">
-                    <i class="fas fa-shopping-cart mr-1"></i> Buy Now
-                </button>
+                <a href="https://t.me/netstressooo" target="_blank" rel="noopener noreferrer"
+                    class="w-full block text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition text-sm">
+                    <i class="fab fa-telegram mr-1"></i> Buy via Telegram
+                </a>
                 <?php endif; ?>
             </div>
             <?php endforeach; ?>

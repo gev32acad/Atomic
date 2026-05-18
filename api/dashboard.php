@@ -11,11 +11,16 @@ if (!$user) {
 
 $attacks = read_json('attacks.json');
 
-// Count running attacks (those that haven't expired)
+// Only consider this user's attacks
+$user_attacks = array_values(array_filter($attacks, function($a) use ($user) {
+    return isset($a['user_id']) && $a['user_id'] === $user['id'];
+}));
+
+// Count running attacks for current user
 $now = time();
 $running = 0;
-foreach ($attacks as $attack) {
-    if (empty($attack['start_time'])) continue; // skip scheduled attacks without start_time
+foreach ($user_attacks as $attack) {
+    if (empty($attack['start_time'])) continue;
     $start = strtotime($attack['start_time']);
     $duration = intval($attack['time'] ?? 0);
     if ($start && ($start + $duration) > $now) {
@@ -23,13 +28,13 @@ foreach ($attacks as $attack) {
     }
 }
 
-// Attacks last 7 days
+// Attacks last 7 days (current user only)
 $days = [];
 for ($i = 6; $i >= 0; $i--) {
     $date = date('Y-m-d', strtotime("-$i days"));
     $day_name = date('D', strtotime("-$i days"));
     $count = 0;
-    foreach ($attacks as $attack) {
+    foreach ($user_attacks as $attack) {
         if (empty($attack['start_time'])) continue;
         if (date('Y-m-d', strtotime($attack['start_time'])) === $date) {
             $count++;
@@ -38,22 +43,15 @@ for ($i = 6; $i >= 0; $i--) {
     $days[] = ['name' => $day_name, 'attacks' => $count];
 }
 
-// Active servers from servers.json (#12)
+// Active servers from servers.json
 $servers = read_json('servers.json');
 $active_servers = count(array_filter($servers, function($s) { return !empty($s['enabled']); }));
 
 $response = [
     'active_servers'      => $active_servers,
-    'total_attacks'       => count($attacks),
+    'total_attacks'       => count($user_attacks),
     'running_attacks'     => $running,
     'attacks_last_7_days' => $days,
 ];
-
-// Stats visible to all authenticated users
-$users = read_json('users.json');
-$response['registered_users'] = count($users);
-$response['paid_users'] = count(array_filter($users, function($u) {
-    return ($u['plan'] ?? 'Starter') !== 'Starter';
-}));
 
 json_response($response);

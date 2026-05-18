@@ -40,6 +40,11 @@ if ($method_req === 'POST') {
     if (empty($_SERVER['HTTP_X_API_KEY'])) {
         verify_csrf_token();
     }
+
+    // Free server is offline — Starter plan users cannot launch attacks
+    if ($user['plan'] === 'Starter') {
+        json_error('The free server is currently offline for maintenance. Please upgrade your plan to continue.', 503);
+    }
     
     $action = $_POST['action'] ?? 'start';
     
