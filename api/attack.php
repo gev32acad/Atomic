@@ -41,9 +41,9 @@ if ($method_req === 'POST') {
         verify_csrf_token();
     }
 
-    // Free server is offline — Starter plan users cannot launch attacks
+    // Starter plan users cannot launch attacks
     if ($user['plan'] === 'Starter') {
-        json_error('The free server is currently offline for maintenance. Please upgrade your plan to continue.', 503);
+        json_error('Launching attacks requires a paid plan. Please upgrade your plan to continue.', 403);
     }
     
     $action = $_POST['action'] ?? 'start';

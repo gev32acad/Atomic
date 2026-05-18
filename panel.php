@@ -46,24 +46,7 @@ include __DIR__ . '/includes/sidebar.php';
             </a>
         </div>
 
-        <?php if ($is_starter): ?>
-        <!-- Free server offline notice — replaces hub content -->
-        <div class="flex flex-col items-center justify-center py-20 text-center space-y-5">
-            <div class="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center">
-                <i class="fas fa-server text-red-400 text-3xl"></i>
-            </div>
-            <div>
-                <h2 class="text-xl font-bold text-white mb-2">Free Server Offline</h2>
-                <p class="text-gray-400 text-sm max-w-md">
-                    The free (Starter) server is currently <span class="text-red-400 font-semibold">offline for maintenance</span>.
-                    Upgrade to a paid plan to get instant access to all servers.
-                </p>
-            </div>
-            <a href="store.php" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2.5 rounded-xl transition">
-                <i class="fas fa-rocket"></i> Upgrade Plan
-            </a>
-        </div>
-        <?php else: ?>
+
 
         <!-- Stats Bar -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -325,7 +308,6 @@ include __DIR__ . '/includes/sidebar.php';
             <div id="scheduled-list" class="space-y-2"></div>
         </div>
 
-        <?php endif; // end else (non-starter) ?>
 
     </div>
 </div>
@@ -512,6 +494,10 @@ async function stopAttack(id) {
 ['l4-form', 'l7-form'].forEach(formId => {
     document.getElementById(formId).addEventListener('submit', async function(e) {
         e.preventDefault();
+        if (!isPremium) {
+            showToast('Upgrade your plan to launch attacks', 'error');
+            return;
+        }
         const btn = this.querySelector('button[type=submit]');
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Launching...';

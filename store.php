@@ -1,7 +1,11 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
-$logged_in = is_logged_in();
-$user = $logged_in ? get_authenticated_user() : null;
+if (!is_logged_in()) {
+    header('Location: login.php');
+    exit;
+}
+$logged_in = true;
+$user = get_authenticated_user();
 $csrf_token = generate_csrf_token();
 $plans = read_json('plans.json');
 $page_title = 'Store';
